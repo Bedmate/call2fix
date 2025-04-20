@@ -92,7 +92,7 @@ class WalletController extends Controller
         $wallet = Wallet::where([
             'user_id' => $request->user_id,
             'role' => $request->_account_type
-        ])->where('slug', 'ngn')->orWhere('currency', 'ngn')->first();
+        ])->where('currency', 'ngn')->first();
 
         if (!$wallet) {
             return back()->with('error', 'Wallet not found.');
