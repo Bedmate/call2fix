@@ -132,14 +132,13 @@ class ArtisanController extends Controller
                         "sla_start_date" => Carbon::parse($request->sla_start_date)->format('Y-m-d'),  // Format to date (Y-m-d)
                         "attachments" => $request->attachments,
                         "summary_note" => $request->summary_note,
-                        "administrative_fee" => get_settings_value('administrative_fee'),
-                        "service_vat" => $service_vat,
+                        "administrative_fee" => $request->administrative_fee, //get_settings_value('administrative_fee'),
+                        "service_vat" => $request->service_vat,
                         "items" => $request->items,
                         "old_price" => $request->total_charges ?? $total_charges,
                         "total_charges" => $request->total_charges ?? $total_charges,
                     ]
                 );
-
 
                 // $createQuote->items()->save($request->items);
 

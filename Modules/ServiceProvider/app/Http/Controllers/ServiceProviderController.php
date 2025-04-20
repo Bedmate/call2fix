@@ -337,7 +337,7 @@ class ServiceProviderController extends Controller
                 $service_vat += $items_total * 0.075;
             }
               
-            // Process quote submission 
+            // Process quote submission  
             // $items_total = $request->total_charges ?? $items_total;
             $createQuote = SubmittedQuotes::updateOrCreate(
                 [
