@@ -85,7 +85,7 @@ class FaqsController extends Controller
             'account_type' => 'nullable|string|max:255',
         ]);
 
-        Faq::create($data);
+        Faqs::create($data);
 
         return redirect()->route('faqs.index')->with('success', 'FAQ created successfully.');
     }
