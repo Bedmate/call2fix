@@ -61,4 +61,91 @@ class FaqsController extends Controller
         }
     }
 
+    // Show all FAQs
+    public function all()
+    {
+        $faqs = Faq::latest()->get();
+        return view('faqs.index', compact('faqs'));
+    }
+
+    // Show create form
+    public function create()
+    {
+        return view('faqs.create');
+    }
+
+    // Store new FAQ
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+            'user_role' => 'required|string|max:255',
+            '_account_type' => 'nullable|string|max:255',
+            'account_type' => 'nullable|string|max:255',
+        ]);
+
+        Faq::create($data);
+
+        return redirect()->route('faqs.index')->with('success', 'FAQ created successfully.');
+    }
+
+    // Show single FAQ
+    public function view($id)
+    {
+        $faq = Faq::findOrFail($id);
+        return view('faqs.show', compact('faq'));
+    }
+
+    // Show edit form
+    public function edit($id)
+    {
+        $faq = Faq::findOrFail($id);
+        return view('faqs.edit', compact('faq'));
+    }
+
+    // Update FAQ
+    public function update(Request $request, $id)
+    {
+        $faq = Faq::findOrFail($id);
+
+        $data = $request->validate([
+            'subject' => 'sometimes|string|max:255',
+            'message' => 'sometimes|string',
+            'user_role' => 'sometimes|string|max:255',
+            '_account_type' => 'nullable|string|max:255',
+            'account_type' => 'nullable|string|max:255',
+        ]);
+
+        $faq->update($data);
+
+        return redirect()->route('faqs.index')->with('success', 'FAQ updated successfully.');
+    }
+
+    // Soft delete FAQ
+    public function destroy($id)
+    {
+        $faq = Faq::findOrFail($id);
+        $faq->delete();
+
+        return redirect()->route('faqs.index')->with('success', 'FAQ deleted successfully.');
+    }
+
+    // Restore soft-deleted FAQ
+    public function restore($id)
+    {
+        $faq = Faq::withTrashed()->findOrFail($id);
+        $faq->restore();
+
+        return redirect()->route('faqs.index')->with('success', 'FAQ restored successfully.');
+    }
+
+    // Permanently delete soft-deleted FAQ
+    public function forceDelete($id)
+    {
+        $faq = Faq::withTrashed()->findOrFail($id);
+        $faq->forceDelete();
+
+        return redirect()->route('faqs.index')->with('success', 'FAQ permanently deleted.');
+    }
 }

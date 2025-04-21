@@ -110,9 +110,10 @@ Route::domain(env('ADMIN_URL'))->group(function () {
         });
 
         Route::prefix('faqs')->controller(FaqController::class)->group(function () {
-            Route::get('/', 'index')->name('faq.index');
+            Route::get('/', 'all')->name('faq.index');
+            Route::get('create', 'create')->name('faq.create');
             Route::post('/', 'store')->name('faq.store');
-            Route::get('{id}', 'show')->name('faq.show');
+            Route::get('{id}', 'view')->name('faq.show');
             Route::put('{id}', 'update')->name('faq.update');
             Route::delete('{id}', 'destroy')->name('faq.destroy');
             Route::post('{id}/restore', 'restore')->name('faq.restore');
