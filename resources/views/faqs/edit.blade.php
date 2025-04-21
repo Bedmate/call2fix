@@ -3,7 +3,7 @@
 @section('title', 'Edit Faqs')
 
 @section('content')
-<form action="{{ isset($faq) ? route('admin.faqs.update', $faq->id) : route('faqs.store') }}" method="POST">
+<form action="{{ isset($faq) ? route('admin.faq.update', $faq->id) : route('admin.faq.store') }}" method="POST">
     @csrf
     @if(isset($faq))
         @method('PUT')
