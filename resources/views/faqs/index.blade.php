@@ -4,7 +4,7 @@
 @section('content')
 <div class="container">
     <h2>FAQs</h2>
-    <a href="{{ route('faqs.create') }}" class="btn btn-primary mb-3">Add New FAQ</a>
+    <a href="{{ route('admin.faqs.create') }}" class="btn btn-primary mb-3">Add New FAQ</a>
 
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
