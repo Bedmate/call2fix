@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ServicesController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\FaqsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\WalletController;
@@ -109,7 +110,7 @@ Route::domain(env('ADMIN_URL'))->group(function () {
             Route::get('{user}/orders', [UsersController::class, 'getOrders'])->name('users.orders');
         });
 
-        Route::prefix('faqs')->controller(FaqController::class)->group(function () {
+        Route::prefix('faqs')->controller(FaqsController::class)->group(function () {
             Route::get('/', 'all')->name('faq.index');
             Route::get('create', 'create')->name('faq.create');
             Route::post('/', 'store')->name('faq.store');
