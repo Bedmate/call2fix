@@ -109,6 +109,17 @@ Route::domain(env('ADMIN_URL'))->group(function () {
             Route::get('{user}/orders', [UsersController::class, 'getOrders'])->name('users.orders');
         });
 
+        Route::prefix('faqs')->controller(FaqController::class)->group(function () {
+            Route::get('/', 'index')->name('faq.index');
+            Route::post('/', 'store')->name('faq.store');
+            Route::get('{id}', 'show')->name('faq.show');
+            Route::put('{id}', 'update')->name('faq.update');
+            Route::delete('{id}', 'destroy')->name('faq.destroy');
+            Route::post('{id}/restore', 'restore')->name('faq.restore');
+            Route::delete('{id}/force', 'forceDelete')->name('faq.force.delete');
+        });
+        
+
         Route::post('logout', [AdminController::class, 'logout'])->name('logout');
     });
 });
