@@ -78,6 +78,26 @@
             </ul>
         </li>
 
+        <!-- F.A.Qs -->
+        <li class="menu-item">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon tf-icons ti ti-settings"></i>
+                <div data-i18n="Service Request">F.A.Qs</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item">
+                    <a href="{{ route('admin.faq.index') }}" class="menu-link">
+                        <div data-i18n="Draft">Faqs</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ route('admin.faq.create') }}" class="menu-link">
+                        <div data-i18n="Pending">Add New Faq</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        
         <!-- Roles & Permissions -->
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -281,29 +301,6 @@
                 </li>
             </ul>
         </li>
-
-
-
-        <!-- Service Requests -->
-        <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons ti ti-settings"></i>
-                <div data-i18n="Service Request">F.A.Qs</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="{{ route('admin.faq.index') }}" class="menu-link">
-                        <div data-i18n="Draft">Faqs</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('admin.faq.create') }}" class="menu-link">
-                        <div data-i18n="Pending">Add New Faq</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-
 
         {{-- Kwik Deliveries  --}}
         <li class="menu-item">
