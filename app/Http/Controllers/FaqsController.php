@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\SupportEmail;
-use App\Models\Faqs;
+use App\Models\Faqs as Faq;
 use Illuminate\Http\Request;
 use Mail;
 use Validator;
@@ -14,20 +14,20 @@ class FaqsController extends Controller
 {
     public function __construct()
     {
-        if(!Schema::hasColumn('faqs', 'account_type')) {
-            Schema::table('faqs', function(Blueprint $table) {
-                $table->string('account_type')->nullable();
-            });
-        }
+        // if(!Schema::hasColumn('faqs', 'account_type')) {
+        //     Schema::table('faqs', function(Blueprint $table) {
+        //         $table->string('account_type')->nullable();
+        //     });
+        // }
     }
 
     public function index()
     {
-        $faqs = Faqs::where('account_type', active_role)->get();
+        $faqs = Faq::where('account_type', active_role)->get();
         return get_success_response($faqs);
     }
 
-    public function show(Faqs $faq)
+    public function show(Faq $faq)
     {
         return get_success_response($faq);
     }
