@@ -64,7 +64,7 @@ class FaqsController extends Controller
     // Show all FAQs
     public function all()
     {
-        $faqs = Faq::latest()->get();
+        $faqs = Faq::latest()->paginate(10);
         return view('faqs.index', compact('faqs'));
     }
 

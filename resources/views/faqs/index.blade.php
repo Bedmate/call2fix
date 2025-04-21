@@ -26,7 +26,7 @@
                 <td>{{ $faq->subject }}</td>
                 <td>{{ $faq->user_role }}</td>
                 <td>{{ $faq->account_type }}</td>
-                <td>{{ $faq->created_at->format('Y-m-d') }}</td>
+                <td>{{ $faq->created_at?->format('Y-m-d') }}</td>
                 <td>
                     <a href="{{ route('faqs.show', $faq->id) }}" class="btn btn-info btn-sm">View</a>
                     <a href="{{ route('faqs.edit', $faq->id) }}" class="btn btn-warning btn-sm">Edit</a>
