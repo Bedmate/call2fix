@@ -22,6 +22,9 @@
 
         <div class="mb-3">
             <label>Account Type</label>
+            <select name="account_type" id="account_type">Account Type</select>
+            @foreach($roles as $role)
+            <select name="{{ $role-> }}" id="account_type">Account Type</select>
             <input type="text" name="account_type" class="form-control" value="{{ old('account_type', $faq->account_type ?? '') }}">
         </div>
 

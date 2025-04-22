@@ -13,6 +13,15 @@ class Earning extends Model
         'user_id',
         'task_id',
         'amount',
+        'claimed'
+    ];
+
+    protected $casts = [
+        'claimed' => 'boolen'
+    ];
+
+    protected $with = [
+        'user'
     ];
 
     public function user()
