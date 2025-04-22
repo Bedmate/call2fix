@@ -17,7 +17,7 @@ class Earning extends Model
     ];
 
     protected $casts = [
-        'claimed' => 'boolen'
+        'claimed' => 'boolean', // ✅ fixed typo
     ];
 
     protected $with = [
@@ -31,6 +31,6 @@ class Earning extends Model
 
     public function task()
     {
-        return $this->belongsTo(Tasks::class);
+        return $this->belongsTo(Tasks::class); 
     }
 }
