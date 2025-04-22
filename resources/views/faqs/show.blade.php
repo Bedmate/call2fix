@@ -14,6 +14,6 @@
         <li class="list-group-item">Created: {{ $faq->created_at->diffForHumans() }}</li>
     </ul>
 
-    <a href="{{ route('faqs.index') }}" class="btn btn-secondary mt-3">Back</a>
+    <a href="{{ route('admin.faq.index') }}" class="btn btn-secondary mt-3">Back</a>
 </div>
 @endsection
