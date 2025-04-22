@@ -115,8 +115,9 @@ Route::domain(env('ADMIN_URL'))->group(function () {
             Route::get('create', 'create')->name('faq.create');
             Route::post('/', 'store')->name('faq.store');
             Route::get('{id}', 'view')->name('faq.show');
-            Route::put('{id}', 'update')->name('faq.update');
-            Route::delete('{id}', 'destroy')->name('faq.destroy');
+            Route::get('{id}/edit', 'edit')->name('faq.edit');
+            Route::put('{id}/update', 'update')->name('faq.update');
+            Route::delete('{id}/delete', 'destroy')->name('faq.destroy');
             Route::post('{id}/restore', 'restore')->name('faq.restore');
             Route::delete('{id}/force', 'forceDelete')->name('faq.force.delete');
         });
