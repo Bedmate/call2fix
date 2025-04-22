@@ -78,7 +78,7 @@ class FaqsController extends Controller
         $data['user_role'] = $data['account_type'];
         $data['_account_type'] = $data['account_type'];
 
-        Faqs::create($data);
+        Faq::create($data);
 
         return redirect()->route('faqs.index')->with('success', 'FAQ created successfully.');
     }
