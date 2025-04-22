@@ -24,7 +24,6 @@
             @foreach($faqs as $faq)
             <tr>
                 <td>{{ $faq->subject }}</td>
-                <td>{{ $faq->user_role }}</td>
                 <td>{{ $faq->account_type }}</td>
                 <td>{{ $faq->created_at?->format('Y-m-d') }}</td>
                 <td>

@@ -8,8 +8,6 @@
     <p>{{ $faq->message }}</p>
 
     <ul class="list-group mt-3">
-        <li class="list-group-item">User Role: {{ $faq->user_role }}</li>
-        <li class="list-group-item">_Account Type: {{ $faq->_account_type }}</li>
         <li class="list-group-item">Account Type: {{ $faq->account_type }}</li>
         <li class="list-group-item">Created: {{ $faq->created_at->diffForHumans() }}</li>
     </ul>
