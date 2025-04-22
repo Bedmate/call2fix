@@ -62,7 +62,7 @@ class FaqsController extends Controller
     public function create()
     {
         $roles = Role::with('permissions')->get();
-        return view('faqs.create');
+        return view('faqs.create', compact('roles'));
     }
 
     // Store new FAQ
