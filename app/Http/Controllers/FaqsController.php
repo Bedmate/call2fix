@@ -13,7 +13,7 @@ class FaqsController extends Controller
 {
     public function index()
     {
-        $faqs = Faq::where('account_type', active_role)->get();
+        $faqs = Faq::where('account_type', active_role())->get();
         return get_success_response($faqs);
     }
 
