@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Faqs as Faq;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class FaqsController extends Controller
 {
