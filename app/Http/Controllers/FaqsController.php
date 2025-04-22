@@ -71,6 +71,7 @@ class FaqsController extends Controller
     // Show create form
     public function create()
     {
+        $roles = Role::with('permissions')->get();
         return view('faqs.create');
     }
 
