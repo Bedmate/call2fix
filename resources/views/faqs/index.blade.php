@@ -28,9 +28,9 @@
                 <td>{{ $faq->account_type }}</td>
                 <td>{{ $faq->created_at?->format('Y-m-d') }}</td>
                 <td>
-                    <a href="{{ route('admin.faqs.show', $faq->id) }}" class="btn btn-info btn-sm">View</a>
-                    <a href="{{ route('admin.faqs.edit', $faq->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                    <form action="{{ route('admin.faqs.destroy', $faq->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete FAQ?')">
+                    <a href="{{ route('admin.faq.show', $faq->id) }}" class="btn btn-info btn-sm">View</a>
+                    <a href="{{ route('admin.faq.edit', $faq->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                    <form action="{{ route('admin.faq.destroy', $faq->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete FAQ?')">
                         @csrf
                         @method('DELETE')
                         <button class="btn btn-danger btn-sm">Delete</button>
