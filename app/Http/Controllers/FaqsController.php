@@ -81,10 +81,12 @@ class FaqsController extends Controller
         $data = $request->validate([
             'subject' => 'required|string|max:255',
             'message' => 'required|string',
-            'user_role' => 'required|string|max:255',
-            '_account_type' => 'nullable|string|max:255',
-            'account_type' => 'nullable|string|max:255',
+            'account_type' => 'required|string|max:255',
         ]);
+        
+
+        $data['user_role'] = $data['account_type'];
+        $data['_account_type'] = $data['account_type'];
 
         Faqs::create($data);
 
