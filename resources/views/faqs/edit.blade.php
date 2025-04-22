@@ -22,7 +22,11 @@
 
         <div class="mb-3">
             <label>Account Type</label>
-            <input type="text" name="account_type" class="form-control" value="{{ old('account_type', $faq->account_type ?? '') }}">
+            <select name="account_type" id="account_type" class="form-control">
+                @foreach($roles as $role)
+                    <option value="{{ $role->name }}">{{ str_replace("_", " ", $role->name) }}</option>
+                @endforeach
+            </select>
         </div>
 
         <button class="btn btn-success">{{ isset($faq) ? 'Update FAQ' : 'Create FAQ' }}</button>
