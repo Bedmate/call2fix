@@ -14,7 +14,6 @@
         <thead>
             <tr>
                 <th>Subject</th>
-                <th>User Role</th>
                 <th>Account Type</th>
                 <th>Created At</th>
                 <th>Actions</th>

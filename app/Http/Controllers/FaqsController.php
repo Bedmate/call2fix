@@ -80,7 +80,7 @@ class FaqsController extends Controller
 
         Faq::create($data);
 
-        return redirect()->route('faqs.index')->with('success', 'FAQ created successfully.');
+        return redirect()->route('admin.faq.index')->with('success', 'FAQ created successfully.');
     }
 
     // Show single FAQ
@@ -93,8 +93,9 @@ class FaqsController extends Controller
     // Show edit form
     public function edit($id)
     {
+        $roles = Role::with('permissions')->get();
         $faq = Faq::findOrFail($id);
-        return view('faqs.edit', compact('faq'));
+        return view('faqs.edit', compact('faq', 'roles'));
     }
 
     // Update FAQ
@@ -105,14 +106,15 @@ class FaqsController extends Controller
         $data = $request->validate([
             'subject' => 'sometimes|string|max:255',
             'message' => 'sometimes|string',
-            'user_role' => 'sometimes|string|max:255',
-            '_account_type' => 'nullable|string|max:255',
-            'account_type' => 'nullable|string|max:255',
+            'account_type' => 'sometimes|string|max:255',
         ]);
+
+        $data['user_role'] = $data['account_type'];
+        $data['_account_type'] = $data['account_type'];
 
         $faq->update($data);
 
-        return redirect()->route('faqs.index')->with('success', 'FAQ updated successfully.');
+        return redirect()->route('admin.faq.index')->with('success', 'FAQ updated successfully.');
     }
 
     // Soft delete FAQ
@@ -121,7 +123,7 @@ class FaqsController extends Controller
         $faq = Faq::findOrFail($id);
         $faq->delete();
 
-        return redirect()->route('faqs.index')->with('success', 'FAQ deleted successfully.');
+        return redirect()->route('admin.faq.index')->with('success', 'FAQ deleted successfully.');
     }
 
     // Restore soft-deleted FAQ
@@ -130,7 +132,7 @@ class FaqsController extends Controller
         $faq = Faq::withTrashed()->findOrFail($id);
         $faq->restore();
 
-        return redirect()->route('faqs.index')->with('success', 'FAQ restored successfully.');
+        return redirect()->route('admin.faq.index')->with('success', 'FAQ restored successfully.');
     }
 
     // Permanently delete soft-deleted FAQ
@@ -139,6 +141,6 @@ class FaqsController extends Controller
         $faq = Faq::withTrashed()->findOrFail($id);
         $faq->forceDelete();
 
-        return redirect()->route('faqs.index')->with('success', 'FAQ permanently deleted.');
+        return redirect()->route('admin.faq.index')->with('success', 'FAQ permanently deleted.');
     }
 }
