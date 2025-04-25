@@ -805,9 +805,8 @@ class ServiceRequestController extends Controller
             $wallet = $customer->getWallet($walletType);
 
             // get the customer's wallet
-            if($customer->parent_account_id != null && $customer->sub_account_type == 'normal') {
-                // then customer should be parent account
-                $parentUser = User::findOrFail($customer->parent_account_id);
+            if(auth()->user()->parent_account_id != null && auth()->user()->sub_account_type == 'normal') {
+                $parentUser = User::findOrFail(auth()->user()->parent_account_id);
                 $wallet = $parentUser->getWallet($walletType);
                 Log::info("Wallet balance: ", ['wallet' => $wallet]);
             }
