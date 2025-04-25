@@ -54,7 +54,8 @@ class ChartController extends Controller
                 $groupBy = 'day';
         }
 
-        if($hasUserColumn) $query = $query->where(['user_id' => auth()->id(), '_account_type' => active_role()]);
+        // if($hasUserColumn) 
+        $query = $query->where(['user_id' => auth()->id(), '_account_type' => active_role()]);
         // Fetch and process data as before
         $data = $query->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count")
