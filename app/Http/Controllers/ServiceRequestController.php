@@ -802,9 +802,14 @@ class ServiceRequestController extends Controller
 
             // get object of the customer that placed the order
             $customer = $serviceRequest->user;
+            $wallet = $customer->getWallet($walletType);
 
             // get the customer's wallet
-            $wallet = $customer->getWallet($walletType);
+            if($customer->parent_account_id != null) {
+                // then customer should be parent account
+                $parentUser = User::findOrFail($customer->parent_account_id);
+                $wallet = $parentUser->getWallet($walletType);
+            }
             $transaction[] = $wallet->withdrawal($total_cost * 100,  ['description' => "Service request payment - {$serviceRequest->id}", "narration" => $request->narration ?? null]);
             $artisan = Artisans::where('artisan_id', $request->artisan_id)->first();
             if ($transaction && $wallet) {
