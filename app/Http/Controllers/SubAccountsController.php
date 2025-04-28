@@ -6,7 +6,7 @@ use App\Mail\NewSubAccountMail;
 use App\Models\SubAccounts;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Mail;
+use Illuminate\Support\Facades\Mail;
 use Str;
 use Validator;
 use Illuminate\Support\Facades\Auth;
