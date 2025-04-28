@@ -225,7 +225,7 @@ class ChartController extends Controller
               ->orWhere('approved_artisan_id', auth()->id());
         });
         
-        return response()->json($query);
+        // return response()->json($query);
         // Count for service requests where the logged-in user is associated
         $totalServiceRequests = $query->count();
         $completedServiceRequests = $query->where('request_status', 'Completed')->count();
