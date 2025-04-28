@@ -225,7 +225,7 @@ class ChartController extends Controller
                 $q->where('user_id', auth()->id())
                   ->orWhereJsonContains('featured_providers_id', auth()->id())
                   ->orWhere('approved_artisan_id', auth()->id());
-            })
+            });
             // ->where('_account_type', active_role());
             
         $totalServiceRequests = $baseQuery->count();
