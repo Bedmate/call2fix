@@ -69,17 +69,16 @@
 
                       <h4>Problem Images</h4>
                       @if ($serviceRequest->problem_images && count($serviceRequest->problem_images) > 0)
-                        @php
-                            $ext = pathinfo($media, PATHINFO_EXTENSION);
-                        @endphp
-
                           <div id="problemImagesCarousel" class="carousel slide" data-bs-ride="carousel">
                               <div class="carousel-inner">
                                   @foreach ($serviceRequest->problem_images as $index => $image)
+                                        @php
+                                            $ext = pathinfo($image, PATHINFO_EXTENSION);
+                                        @endphp
                                       <div class="carousel-item {{ $loop->first ? 'active' : '' }}">
                                         @if (in_array(strtolower($ext), ['mp4', 'webm', 'ogg']))
                                             <video controls class="w-full rounded">
-                                                <source src="{{ $media }}" type="video/{{ $ext }}">
+                                                <source src="{{ $image }}" type="video/{{ $ext }}">
                                                 Your browser does not support the video tag.
                                             </video>
                                         @else
