@@ -48,8 +48,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var map = L.map('map').setView([
-            parseFloat("{{ $property->porperty_latitude }}"), 
-            parseFloat("{{ $property->porperty_longitude }}")
+            parseFloat("{{ $property->property_latitude }}"), 
+            parseFloat("{{ $property->property_longitude }}")
         ], 15);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -57,8 +57,8 @@
         }).addTo(map);
 
         L.marker([
-            parseFloat("{{ $property->porperty_latitude }}"), 
-            parseFloat("{{ $property->porperty_longitude }}")
+            parseFloat("{{ $property->property_latitude }}"), 
+            parseFloat("{{ $property->property_longitude }}")
         ]).addTo(map)
         .bindPopup('<b>{{ $property->property_name }}</b><br>{{ $property->property_address }}')
         .openPopup();

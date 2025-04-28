@@ -1,4 +1,3 @@
-{{-- resources/views/service-request-view.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
@@ -9,21 +8,21 @@
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 class="text-xl font-semibold mb-4">Request Information</h2>
 
-        <p><strong>Problem Title:</strong> {{ $request->problem_title ?? 'N/A' }}</p>
-        <p><strong>Description:</strong> {{ $request->problem_description ?? 'N/A' }}</p>
-        <p><strong>Status:</strong> {{ $request->request_status ?? 'N/A' }}</p>
-        <p><strong>Inspection Date:</strong> {{ $request->inspection_date ? \Carbon\Carbon::parse($request->inspection_date)->format('d M, Y') : 'N/A' }}</p>
-        <p><strong>Inspection Time:</strong> {{ $request->inspection_time ?? 'N/A' }}</p>
-        <p><strong>Total Cost:</strong> {{ $request->formatted_price ?? number_format($request->total_cost, 2) }}</p>
+        <p><strong>Problem Title:</strong> {{ $serviceRequest->problem_title ?? 'N/A' }}</p>
+        <p><strong>Description:</strong> {{ $serviceRequest->problem_description ?? 'N/A' }}</p>
+        <p><strong>Status:</strong> {{ $serviceRequest->request_status ?? 'N/A' }}</p>
+        <p><strong>Inspection Date:</strong> {{ $serviceRequest->inspection_date ? \Carbon\Carbon::parse($serviceRequest->inspection_date)->format('d M, Y') : 'N/A' }}</p>
+        <p><strong>Inspection Time:</strong> {{ $serviceRequest->inspection_time ?? 'N/A' }}</p>
+        <p><strong>Total Cost:</strong> {{ $serviceRequest->formatted_price ?? number_format($serviceRequest->total_cost, 2) }}</p>
     </div>
 
     {{-- Problem Images --}}
-    @if (!empty($request->problem_images))
+    @if (!empty($serviceRequest->problem_images))
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 class="text-xl font-semibold mb-4">Problem Media</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            @foreach ($request->problem_images as $media)
+            @foreach ($serviceRequest->problem_images as $media)
                 @php
                     $ext = pathinfo($media, PATHINFO_EXTENSION);
                 @endphp
@@ -44,27 +43,27 @@
     @endif
 
     {{-- User Info --}}
-    @if (!empty($request->user))
+    @if (!empty($serviceRequest->user))
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 class="text-xl font-semibold mb-4">User Information</h2>
 
         <div class="flex items-center gap-4 mb-4">
-            <img src="{{ $request->user['profile_picture'] ?? 'https://via.placeholder.com/100' }}" class="w-16 h-16 rounded-full" alt="User Image">
+            <img src="{{ $serviceRequest->user['profile_picture'] ?? 'https://via.placeholder.com/100' }}" class="w-16 h-16 rounded-full" alt="User Image">
             <div>
-                <p><strong>Name:</strong> {{ $request->user['first_name'] ?? '' }} {{ $request->user['last_name'] ?? '' }}</p>
-                <p><strong>Email:</strong> {{ $request->user['email'] ?? 'N/A' }}</p>
-                <p><strong>Phone:</strong> {{ $request->user['phone'] ?? 'N/A' }}</p>
+                <p><strong>Name:</strong> {{ $serviceRequest->user['first_name'] ?? '' }} {{ $serviceRequest->user['last_name'] ?? '' }}</p>
+                <p><strong>Email:</strong> {{ $serviceRequest->user['email'] ?? 'N/A' }}</p>
+                <p><strong>Phone:</strong> {{ $serviceRequest->user['phone'] ?? 'N/A' }}</p>
             </div>
         </div>
     </div>
     @endif
 
     {{-- Submitted Quotes --}}
-    @if (!empty($request->submitted_quotes))
+    @if (!empty($serviceRequest->submitted_quotes))
     <div class="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 class="text-xl font-semibold mb-4">Submitted Quotes</h2>
 
-        @foreach ($request->submitted_quotes as $quote)
+        @foreach ($serviceRequest->submitted_quotes as $quote)
             <div class="border p-4 rounded mb-6">
                 <p><strong>Summary Note:</strong> {{ $quote['summary_note'] ?? 'N/A' }}</p>
                 <p><strong>SLA Start Date:</strong> {{ $quote['sla_start_date'] ?? 'N/A' }}</p>
