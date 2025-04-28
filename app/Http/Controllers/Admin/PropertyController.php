@@ -76,6 +76,7 @@ class PropertyController extends Controller
 
     public function show(Property $property)
     {
+        return response()->json($property);
         return view('admin.properties.show', compact('property'));
     }
 
