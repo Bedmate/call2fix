@@ -7,6 +7,7 @@ use App\Models\OrderModel;
 use App\Models\Product;
 use App\Models\Artisans;
 use App\Models\ServiceRequest;
+use App\Models\ServiceRequestModel;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Towoju5\Wallet\Models\Wallet;
@@ -219,11 +220,10 @@ class ChartController extends Controller
 
     public function service_request_counts()
     {
-        $query = ServiceRequest::where(function ($q) {
-            $q->where('user_id', auth()->id())
+        $query = ServiceRequestModel::query()->where('user_id', auth()->id())
               ->orWhere('approved_providers_id', auth()->id())
               ->orWhere('approved_artisan_id', auth()->id());
-        });
+
         
         // return response()->json($query);
         // Count for service requests where the logged-in user is associated
