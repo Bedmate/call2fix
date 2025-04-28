@@ -48,15 +48,17 @@ class ServiceRequestController extends Controller
     {
         try {
             $serviceRequests = ServiceRequestModel::with('reworkMessages', 'service_provider', 'invited_artisan')
-                // ->where('_account_type', active_role())
                 ->where(function($q) {
-                    $q->where('user_id', auth()->id())
-                      ->orWhereJsonContains('featured_providers_id', auth()->id())
-                      ->orWhere('approved_artisan_id', auth()->id());
+                    $q->where(function($subQuery) {
+                        $subQuery->where('user_id', auth()->id())
+                                ->where('_account_type', active_role()); // only for user_id
+                    })
+                    ->orWhereJsonContains('featured_providers_id', auth()->id())
+                    ->orWhere('approved_artisan_id', auth()->id());
                 })
                 ->orderBy('updated_at', 'desc')
                 ->get();
-        
+
             return get_success_response($serviceRequests);
         } catch (\Throwable $th) {
             logger()->error('Service Requests Error', ['error' => $th]);
