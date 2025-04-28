@@ -217,31 +217,43 @@ class ChartController extends Controller
             'rentable' => $getOrdersCount['rentables']
         ]);
     }
-
+    
     public function service_request_counts()
     {
-        $query = ServiceRequestModel::query()->where('user_id', auth()->id())
-              ->orWhereIn('featured_providers_id', auth()->id())
-              ->orWhere('approved_artisan_id', auth()->id());
-
-        
-        // return response()->json($query);
-        // Count for service requests where the logged-in user is associated
-        $totalServiceRequests = $query->count();
-        $completedServiceRequests = $query->where('request_status', 'Completed')->count();
+        // Main query for all service requests associated with logged-in user
+        $baseQuery = ServiceRequestModel::query()
+            ->where(function($q) {
+                $q->where('user_id', auth()->id())
+                  ->orWhere('featured_providers_id', auth()->id())
+                  ->orWhere('approved_artisan_id', auth()->id());
+            });
     
-        // Calculate the percentage of completed requests
+        $totalServiceRequests = $baseQuery->count();
+    
+        // Separate query for completed requests
+        $completedServiceRequests = ServiceRequestModel::query()
+            ->where(function($q) {
+                $q->where('user_id', auth()->id())
+                  ->orWhere('featured_providers_id', auth()->id())
+                  ->orWhere('approved_artisan_id', auth()->id());
+            })
+            ->where('request_status', 'Completed')
+            ->count();
+    
         $percentageCompleted = $totalServiceRequests > 0 
             ? ($completedServiceRequests / $totalServiceRequests) * 100 
             : 0;
-            
-        $artisans = Artisans::where('service_provider_id', auth()->id())->latest()->count();
+    
+        $totalArtisans = Artisans::where('service_provider_id', auth()->id())
+            ->latest()
+            ->count();
     
         return get_success_response([
             'total_service_requests' => $totalServiceRequests,
             'completed_service_requests' => $completedServiceRequests,
             'percentage_completed' => round($percentageCompleted, 2),
-            'total_artisans' => $artisans ?? 0
+            'total_artisans' => $totalArtisans
         ]);
     }
+    
 }
