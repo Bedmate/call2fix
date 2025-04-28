@@ -219,12 +219,13 @@ class ChartController extends Controller
 
     public function service_request_counts()
     {
-        $query = ServiceRequest::where('_account_type', active_role())->where(function ($q) {
+        $query = ServiceRequest::where(function ($q) {
             $q->where('user_id', auth()->id())
-                ->orWhere('approved_providers_id', auth()->id())
-                ->orWhere('approved_artisan_id', auth()->id());
+              ->orWhere('approved_providers_id', auth()->id())
+              ->orWhere('approved_artisan_id', auth()->id());
         });
-    
+        
+        return response()->json($query);
         // Count for service requests where the logged-in user is associated
         $totalServiceRequests = $query->count();
         $completedServiceRequests = $query->where('request_status', 'Completed')->count();
