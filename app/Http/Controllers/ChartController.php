@@ -226,7 +226,7 @@ class ChartController extends Controller
                   ->orWhereJsonContains('featured_providers_id', auth()->id())
                   ->orWhere('approved_artisan_id', auth()->id());
             })
-            ->where('_account_type', active_role());
+            // ->where('_account_type', active_role());
             
         $totalServiceRequests = $baseQuery->count();
     
@@ -241,7 +241,7 @@ class ChartController extends Controller
                 $q->where('request_status', 'Completed')
                   ->orWhere('request_status', 'Closed');
             })
-            ->where('_account_type', active_role())
+            // ->where('_account_type', active_role())
             ->count();
     
         $percentageCompleted = $totalServiceRequests > 0 
@@ -249,7 +249,7 @@ class ChartController extends Controller
             : 0;
     
         $totalArtisans = Artisans::where('service_provider_id', auth()->id())
-            ->where('_account_type', active_role())
+            // ->where('_account_type', active_role())
             ->latest()
             ->count();
     
