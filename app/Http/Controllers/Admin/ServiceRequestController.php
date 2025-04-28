@@ -47,7 +47,7 @@ class ServiceRequestController extends Controller
 
     public function show(ServiceRequest $serviceRequest)
     {
-        return response()->json($serviceRequest);
+        // return response()->json($serviceRequest);
         return view('admin.service-requests.show', compact('serviceRequest'));
     }
 
