@@ -47,7 +47,7 @@ class ServiceRequestController extends Controller
     public function index()
     {
         try {
-            $serviceRequests = ServiceRequestModel::with('reworkMessages', 'service_provider', 'invited_artisan')->whereUserId(auth()->id())->latest()->get();
+            $serviceRequests = ServiceRequestModel::with('reworkMessages', 'service_provider', 'invited_artisan')->whereUserId(auth()->id())->orderBy('updated_at', 'desc')->get();
             return get_success_response($serviceRequests);
         } catch (\Throwable $th) {
             return get_error_response($th->getMessage());
