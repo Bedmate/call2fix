@@ -221,27 +221,33 @@ class ChartController extends Controller
     {
         // Main query for all service requests associated with logged-in user
         $baseQuery = ServiceRequestModel::query()
-            ->where(function($q) {
-                $q->where(function($subQuery) {
-                    $subQuery->where('user_id', auth()->id())
-                            ->where('_account_type', active_role()); // only for user_id
-                })
-                  ->orWhereJsonContains('featured_providers_id', auth()->id())
-                  ->orWhere('approved_artisan_id', auth()->id());
-            });
+                    ->where(function($query) {
+                        $role = active_role();
+                        if (strtolower($role) === 'providers') {
+                            $query->whereJsonContains('featured_providers_id', auth()->id());
+                        } elseif (strtolower($role) === 'artisan') {
+                            $query->where('approved_artisan_id', auth()->id());
+                        } else {
+                            $query->where('user_id', auth()->id())
+                                ->where('_account_type', $role);
+                        }
+                    });
             // ->where('_account_type', active_role());
             
         $totalServiceRequests = $baseQuery->count();
     
         // Separate query for completed or closed requests
         $completedServiceRequests = ServiceRequestModel::query()
-            ->where(function($q) {
-                $q->where(function($subQuery) {
-                    $subQuery->where('user_id', auth()->id())
-                            ->where('_account_type', active_role()); // only for user_id
-                })
-                ->orWhereJsonContains('featured_providers_id', auth()->id())
-                ->orWhere('approved_artisan_id', auth()->id());
+            ->where(function($query) {
+                $role = active_role();
+                if (strtolower($role) === 'providers') {
+                    $query->whereJsonContains('featured_providers_id', auth()->id());
+                } elseif (strtolower($role) === 'artisan') {
+                    $query->where('approved_artisan_id', auth()->id());
+                } else {
+                    $query->where('user_id', auth()->id())
+                        ->where('_account_type', $role);
+                }
             })
             ->where(function($q) {
                 $q->where('request_status', 'Completed')
