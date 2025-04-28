@@ -108,7 +108,7 @@ class SubAccountsController extends Controller
             $data['sub_account_type'] = $user->sub_account_type;
 
             $subAccount = User::create($data);
-            Log::info("Sub account for department")
+            Log::info("Sub account for department");
             Mail::to($subAccount->email)->send(new NewSubAccountMail($subAccount, $password));
 
             return get_success_response($subAccount, "Sub account added successfully and password sent via email");
