@@ -58,7 +58,7 @@ class ServiceRequestController extends Controller
     public function serviceProviderRequest()
     {
         $serviceRequests = ServiceRequestModel::with('reworkMessages', 'service_provider', 'invited_artisan')
-                            ->where('_account_type', active_role())->whereJsonContains('featured_providers_id', [auth()->id()])->latest()->get();
+                            ->whereJsonContains('featured_providers_id', [auth()->id()])->latest()->get();
         return get_success_response($serviceRequests);
     }
     
