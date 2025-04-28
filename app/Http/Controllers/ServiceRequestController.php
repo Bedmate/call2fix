@@ -855,9 +855,13 @@ class ServiceRequestController extends Controller
 
     private function aportionment($requestId)
     {
-        $neg = Negotiation::where('request_id', $requestId)->where('status', "accepted")->first();
+        $neg = Negotiation::where('request_id', $requestId)->first();
         if (!$neg) {
-            return ['error' => 'Negotiation not found or not yet approved'];
+            return ['error' => 'Negotiation not found.'];
+        }
+
+        if($neg->status != "accepted") {
+            return ['error' => 'Negotiation not yet accepted.'];
         }
 
         $submittedQuote = SubmittedQuotes::where('request_id', $requestId)->whereId($neg->submitted_quote_id)->first();
