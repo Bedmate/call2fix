@@ -221,7 +221,7 @@ class ChartController extends Controller
     public function service_request_counts()
     {
         $query = ServiceRequestModel::query()->where('user_id', auth()->id())
-              ->orWhere('approved_providers_id', auth()->id())
+              ->orWhereIn('featured_providers_id', auth()->id())
               ->orWhere('approved_artisan_id', auth()->id());
 
         
