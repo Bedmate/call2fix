@@ -48,17 +48,21 @@ class ServiceRequestController extends Controller
     {
         try {
             $serviceRequests = ServiceRequestModel::with('reworkMessages', 'service_provider', 'invited_artisan')
-                                ->where('_account_type', active_role())
-                                ->where(function($q) {
-                                    $q->where('user_id', auth()->id())
-                                    //   ->orWhereJsonContains('featured_providers_id', auth()->id())
-                                    //   ->orWhere('approved_artisan_id', auth()->id());
-                                })
-                                ->orderBy('updated_at', 'desc')->get();
+                // ->where('_account_type', active_role())
+                ->where(function($q) {
+                    $q->where('user_id', auth()->id())
+                      ->orWhereJsonContains('featured_providers_id', auth()->id())
+                      ->orWhere('approved_artisan_id', auth()->id());
+                })
+                ->orderBy('updated_at', 'desc')
+                ->get();
+        
             return get_success_response($serviceRequests);
         } catch (\Throwable $th) {
-            return get_error_response($th->getMessage());
+            logger()->error('Service Requests Error', ['error' => $th]);
+            return get_error_response('An error occurred while fetching service requests.');
         }
+        
     }
 
     public function serviceProviderRequest()
