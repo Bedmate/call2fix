@@ -217,27 +217,31 @@ class ChartController extends Controller
             'rentable' => $getOrdersCount['rentables']
         ]);
     }
-    
     public function service_request_counts()
     {
         // Main query for all service requests associated with logged-in user
         $baseQuery = ServiceRequestModel::query()
             ->where(function($q) {
                 $q->where('user_id', auth()->id())
-                  ->orWhere('featured_providers_id', auth()->id())
+                  ->orWhereJsonContains('featured_providers_id', auth()->id())
                   ->orWhere('approved_artisan_id', auth()->id());
-            });
-    
+            })
+            ->where('_account_type', active_role());
+            
         $totalServiceRequests = $baseQuery->count();
     
-        // Separate query for completed requests
+        // Separate query for completed or closed requests
         $completedServiceRequests = ServiceRequestModel::query()
             ->where(function($q) {
                 $q->where('user_id', auth()->id())
-                  ->orWhere('featured_providers_id', auth()->id())
+                  ->orWhereJsonContains('featured_providers_id', auth()->id())
                   ->orWhere('approved_artisan_id', auth()->id());
             })
-            ->where('request_status', 'Completed')
+            ->where(function($q) {
+                $q->where('request_status', 'Completed')
+                  ->orWhere('request_status', 'Closed');
+            })
+            ->where('_account_type', active_role())
             ->count();
     
         $percentageCompleted = $totalServiceRequests > 0 
@@ -245,6 +249,7 @@ class ChartController extends Controller
             : 0;
     
         $totalArtisans = Artisans::where('service_provider_id', auth()->id())
+            ->where('_account_type', active_role())
             ->latest()
             ->count();
     
@@ -254,6 +259,5 @@ class ChartController extends Controller
             'percentage_completed' => round($percentageCompleted, 2),
             'total_artisans' => $totalArtisans
         ]);
-    }
-    
+    }    
 }
