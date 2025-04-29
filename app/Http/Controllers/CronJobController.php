@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\ServiceRequestModel;
-use App\Models\User;
-use Illuminate\Support\Facades\Log;
+use App\Models\User;_account_type_account_type
 
 class CronJobController extends Controller
 {
