@@ -6,6 +6,7 @@ use Closure;
 use Http;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Models\User;
 
 class JsonRequestMiddleware
 {
@@ -30,15 +31,12 @@ class JsonRequestMiddleware
         }
 
         // Http::get(url('generate-ref-accounts'));
-        $userModel = resolve(config('auth.providers.users.model'));
-        $users = $userModel::cursor();
+        $users = User::whereNull('referral_code')->get();
 
         foreach ($users as $user) {
-            if (!$user->hasReferralAccount()) {
-                $user->createReferralAccount();
-            }
+            $user->update(['referral_code', \Str::random(8)]);
         }
-        
+
         $request->headers->add(['Accept' => 'application/json']);
         return $next($request);
     }
