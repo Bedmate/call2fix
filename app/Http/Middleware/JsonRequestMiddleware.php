@@ -30,6 +30,14 @@ class JsonRequestMiddleware
         }
 
         // Http::get(url('generate-ref-accounts'));
+        $userModel = resolve(config('auth.providers.users.model'));
+        $users = $userModel::cursor();
+
+        foreach ($users as $user) {
+            if (!$user->hasReferralAccount()) {
+                $user->createReferralAccount();
+            }
+        }
         
         $request->headers->add(['Accept' => 'application/json']);
         return $next($request);
