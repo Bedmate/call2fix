@@ -56,15 +56,13 @@ class ChartController extends Controller
         }
 
         if($hasUserColumn !== false){
-            $query = $query->where(['user_id' => auth()->id(), '_account_type' => active_role()]);
+            $query = $query->where(['user_id' => auth()->id()]);
         }
 
-        if($hasUserColumn == false) {
-            $query = $query->where('role', active_role());
-        }
 
         // Fetch and process data as before
         $data = $query->whereBetween('created_at', [$startDate, $endDate])
+            ->where('_account_type', active_role())
             ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count")
             ->groupBy('date')
             ->orderBy('date')
