@@ -41,6 +41,12 @@ class ServiceRequestController extends Controller
                 $table->string('new_workmanship')->nullable();
             });
         }
+
+        if (!Schema::hasColumn('service_requests', 'is_retention_paid')) {
+            Schema::table('service_requests', function (Blueprint $table) {
+                $table->boolean('is_retention_paid')->default(false);
+            });
+        }
         $this->radiusLimitKm = get_settings_value('max_provider_radius') ?? 30;
     }
 

@@ -59,6 +59,10 @@ class ChartController extends Controller
             $query = $query->where(['user_id' => auth()->id(), '_account_type' => active_role()]);
         }
 
+        if($hasUserColumn == false) {
+            $query = $query->where('role', active_role());
+        }
+
         // Fetch and process data as before
         $data = $query->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count")
@@ -169,7 +173,7 @@ class ChartController extends Controller
         }
     
         // Fetch data from the model grouped by day of the week
-        $data = $query->whereBetween('created_at', [$startDate, $endDate])
+        $data = $query->where('_account_type', active_role())->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw("DAYNAME(created_at) as day_of_week, COUNT(*) as count")
             ->groupBy('day_of_week')
             ->get()
@@ -195,9 +199,9 @@ class ChartController extends Controller
 
     public function products_count()
     {
-        $totalProducts = Product::where('seller_id', auth()->id())->count();
-        $buyable = Product::where('is_leasable', false)->where('seller_id', auth()->id())->get();
-        $rentable = Product::where('is_leasable', true)->where('seller_id', auth()->id())->get();
+        $totalProducts = Product::where('_account_type', active_role())->where('seller_id', auth()->id())->count();
+        $buyable = Product::where('_account_type', active_role())->where('is_leasable', false)->where('seller_id', auth()->id())->get();
+        $rentable = Product::where('_account_type', active_role())->where('is_leasable', true)->where('seller_id', auth()->id())->get();
         
         
         $buyableIds = $buyable->pluck('id');  // Extract IDs of buyable products
@@ -217,6 +221,7 @@ class ChartController extends Controller
             'rentable' => $getOrdersCount['rentables']
         ]);
     }
+
     public function service_request_counts()
     {
         // Main query for all service requests associated with logged-in user

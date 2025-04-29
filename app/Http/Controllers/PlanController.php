@@ -50,10 +50,6 @@ class PlanController extends Controller
                 return get_error_response("No Plan Found!", ['error' => "Plans not found"], 404);
             }
 
-            // if(count($user->subscribedPlans()) > 0) {
-            //     return get_error_response('Please, Cancel your current plan to upgrade to a new plan', ['error' => 'Please, Cancel your current plan to upgrade to a new plan'], 402);
-            // }
-
             // charge the customer
             $wallet = $user->getWallet('ngn');
 

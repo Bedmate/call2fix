@@ -43,7 +43,8 @@ class ServiceRequestModel extends Model
         'ratings',
         'user',
         'service_provider',
-        'checkIns'
+        'checkIns',
+        'aportionment'
     ];
 
     public function negotiations()
@@ -54,6 +55,11 @@ class ServiceRequestModel extends Model
     public function submittedQuotes()
     {
         return $this->hasMany(SubmittedQuotes::class, 'request_id');
+    }
+
+    public function aportionment()
+    {
+        return $this->belongsTo(PaymentApportionment::class, 'service_request_id');
     }
 
     // Override the primary key type
