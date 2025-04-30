@@ -32,9 +32,10 @@ class JsonRequestMiddleware
         }
 
         // Http::get(url('generate-ref-accounts'));
-        $ref = new Referrable();
-        $ref->createReferralAccount();
-       
+        $user = auth()->user();
+        if ($user && method_exists($user, 'createReferralAccount')) {
+            $user->createReferralAccount();
+        }       
         $request->headers->add(['Accept' => 'application/json']);
         return $next($request);
     }
