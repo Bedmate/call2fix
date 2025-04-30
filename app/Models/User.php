@@ -110,10 +110,10 @@ class User extends Authenticatable
      * @var bool
      */
     public $incrementing = false;
-
+    protected $appends = ['ratings'];
+    
     protected $with = [
-        'country',
-        'ratings'
+        'country'
     ];
 
     /**
@@ -334,7 +334,7 @@ class User extends Authenticatable
         return $this->hasMany(BusinessOfficeAddress::class, 'user_id');
     }
 
-    public function ratings()
+    public function getRatingsAttribute()
     {
         $pluckIds = ServiceRequestModel::where('approved_providers_id', $this->id)->pluck('id');
         $getRatings = ServiceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
