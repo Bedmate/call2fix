@@ -341,6 +341,7 @@ class User extends Authenticatable
 
         $total = 0;
         $count = 0;
+        $average = 0;
 
         foreach ($getRatings as $rating) {
             $criteria = [
