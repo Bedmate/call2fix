@@ -20,7 +20,7 @@ use Towoju5\Wallet\Models\Wallet;
 use Towoju5\Wallet\Traits\HasWallets;
 use App\Models\BusinessOfficeAddress;
 use Laravelcm\Subscriptions\Traits\HasPlanSubscriptions;
-use App\Models\serviceRequestsModel;
+use App\Models\ServiceRequestModel;
 
 
 class User extends Authenticatable
@@ -336,7 +336,7 @@ class User extends Authenticatable
 
     public function ratings()
     {
-        $pluckIds = serviceRequestsModel::where('approved_provider_id', $this->id)->pluck('id');
+        $pluckIds = ServiceRequestModel::where('approved_provider_id', $this->id)->pluck('id');
         $getRatings = serviceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
 
         $total = 0;
