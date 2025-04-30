@@ -336,7 +336,7 @@ class User extends Authenticatable
 
     public function ratings()
     {
-        $pluckIds = ServiceRequestModel::where('approved_provider_id', $this->id)->pluck('id');
+        $pluckIds = ServiceRequestModel::where('approved_providers_id', $this->id)->pluck('id');
         $getRatings = serviceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
 
         $total = 0;
