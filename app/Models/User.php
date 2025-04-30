@@ -111,7 +111,8 @@ class User extends Authenticatable
     public $incrementing = false;
 
     protected $with = [
-        'country'
+        'country',
+        'ratings'
     ];
 
     /**
@@ -330,5 +331,45 @@ class User extends Authenticatable
     public function business_office_address()
     {
         return $this->hasMany(BusinessOfficeAddress::class, 'user_id');
+    }
+
+    public function ratings()
+    {
+        $pluckIds = serviceRequestsModel::where('approved_provider_id', $this->id)->pluck('id');
+        $getRatings = serviceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
+
+        $total = 0;
+        $count = 0;
+
+        foreach ($getRatings as $rating) {
+            $criteria = [
+                'work_quality',
+                'timeliness',
+                'communication',
+                'professionalism',
+                'cleanliness',
+                'pricing_transparency',
+                'tools_quality',
+                'issue_handling',
+                'safety_adherence',
+                'overall_satisfaction',
+            ];
+
+            foreach ($criteria as $field) {
+                if (isset($rating->$field) && is_numeric($rating->$field)) {
+                    $total += $rating->$field;
+                    $count++;
+                }
+            }
+        }
+
+        $average = round($total / $count, 2) ?? 0;
+
+        return [
+            'user_id' => $this->id,
+            'average_rating' => $average,
+            'out_of' => 5,
+            'total_criteria' => $count,
+        ];
     }
 }
