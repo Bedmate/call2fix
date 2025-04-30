@@ -20,6 +20,7 @@ use Towoju5\Wallet\Models\Wallet;
 use Towoju5\Wallet\Traits\HasWallets;
 use App\Models\BusinessOfficeAddress;
 use Laravelcm\Subscriptions\Traits\HasPlanSubscriptions;
+use App\Models\serviceRequestsModel;
 
 
 class User extends Authenticatable
