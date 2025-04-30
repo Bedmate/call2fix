@@ -337,7 +337,7 @@ class User extends Authenticatable
     public function getRatingsAttribute()
     {
         $pluckIds = ServiceRequestModel::where('approved_providers_id', $this->id)->pluck('id');
-        $getRatings = ServiceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
+        return $getRatings = ServiceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
 
         $total = 0;
         $count = 0;
@@ -367,7 +367,6 @@ class User extends Authenticatable
 
         if ($count > 0) {
             $average = round($total / $count, 2) ?? 0;
-            // return get_error_response("No valid ratings found", ['error' => 'User has no valid numeric ratings'], 404);
         }
 
         return [
