@@ -364,7 +364,10 @@ class User extends Authenticatable
             }
         }
 
-        $average = round($total / $count, 2) ?? 0;
+        if ($count > 0) {
+            $average = round($total / $count, 2) ?? 0;
+            // return get_error_response("No valid ratings found", ['error' => 'User has no valid numeric ratings'], 404);
+        }
 
         return [
             'user_id' => $this->id,
