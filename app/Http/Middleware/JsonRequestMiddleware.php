@@ -7,6 +7,7 @@ use Http;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\User;
+use Jijunair\LaravelReferral\Traits\Referrable;
 
 class JsonRequestMiddleware
 {
@@ -31,12 +32,8 @@ class JsonRequestMiddleware
         }
 
         // Http::get(url('generate-ref-accounts'));
-        $users = User::whereNull('referral_code')->get();
-
-        foreach ($users as $user) {
-            $user->update(['referral_code', \Str::random(8)]);
-        }
-
+        Referrable::createReferralAccount();
+       
         $request->headers->add(['Accept' => 'application/json']);
         return $next($request);
     }
