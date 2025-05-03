@@ -334,7 +334,7 @@ class User extends Authenticatable
         return $this->hasMany(BusinessOfficeAddress::class, 'user_id');
     }
 
-    public function getReviewSummary()
+    public function getRatingsAttribute()
     {
         $pluckIds = ServiceRequestModel::where('approved_providers_id', $this->id)->pluck('id');
 
