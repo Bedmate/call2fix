@@ -336,27 +336,26 @@ class User extends Authenticatable
 
     public function getRatingsAttribute()
     {
-        return $pluckIds = ServiceRequestModel::where('approved_providers_id', $this->id)->pluck('id');
+        $pluckIds = ServiceRequestModel::where('approved_providers_id', $this->id)->pluck('id');
         $getRatings = ServiceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
 
         $total = 0;
         $count = 0;
-        $average = 0;
+
+        $criteria = [
+            'work_quality',
+            'timeliness',
+            'communication',
+            'professionalism',
+            'cleanliness',
+            'pricing_transparency',
+            'tools_quality',
+            'issue_handling',
+            'safety_adherence',
+            'overall_satisfaction',
+        ];
 
         foreach ($getRatings as $rating) {
-            $criteria = [
-                'work_quality',
-                'timeliness',
-                'communication',
-                'professionalism',
-                'cleanliness',
-                'pricing_transparency',
-                'tools_quality',
-                'issue_handling',
-                'safety_adherence',
-                'overall_satisfaction',
-            ];
-
             foreach ($criteria as $field) {
                 if (isset($rating->$field) && is_numeric($rating->$field)) {
                     $total += $rating->$field;
@@ -365,9 +364,7 @@ class User extends Authenticatable
             }
         }
 
-        if ($count > 0) {
-            $average = round($total / $count, 2) ?? 0;
-        }
+        $average = $count > 0 ? round($total / $count, 2) : 0;
 
         return [
             'user_id' => $this->id,
@@ -376,4 +373,5 @@ class User extends Authenticatable
             'total_criteria' => $count,
         ];
     }
+
 }
