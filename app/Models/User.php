@@ -338,7 +338,7 @@ class User extends Authenticatable
     {
         $pluckIds = ServiceRequestModel::where('approved_providers_id', $this->id)->pluck('id');
 
-        $reviews = ServiceRequestRatings::with('criteria')->whereIn('service_request_id', $pluckIds)->get();
+        $reviews = ServiceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
 
         $summary = [];
         $totalCriteria = 0;
