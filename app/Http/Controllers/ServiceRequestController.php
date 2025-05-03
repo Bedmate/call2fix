@@ -132,24 +132,50 @@ class ServiceRequestController extends Controller
                 $longitude = $property->longitude;
 
                 // Get nearby providers
+                // $providers = BusinessOfficeAddress::query()
+                //     ->select(
+                //         'user_id',
+                //         DB::raw("
+                //             ST_Distance_Sphere(
+                //                 point(longitude, latitude),
+                //                 point(?, ?)
+                //             ) as distance
+                //         ")
+                //     )
+                //     ->setBindings([$longitude, $latitude])
+                //     ->having('distance', '<=', $radiusLimitMeters)
+                //     ->orderBy('distance')
+                //     ->groupBy('user_id')
+                //     ->where('user_id', '!=', auth()->id())
+                //     ->take(5)
+                //     ->pluck('user_id')
+                //     ->toArray(); // Convert collection to array
+
+                $selectedCategoryId = $request->service_category_id;
+
                 $providers = BusinessOfficeAddress::query()
                     ->select(
-                        'user_id',
+                        'business_office_addresses.user_id',
                         DB::raw("
                             ST_Distance_Sphere(
-                                point(longitude, latitude),
+                                point(business_office_addresses.longitude, business_office_addresses.latitude),
                                 point(?, ?)
                             ) as distance
                         ")
                     )
-                    ->setBindings([$longitude, $latitude])
+                    ->join('business_infos', 'business_infos.user_id', '=', 'business_office_addresses.user_id')
+                    ->where('business_office_addresses.user_id', '!=', auth()->id())
+                    ->whereRaw("JSON_CONTAINS(business_infos.businessCategory, ?)", [json_encode($selectedCategoryId)])
                     ->having('distance', '<=', $radiusLimitMeters)
                     ->orderBy('distance')
-                    ->groupBy('user_id')
-                    ->where('user_id', '!=', auth()->id())
+                    ->groupBy('business_office_addresses.user_id')
+                    ->addBinding([$longitude, $latitude], 'select') // Only add bindings for ST_Distance_Sphere
                     ->take(5)
-                    ->pluck('user_id')
-                    ->toArray(); // Convert collection to array
+                    ->pluck('business_office_addresses.user_id')
+                    ->toArray();
+                
+
+
 
                 // Ensure only provider users
                 $distinctProviders = User::whereIn('id', $providers)
