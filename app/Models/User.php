@@ -337,50 +337,54 @@ class User extends Authenticatable
     public function getRatingsAttribute()
     {
         $pluckIds = ServiceRequestModel::where('approved_providers_id', $this->id)->pluck('id');
-
-        return $reviews = ServiceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
-
+        $reviews = ServiceRequestRatings::whereIn('service_request_id', $pluckIds)->get();
+    
         $summary = [];
+        $criteriaCount = [];
         $totalCriteria = 0;
         $totalRating = 0;
-        $criteriaCount = [];
-
+    
+        $categories = [
+            'work_quality', 'timeliness', 'communication', 'professionalism',
+            'cleanliness', 'pricing_transparency', 'tools_quality',
+            'issue_handling', 'safety_adherence', 'overall_satisfaction'
+        ];
+    
+        // Initialize counters
+        foreach ($categories as $category) {
+            $summary[$category] = 0;
+            $criteriaCount[$category] = 0;
+        }
+    
         foreach ($reviews as $review) {
-            foreach ($review->criteria as $criterion) {
-                $name = $criterion->name ?? null;
-                $rating = $criterion->pivot->rating ?? null;
-
-                if (is_null($name) || is_null($rating)) {
-                    continue;
+            foreach ($categories as $category) {
+                $ratingValue = $review[$category]['ratings'] ?? null;
+                if (is_numeric($ratingValue)) {
+                    $summary[$category] += $ratingValue;
+                    $criteriaCount[$category]++;
+                    $totalRating += $ratingValue;
+                    $totalCriteria++;
                 }
-
-                if (!isset($summary[$name])) {
-                    $summary[$name] = 0;
-                    $criteriaCount[$name] = 0;
-                }
-
-                $summary[$name] += $rating;
-                $criteriaCount[$name]++;
-                $totalRating += $rating;
-                $totalCriteria++;
             }
         }
-
-        foreach ($summary as $name => $total) {
-            $summary[$name] = round($total / $criteriaCount[$name], 2);
+    
+        // Compute per-category average
+        foreach ($categories as $category) {
+            $summary[$category] = $criteriaCount[$category] > 0
+                ? round($summary[$category] / $criteriaCount[$category], 2)
+                : null;
         }
-
-        $average = $totalCriteria > 0 ? round($totalRating / $totalCriteria, 2) : 0;
-
+    
+        $overallAverage = $totalCriteria > 0 ? round($totalRating / $totalCriteria, 2) : null;
+    
         return [
             'user_id' => $this->id,
-            'average_rating' => $average,
+            'average_rating' => $overallAverage,
             'out_of' => 5,
             'total_criteria' => $totalCriteria,
             'category_averages' => $summary,
-            'overall_average' => $average,
+            'overall_average' => $overallAverage,
             'total_reviews' => $reviews->count(),
         ];
-    }
-
+    }    
 }
