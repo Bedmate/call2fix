@@ -33,6 +33,7 @@ class ServiceRequest extends BaseModel
     protected $casts = [
         'problem_images' => 'array',
         'featured_providers_id' => 'array',
+        'old_featured_providers_id' => 'array',
         'use_featured_providers' => 'boolean',
         'inspection_date' => 'date',
     ];
