@@ -27,7 +27,8 @@ class ServiceRequestModel extends Model
         'department_id',
         'approved_providers_id',
         'approved_artisan_id',
-        'total_cost'
+        'total_cost',
+        'old_featured_providers_id'
     ];
 
     protected $casts = [

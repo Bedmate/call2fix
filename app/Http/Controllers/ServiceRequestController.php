@@ -42,9 +42,9 @@ class ServiceRequestController extends Controller
             });
         }
 
-        if (!Schema::hasColumn('service_requests', 'is_retention_paid')) {
+        if (!Schema::hasColumn('service_requests', 'old_featured_providers_id')) {
             Schema::table('service_requests', function (Blueprint $table) {
-                $table->boolean('is_retention_paid')->default(false);
+                $table->json('old_featured_providers_id')->nullable();
             });
         }
         $this->radiusLimitKm = get_settings_value('max_provider_radius') ?? 30;
@@ -487,11 +487,14 @@ class ServiceRequestController extends Controller
                 ])->latest()->first();
 
                 if ($service_request) {
+                    $old_featured_providers_id = $service_request->featured_providers_id;
                     $service_request->update([
                         "total_cost" => $amountDue,
                         "request_status" => "Quote Accepted",
                         "approved_providers_id" => $quote->provider_id,
-                        "approved_artisan_id" => $artisan->artisan_id ?? null
+                        "approved_artisan_id" => $artisan->artisan_id ?? null,
+                        "featured_providers_id" => (array)$quote->provider_id,
+                        "old_featured_providers_id" => $old_featured_providers_id
                     ]);
 
                     $quote->update([
