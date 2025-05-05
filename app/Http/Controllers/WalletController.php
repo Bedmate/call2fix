@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BankAccounts;
 use App\Models\Department;
+use App\Notifications\CustomNotification;
 use App\Services\PaystackServices;
 use DB;
 use Illuminate\Http\Request;
@@ -168,7 +169,7 @@ class WalletController extends Controller
                 $payoutObject = [
                     'amount' => $amount * 100, // In cents
                     'recipient' => $account->account_reference,
-                    'narration' => $request->narration ?? 'Personal Use',
+                    'narration' => $request->narration ?? 'Call2Fix Payout',
                     'reference' => $transactionReference
                 ];
     
@@ -209,7 +210,10 @@ class WalletController extends Controller
                         'payout_payload' => $payoutObject
                     ])
                 ]);
-    
+
+
+                $artisanMessage = "Hi {$user->last_name},\n\nYour wallet withdrawal has been successfully processed. You should receive the payment in your bank account shortly.\n\nThank you for using Call2Fix.";
+                $user->notify(new CustomNotification("Your Withdrawal Request Has Been Processed", $artisanMessage));
                 DB::commit();
     
                 return get_success_response([

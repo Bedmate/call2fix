@@ -410,6 +410,15 @@ class ServiceRequestController extends Controller
                     return get_error_response('Failed to deposit into artisan wallet');
                 }
 
+                if ($artisan) {
+                    $artisanMessage = "Hi {$artisan->last_name},\n\nCongratulations! You’ve just earned a payout from a completed task. The amount will be reflected in your wallet shortly.\nYour hard work is paying off. Keep delivering excellent service.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                    $artisan->notify(new CustomNotification("You've Earned From a Completed Task", $artisanMessage));
+
+                    $artisan_message = "Hi {$artisan->last_name},\n\nThe customer has reviewed your work and marked the task as completed and satisfactory. Well done!\nYou’re one step closer to receiving your payment and boosting your profile.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                    $artisan->notify(new CustomNotification('Customer Has Approved the Task as Completed', $artisan_message));
+                }
+
+
                 $artisan->notify(new CustomNotification(
                     'Wallet Credited',
                     "Your wallet has been credited with ₦" . number_format($apportionment['artisan_earnings'], 2)
@@ -500,6 +509,12 @@ class ServiceRequestController extends Controller
                     $quote->update([
                         "artisan_id" => $artisan->artisan_id ?? null
                     ]);
+
+                    $artisanBio = Artisans::where('artisan_id', $artisan->artisan_id)->first();
+                    if($artisanBio) {
+                        $artisanMessage = "Hi {$artisan->last_name},\n\nGood news! The customer has approved your quote. You are now expected to proceed to site and begin the job as outlined. Please make sure you arrive on time and deliver quality service.\n\nLet us know if you experience any challenges along the way.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                        $artisanBio->notify(new CustomNotification('Your Quote Has Been Approved - Get Ready to Work', $artisanMessage));
+                    }
 
                     if ($service_request->save()) {
                         // $service_request->save();
@@ -771,6 +786,11 @@ class ServiceRequestController extends Controller
                 if ($provider) {
                     $provider->notify(new ReworkIssuedNotification($serviceRequest));
                 }
+                $artisan = User::find($serviceRequest->approved_artisan_id);
+                if ($artisan) {
+                    $artisanMessage = "Hi {$artisan->last_name},\n\nThe customer has reopened the request and asked for a rework due to dissatisfaction. Please check the updated request details in your app and take necessary action as soon as possible.\n\nWe count on you to address this promptly and professionally.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                    $artisan->notify(new CustomNotification("Task Reopened – Customer Requests a Rework", $artisanMessage));
+                }
 
                 $serviceRequest->reworkMessages()->create([
                     'message' => $request->message,
@@ -888,9 +908,13 @@ class ServiceRequestController extends Controller
                     $provider->notify(new CustomNotification("Payment confirmed", "Payment confirmed."));
                 }
                 
-                if($artisan) {
+                if ($artisan) {
+                    $artisanMessage = "Hi {$artisan->last_name}, \n\nA new service request has just been assigned to you. Please review the details in your Call2Fix app and take prompt action to confirm availability and begin preparations.\n\nYour reliability and professionalism help ensure customer satisfaction.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                
+                    $artisan->notify(new CustomNotification("A New Task Has Been Assigned to You", $artisanMessage));
                     $artisan->notify(new CustomNotification("Payment confirmed", "Payment has been confirmed for service request ID: {$serviceRequest->id}"));
                 }
+                
 
                 // return success data with the transaction and service request data  
                 return get_success_response([

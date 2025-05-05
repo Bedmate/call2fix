@@ -67,9 +67,12 @@ class CheckInOutController extends Controller
                 'achievements' => $achievements,
             ]);
     
-            if ($customer) {
-                $customer->notify(new CustomNotification("Artisan check-out", "Artisan check-out."));
+            $artisan = auth()->user();
+            if ($artisan) {
+                $artisanMessage = "Hi {$artisan->last_name},\n\nYou've successfully checked out of your task. Thank you for completing your session. The customer will now be able to review your work and provide feedback.\n\nKeep up the great work—your commitment adds value to the Call2Fix community.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                $artisan->notify(new CustomNotification("You've Checked Out - Task Session Ended", $artisanMessage));
             }
+            
             if ($provider) {
                 $provider->notify(new CustomNotification("Artisan checkings are completed.", "Artisan checkings are completed."));
             }
@@ -100,7 +103,8 @@ class CheckInOutController extends Controller
         ]);
     
         if ($customer) {
-            $customer->notify(new CustomNotification("Artisan check-in", "Artisan check-in."));
+            $artisanMessage = "Hi {$artisan->last_name},\n\nYou've successfully checked in for your scheduled task. Please ensure you carry out the work as agreed, maintain professionalism, and document your progress where necessary.\n\nRemember, punctuality and quality service help build your reputation on Call2Fix.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+            $customer->notify(new CustomNotification("You've Checked In Successfully", $artisanMessage));
         }
     
         return get_success_response([

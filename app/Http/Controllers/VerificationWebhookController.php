@@ -44,6 +44,10 @@ class VerificationWebhookController extends Controller
                         "first_name" => data_get($bvnData, 'first_name') ?? $user->first_name,,
                         "last_name" => data_get($bvnData, 'last_name') ?? $user->last_name,
                     ]);
+
+                    $artisanMessage = "Hi {$artisan->last_name},\n\nYour ID verification was successful. You’re now fully verified and can access more job opportunities on Call2Fix.\nWe’re excited to have you as part of our trusted community of artisans.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                    $artisan->notify(new CustomNotification("Your Identity Has Been Verified", $artisanMessage));
+
                 }
             }
 

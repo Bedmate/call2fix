@@ -35,6 +35,7 @@ class ServiceRequestModel extends Model
         'problem_images' => 'array',
         'featured_providers_id' => 'array',
         'use_featured_providers' => 'boolean',
+        'old_featured_providers_id' => 'array',
         'inspection_date' => 'date',
     ];
     
