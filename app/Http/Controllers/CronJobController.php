@@ -32,7 +32,7 @@ class CronJobController extends Controller
                         $wallet->deposit(
                             $request->aportionment->warranty_retention * 100,
                             [
-                                "description" => "Service request payment - {$serviceRequest->id}", 
+                                "description" => "Service request payment - {$requests->id}", 
                                 "narration" => $request->narration ?? null
                             ]
                         );
