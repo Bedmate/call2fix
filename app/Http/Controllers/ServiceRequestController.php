@@ -907,12 +907,12 @@ class ServiceRequestController extends Controller
                 if($provider) {
                     $provider->notify(new CustomNotification("Payment confirmed", "Payment confirmed."));
                 }
-                
-                if ($artisan) {
+                $artisanBio = User::find($serviceRequest->approved_artisan_id);
+                if ($artisanBio) {
                     $artisanMessage = "Hi {$artisan->last_name}, \n\nA new service request has just been assigned to you. Please review the details in your Call2Fix app and take prompt action to confirm availability and begin preparations.\n\nYour reliability and professionalism help ensure customer satisfaction.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
                 
-                    $artisan->notify(new CustomNotification("A New Task Has Been Assigned to You", $artisanMessage));
-                    $artisan->notify(new CustomNotification("Payment confirmed", "Payment has been confirmed for service request ID: {$serviceRequest->id}"));
+                    $artisanBio->notify(new CustomNotification("A New Task Has Been Assigned to You", $artisanMessage));
+                    $artisanBio->notify(new CustomNotification("Payment confirmed", "Payment has been confirmed for service request ID: {$serviceRequest->id}"));
                 }
                 
 
