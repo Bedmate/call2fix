@@ -22,7 +22,7 @@ return [
     'ref_code_prefix' => '',
 
     // The route where users will be redirected after clicking on a referral link
-    'redirect_route' => 'orders.create',
+    'redirect_route' => '', //'orders.create',
 
     // The model class for the user
     'user_model' => 'App\Models\User',
