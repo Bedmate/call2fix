@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BusinessInfo;
 use App\Models\Subscription;
+use App\Notifications\CustomNotification;
 use App\Notifications\PasswordResetComplete;
 use App\Notifications\PasswordResetNotification;
 use Illuminate\Http\Request;
@@ -716,23 +717,27 @@ class AuthController extends Controller
         
         // Create a referral record for the user
         $referral = $user->createReferralAccount($referred_by);
+        // Check if it's for a task referral
+        $subscription = Subscription::where('referral_code', $referred_by)->first();
+        // return response()->json($subscription);
 
         // check if device ID exists in the user table.
         if(User::where('device_id', request()->device_id)->exists()){
             return true;
         }
-
-        if($user->hasRole('private_account')) {
-            // increment the number of referrer
-            // also if the count total of referred so far is in the array [10, 20, 30, 40, 50] then give user referrer bonues
-        } else if ($referrer) {    
+        
+        if ($referrer) {    
             // Check if the referrer exists and and credit for referring user
             $wallet = $user->getWallet('bonus');
             if ($wallet) {
+                $user->notify(new CustomNotification('Referrral Commission', "You've successfully refeered a new customer"));
                 $wallet->deposit(get_settings_value('referal_commission', 0.1), ["description" => "Referral Bonus"], ["description" => "Referral Bonus"]);
             }
-        } else {
-            return true;
+        } else if (isset($subscription->id)) {
+            $task = new TasksController();
+            if($task->handleReferral($referred_by)) {
+                return true;
+            }
         }
     }
 }
