@@ -23,7 +23,7 @@ class CheckInOutController extends Controller
             }
     
             $req = ServiceRequest::find($requestId);
-            Log::debug("Clock action triggered", ['request_id' => $requestId]);
+            // Log::debug("Clock action triggered", ['request_id' => $requestId]);
     
             if (!$req) {
                 return get_error_response("Service request with provided ID not found", ['error' => "Request not found"], 404);
