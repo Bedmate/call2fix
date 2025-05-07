@@ -672,7 +672,7 @@ class AuthController extends Controller
     
             if (!$referrer) {
                 // Check if it's for a task referral
-                $subscription = Subscription::where('task_id', $ref_code)->first();
+                $subscription = Subscription::where('referral_code', $ref_code)->first();
     
                 if (!$subscription) {
                     return get_error_response('Referrer not found', ['is_valid_referrer' => false]);
