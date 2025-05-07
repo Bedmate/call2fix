@@ -30,9 +30,9 @@ class AuthController extends Controller
             });
         }
 
-        Schema::table('referrals', function (Blueprint $table) {
-            $table->dropForeign(['referrer_id']);
-        });
+        // Schema::table('referrals', function (Blueprint $table) {
+        //     $table->dropForeign(['referrer_id']);
+        // });
     }
 
     public function register(Request $request)
