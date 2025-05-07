@@ -61,6 +61,7 @@ class AuthController extends Controller
                 'username' => 'required|string|max:255|unique:users',
                 'profile_picture' => 'nullable|string',
                 'country_code' => 'required|string|max:255',
+                'referred_by' => 'sometimes|string|min:6|max:8'
             ];
 
             // Validation for account type
@@ -184,7 +185,6 @@ class AuthController extends Controller
             ]);
         }
     }
-
 
     public function login(Request $request)
     {
@@ -692,7 +692,8 @@ class AuthController extends Controller
         if($user->hasRole('private_account')) {
             // increment the number of referrer
             // also if the count total of referred so far is in the array [10, 20, 30, 40, 50] then give user referrer bonues
-        } else if ($referrer) {    // Check if the referrer exists and and credit for referring user
+        } else if ($referrer) {    
+            // Check if the referrer exists and and credit for referring user
             $wallet = $user->getWallet('bonus');
             if ($wallet) {
                 $wallet->deposit(get_settings_value($account_type.'_referal_commission', 0.1), ["description" => "Referral Bonus"], ["description" => "Referral Bonus"]);
