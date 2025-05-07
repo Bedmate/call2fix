@@ -67,7 +67,7 @@ class TasksController extends Controller
     }
 
     // Handle referrals and assign commission
-    public function handleReferral(Request $request, $referralCode)
+    public function handleReferral($referralCode)
     {
         $subscription = Subscription::where('referral_code', $referralCode)->first();
 

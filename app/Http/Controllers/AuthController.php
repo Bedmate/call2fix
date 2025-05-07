@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BusinessInfo;
+use App\Models\Subscription;
 use App\Notifications\PasswordResetComplete;
 use App\Notifications\PasswordResetNotification;
 use Illuminate\Http\Request;
@@ -661,22 +662,48 @@ class AuthController extends Controller
         }
     }
 
-
     public function validateReferrer(Request $request)
     {
         try {
             $ref_code = $request->referred_by;
+            $is_task = false;
+    
             $referrer = Referral::userByReferralCode($ref_code);
-            // return response()->json(['response' => Referral::all()]);
+    
             if (!$referrer) {
-                return get_error_response('Referrer not found', ['is_valid_referrer' => false]);
+                // Check if it's for a task referral
+                $subscription = Subscription::where('referral_code', $ref_code)->first();
+    
+                if (!$subscription) {
+                    return get_error_response('Referrer not found', ['is_valid_referrer' => false]);
+                }
+    
+                $is_task = true;
+                $user = User::find($subscription->id);
+    
+                if (!$user) {
+                    return get_error_response('Referrer not found', ['is_valid_referrer' => false]);
+                }
+    
+                return get_success_response([
+                    'is_valid_referrer' => true,
+                    'owner' => $user->only(['first_name', 'last_name']),
+                    'type' => 'task'
+                ], 'Referrer found');
             }
-            return get_success_response(['is_valid_referrer' => true, 'owner' => $referrer->only(['first_name', 'last_name'])], 'Referrer found');
+    
+            return get_success_response([
+                'is_valid_referrer' => true,
+                'owner' => $referrer->only(['first_name', 'last_name']),
+                'type' => 'general_referrer'
+            ], 'Referrer found');
         } catch (\Throwable $th) {
-            return get_error_response($th->getMessage(), ['error' => $th->getMessage()]);
+            return get_error_response('An error occurred while validating the referrer.', [
+                'error' => $th->getMessage()
+            ]);
         }
-    }
-
+    }    
+    
     private function process_referral($user, $referred_by, $account_type)
     {
         // Implement referral system if referred_by exists
