@@ -729,7 +729,7 @@ class AuthController extends Controller
             // Check if the referrer exists and and credit for referring user
             $wallet = $user->getWallet('bonus');
             if ($wallet) {
-                $wallet->deposit(get_settings_value($account_type.'_referal_commission', 0.1), ["description" => "Referral Bonus"], ["description" => "Referral Bonus"]);
+                $wallet->deposit(get_settings_value('referal_commission', 0.1), ["description" => "Referral Bonus"], ["description" => "Referral Bonus"]);
             }
         } else {
             return true;
