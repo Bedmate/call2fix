@@ -667,7 +667,7 @@ class AuthController extends Controller
         try {
             $ref_code = $request->referred_by;
             $referrer = Referral::userByReferralCode($ref_code);
-            return response()->json(['response' => Referral::all()]);
+            // return response()->json(['response' => Referral::all()]);
             if (!$referrer) {
                 return get_error_response('Referrer not found', ['is_valid_referrer' => false]);
             }
