@@ -31,8 +31,7 @@ class AuthController extends Controller
         }
 
         Schema::table('referrals', function (Blueprint $table) {
-            $table->dropForeign(['referrer_id']); // drops 'referrals_referrer_id_foreign'
-            $table->foreign('referrer_id')->references('id')->on('users')->onDelete('set null');
+            $table->dropForeign(['referrer_id']);
         });
     }
 

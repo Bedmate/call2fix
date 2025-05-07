@@ -24,6 +24,8 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Creatydev\Plans\Models\PlanFeatureModel;
 use App\Http\Controllers\VerificationWebhookController;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 
 
@@ -36,6 +38,12 @@ Route::get('/', function () {
 // 	$send = fcm("Test mode", "Hello world is a big shit, hello Emmanuel is the real deal", $device, ['message' => 'Hello nation']);
 // 	dd($send);
 // });
+
+
+
+Schema::table('referrals', function (Blueprint $table) {
+	$table->dropForeign(['referrer_id']);
+});
 
 Route::get('clear', function () {
 	Artisan::call('migrate');
