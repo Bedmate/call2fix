@@ -41,9 +41,9 @@ Route::get('/', function () {
 
 
 
-Schema::table('referrals', function (Blueprint $table) {
-	$table->dropForeign(['referrer_id']);
-});
+// Schema::table('referrals', function (Blueprint $table) {
+// 	$table->dropForeign(['referrer_id']);
+// });
 
 Route::get('clear', function () {
 	Artisan::call('migrate');
