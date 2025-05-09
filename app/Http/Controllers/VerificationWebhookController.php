@@ -41,7 +41,7 @@ class VerificationWebhookController extends Controller
                 $artisan = Artisans::where('artisan_id', $user->id)->first();
                 if($artisan) {
                     $artisan->update([
-                        "first_name" => data_get($bvnData, 'first_name') ?? $user->first_name,,
+                        "first_name" => data_get($bvnData, 'first_name') ?? $user->first_name,
                         "last_name" => data_get($bvnData, 'last_name') ?? $user->last_name,
                     ]);
 
