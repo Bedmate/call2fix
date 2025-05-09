@@ -12,6 +12,7 @@ use App\Models\Deposit;
 use App\Models\Order;
 use App\Models\Property;
 use App\Models\User;
+use App\Notifications\CustomNotification;
 use Creatydev\Plans\Models\PlanModel;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Artisan;
@@ -30,6 +31,8 @@ use Illuminate\Support\Facades\Schema;
 
 
 Route::get('/', function () {
+	$user = User::whereEmail('towojuads@gmail.com')->first();
+	$user->notify(new CustomNotification('Testing email', 'This is a sample test email by Emmanuel'));
 	return view('welcome');
 });
 // Route::get('/fb', function () {
