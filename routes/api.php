@@ -104,6 +104,7 @@ Route::middleware(['api'])->domain(env('API_URL'))->prefix('v1')->group(function
         Route::prefix('logs')->group(function () {
             Route::get('all', [EventsController::class, 'index']);
             Route::get('show/{eventId}', [EventsController::class, 'show']);
+            Route::get('referrals', [AuthController::class, 'referrals']);
         });
 
         Route::prefix('ratings')->middleware('log_activity')->group(function () {
