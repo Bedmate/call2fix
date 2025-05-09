@@ -56,7 +56,7 @@ class VerificationWebhookController extends Controller
             $business_number = data_get($businessData, 'business_number');
             $cacNumber = optional($user->business_info)->cacNumber ?? $user->business_info->cacNumber ?? null;
 
-            if ($business_number !== $cacNumber) {
+            if (strlen($cacNumber) > 0 && $business_number != $cacNumber) {
                 Log::info("RC number does not match {$business_number} is not the same as {$cacNumber}");
                 $user->notify(new CustomNotification(
                     "Verification Unsuccessful",
