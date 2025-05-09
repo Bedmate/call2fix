@@ -790,7 +790,7 @@ class AuthController extends Controller
 
     public function referrals()
     {
-        $referrals = Referral::where("referrer_id", auth()->id())->get();
+        $referrals = Referral::all(); //where("referrer_id", auth()->id())->get();
         return get_success_response($referrals, "Data fetched successfully");
     }
 }
