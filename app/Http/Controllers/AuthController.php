@@ -126,7 +126,11 @@ class AuthController extends Controller
 
                 // Process referral
                 if ($request->has('referred_by')) {
-                    $this->process_referral($user, $request->referred_by, $accountType);
+                    $referred_by = $request->referred_by;
+                    $user->update([
+                        'referred_by' => $referred_by
+                    ]);
+                    $this->process_referral($user, $referred_by, $accountType);
                 }
 
                 $user->getWallet('ngn');
@@ -415,7 +419,11 @@ class AuthController extends Controller
             
                 // Implement referral system if referred_by exists
                 if ($request->has('referred_by')) {
-                    $this->process_referral($user, $request->referred_by, $request->account_type);
+                    $referred_by = $request->referred_by;
+                    $user->update([
+                        'referred_by' => $referred_by
+                    ]);
+                    $this->process_referral($user, $referred_by, $request->account_type);
                 }
             
                 return get_success_response([
@@ -780,10 +788,6 @@ class AuthController extends Controller
                 }
             }
         }
-
-        $user->update([
-            'referred_by' => $referred_by
-        ]);
 
         return true;
     }
