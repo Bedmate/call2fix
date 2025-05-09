@@ -27,7 +27,7 @@ class AuthController extends Controller
     {
         if (!Schema::hasColumn('users', 'referred_by_earnings')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->string('referred_by_earnings')->nullable();
+                $table->string('referred_by_earnings')->default(0);
             });
         }
     }
@@ -755,7 +755,7 @@ class AuthController extends Controller
 
             $user->update([
                 'referred_by' => $referred_by,
-                'referred_by_earnings' => $user->referred_by_earnings + floatval(get_settings_value('referal_commission', 0.1))
+                'referred_by_earnings' => (int)$user->referred_by_earnings + floatval(get_settings_value('referal_commission', 0.1))
             ]);
 
             // Create a referral record for the user
