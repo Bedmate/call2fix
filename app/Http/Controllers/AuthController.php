@@ -25,9 +25,9 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        if (!Schema::hasColumn('users', 'referred_by')) {
+        if (!Schema::hasColumn('users', 'referred_by_earnings')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->string('referred_by')->nullable();
+                $table->string('referred_by_earnings')->nullable();
             });
         }
     }
@@ -127,9 +127,6 @@ class AuthController extends Controller
                 // Process referral
                 if ($request->has('referred_by')) {
                     $referred_by = $request->referred_by;
-                    $user->update([
-                        'referred_by' => $referred_by
-                    ]);
                     $this->process_referral($user, $referred_by, $accountType);
                 }
 
@@ -420,9 +417,6 @@ class AuthController extends Controller
                 // Implement referral system if referred_by exists
                 if ($request->has('referred_by')) {
                     $referred_by = $request->referred_by;
-                    $user->update([
-                        'referred_by' => $referred_by
-                    ]);
                     $this->process_referral($user, $referred_by, $request->account_type);
                 }
             
@@ -759,6 +753,11 @@ class AuthController extends Controller
             // Process as user referral
             $referrer = Referral::userByReferralCode($referred_by);
 
+            $user->update([
+                'referred_by' => $referred_by,
+                'referred_by_earnings' => $user->referred_by_earnings + floatval(get_settings_value('referal_commission', 0.1))
+            ]);
+
             // Create a referral record for the user
             $referral = $user->createReferralAccount($referred_by);
 
@@ -772,7 +771,7 @@ class AuthController extends Controller
                     ));
 
                     $wallet->deposit(
-                        get_settings_value('referal_commission', 0.1),
+                        get_settings_value('referal_commission', 0.1) * 100,
                         ['description' => 'Referral Bonus']
                     );
                 }
