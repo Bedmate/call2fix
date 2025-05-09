@@ -25,15 +25,11 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        if (!Schema::hasColumn('business_office_addresses', 'is_active')) {
-            Schema::table('business_office_addresses', function (Blueprint $table) {
-                $table->boolean('is_active')->default(false);
+        if (!Schema::hasColumn('users', 'referred_by')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('referred_by')->nullable();
             });
         }
-
-        // Schema::table('referrals', function (Blueprint $table) {
-        //     $table->dropForeign(['referrer_id']);
-        // });
     }
 
     public function register(Request $request)
@@ -790,7 +786,8 @@ class AuthController extends Controller
 
     public function referrals()
     {
-        $referrals = Referral::all(); //where("referrer_id", auth()->id())->get();
-        return get_success_response($referrals, "Data fetched successfully");
+        $referralId = Referral::where("user_id", auth()->id())->first();
+        $users = User::where('referred_by', $referralId)->get();
+        return get_success_response($users, "Data fetched successfully");
     }
 }
