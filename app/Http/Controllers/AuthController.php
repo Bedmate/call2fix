@@ -792,6 +792,9 @@ class AuthController extends Controller
     {
         $referralId = Referral::where("user_id", auth()->id())->first();
         $ref_id = request()->referred_by ?? $referralId->referrer_id;
+        if($ref_id == null || empty($red_id)) {
+            return get_error_response(['error' => 'Ref ID not found, please contact support']);
+        }
         $users = User::where('referred_by', $ref_id)->get();
         return get_success_response($users, "Data fetched successfully");
     }
