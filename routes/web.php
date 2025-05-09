@@ -31,8 +31,8 @@ use Illuminate\Support\Facades\Schema;
 
 
 Route::get('/', function () {
-	$user = User::whereEmail('towojuads@gmail.com')->first();
-	$user->notify(new CustomNotification('Testing email', 'This is a sample test email by Emmanuel'));
+	// $user = User::whereEmail('towojuads@gmail.com')->first();
+	// $user->notify(new CustomNotification('Testing email', 'This is a sample test email by Emmanuel'));
 	return view('welcome');
 });
 // Route::get('/fb', function () {
