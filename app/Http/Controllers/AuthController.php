@@ -780,6 +780,10 @@ class AuthController extends Controller
                 }
             }
         }
+        
+        $user->update([
+            'referred_by' => $referred_by
+        ]);
 
         return true;
     }
