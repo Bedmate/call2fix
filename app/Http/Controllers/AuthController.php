@@ -780,7 +780,7 @@ class AuthController extends Controller
                 }
             }
         }
-        
+
         $user->update([
             'referred_by' => $referred_by
         ]);
@@ -791,7 +791,8 @@ class AuthController extends Controller
     public function referrals()
     {
         $referralId = Referral::where("user_id", auth()->id())->first();
-        $users = User::where('referred_by', $referralId)->get();
+        $ref_id = request()->referred_by ?? $referralId->referrer_id;
+        $users = User::where('referred_by', $ref_id)->get();
         return get_success_response($users, "Data fetched successfully");
     }
 }
