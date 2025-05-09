@@ -787,15 +787,27 @@ class AuthController extends Controller
 
         return true;
     }
-
+    
     public function referrals()
     {
-        $referralId = Referral::where("user_id", auth()->id())->first();
-        $ref_id = request()->referred_by ?? $referralId->referrer_id;
-        if($ref_id == null || empty($red_id)) {
-            return get_error_response(['error' => 'Ref ID not found, please contact support']);
+        // Get the current user's referral info
+        $userReferral = Referral::where('user_id', auth()->id())->first();
+        
+        // Get referrer ID from request or user's referral code
+        $refId = request()->input('referred_by', $userReferral?->referrer_id);
+        
+        // Validate ref ID
+        if (is_null($refId)) {
+            return get_error_response(
+                "Ref ID not found, please contact support",
+                ['error' => 'Ref ID not found']
+            );
         }
-        $users = User::where('referred_by', $ref_id)->get();
-        return get_success_response($users, "Data fetched successfully");
+
+        // Get users who were referred by this ID
+        $users = User::where('referred_by', $refId)
+            ->get();
+
+        return get_success_response($users, "Referral data fetched successfully");
     }
 }
