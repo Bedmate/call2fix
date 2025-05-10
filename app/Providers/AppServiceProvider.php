@@ -15,6 +15,8 @@ use App\Observers\PropertyModelObserver;
 use App\Observers\ServiceRequestModelObserver;
 use App\Observers\WalletModelObserver;
 use Towoju5\Wallet\Models\Wallet as ModelsWallet;
+use App\Models\User;
+use Jijunair\LaravelReferral\Traits\Referrable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,6 +43,12 @@ class AppServiceProvider extends ServiceProvider
         //         WalletUpdatedEventInterface::class,
         //     ]
         // );
+
+        // Http::get(url('generate-ref-accounts'));
+        $user = auth()->user();
+        if ($user && method_exists($user, 'createReferralAccount')) {
+            $user->createReferralAccount();
+        }       
 
     }
 }

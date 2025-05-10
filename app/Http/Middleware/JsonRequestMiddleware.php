@@ -30,12 +30,6 @@ class JsonRequestMiddleware
             }
 
         }
-
-        // Http::get(url('generate-ref-accounts'));
-        $user = auth()->user();
-        if ($user && method_exists($user, 'createReferralAccount')) {
-            $user->createReferralAccount();
-        }       
         $request->headers->add(['Accept' => 'application/json']);
         return $next($request);
     }
