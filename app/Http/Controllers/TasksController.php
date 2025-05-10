@@ -56,7 +56,7 @@ class TasksController extends Controller
     public function subscribeToTask(Request $request, $taskId)
     {
         $user = auth()->user();
-        $task = AffiliateTask::findOrFail($taskId);
+        $task = AffiliateTask::whereId($taskId)->with('earnings')->first();
 
         // Check if the user is already subscribed
         if ($user->task_subscriptions()->where('task_id', $taskId)->exists()) {
