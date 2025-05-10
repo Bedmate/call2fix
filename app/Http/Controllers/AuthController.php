@@ -706,90 +706,71 @@ class AuthController extends Controller
                 'error' => $th->getMessage()
             ]);
         }
-    }    
-    
-    // private function process_referral($user, $referred_by, $account_type)
-    // {
-    //     // Implement referral system if referred_by exists
-    //     $referrer = Referral::userByReferralCode($referred_by);
-        
-    //     // Create a referral record for the user
-    //     $referral = $user->createReferralAccount($referred_by);
-    //     // Check if it's for a task referral
-    //     $subscription = Subscription::where('referral_code', $referred_by)->first();
-    //     // return response()->json($subscription);
-
-    //     // check if device ID exists in the user table.
-    //     if(User::where('device_id', request()->device_id)->exists()){
-    //         return true;
-    //     }
-        
-    //     if ($referrer) {    
-    //         // Check if the referrer exists and and credit for referring user
-    //         $wallet = $user->getWallet('bonus');
-    //         if ($wallet) {
-    //             $user->notify(new CustomNotification('Referrral Commission', "You've successfully refeered a new customer"));
-    //             $wallet->deposit(get_settings_value('referal_commission', 0.1), ["description" => "Referral Bonus"], ["description" => "Referral Bonus"]);
-    //         }
-    //     } else if (isset($subscription->id)) {
-    //         $task = new TasksController();
-    //         if($task->handleReferral($referred_by)) {
-    //             return true;
-    //         }
-    //     }
-    // }
+    }   
 
     private function process_referral($user, $referred_by, $account_type)
     {
-        // check if device ID exists in the user table.
-        if (User::where('device_id', request()->device_id)->exists()) {
-            return true;
-        }
-
-        // Determine code type by length
-        $codeLength = strlen($referred_by);
-
-        if ($codeLength === 6) {
-            // Process as user referral
-            $referrer = Referral::userByReferralCode($referred_by);
-
-            $user->update([
-                'referred_by' => $referred_by,
-                'referred_by_earnings' => (int)$user->referred_by_earnings + floatval(get_settings_value('referal_commission', 0.1))
-            ]);
-
-            // Create a referral record for the user
-            $referral = $user->createReferralAccount($referred_by);
-
-            if ($referrer) {
-                // Credit the referring user's bonus wallet
-                $wallet = $user->getWallet('bonus');
-                if ($wallet) {
-                    $user->notify(new CustomNotification(
-                        'Referral Commission',
-                        "You've successfully referred a new customer"
-                    ));
-
-                    $wallet->deposit(
-                        get_settings_value('referal_commission', 0.1) * 100,
-                        ['description' => 'Referral Bonus']
-                    );
-                }
-            }
-
-        } elseif ($codeLength === 8) {
-            // Process as subscription task referral
-            $subscription = Subscription::where('referral_code', $referred_by)->first();
-            if ($subscription && isset($subscription->id)) {
-                $task = new TasksController();
-                if ($task->handleReferral($referred_by)) {
+        try {
+            return DB::transaction(function () use ($user, $referred_by, $account_type) {
+                // check if device ID exists in the user table.
+                if (User::where('device_id', request()->device_id)->exists()) {
                     return true;
                 }
-            }
-        }
 
-        return true;
+                // Determine code type by length
+                $codeLength = strlen($referred_by);
+
+                if ($codeLength == 6) {
+                    // Process as user referral
+                    $referrer = Referral::userByReferralCode($referred_by);
+
+                    $user->update([
+                        'referred_by' => $referred_by,
+                        'referred_by_earnings' => (int)$user->referred_by_earnings + floatval(get_settings_value('referal_commission', 0.1))
+                    ]);
+
+                    // Create a referral record for the user
+                    $referral = $user->createReferralAccount($referred_by);
+
+                    if ($referrer) {
+                        // Credit the referring user's bonus wallet
+                        $wallet = $user->getWallet('bonus');
+                        if ($wallet) {
+                            $user->notify(new CustomNotification(
+                                'Referral Commission',
+                                "You've successfully referred a new customer"
+                            ));
+
+                            $wallet->deposit(
+                                get_settings_value('referal_commission', 0.1) * 100,
+                                ['description' => 'Referral Bonus']
+                            );
+                        }
+                    }
+
+                } elseif ($codeLength == 8) {
+                    // Process as subscription task referral
+                    $subscription = Subscription::where('referral_code', $referred_by)->first();
+                    if ($subscription && isset($subscription->id)) {
+                        $task = new TasksController();
+                        if ($task->handleReferral($referred_by)) {
+                            return true;
+                        }
+                    }
+                }
+
+                return true;
+            });
+        } catch (\Throwable $e) {
+            Log::error('Referral processing failed: ' . $e->getMessage(), [
+                'user_id' => $user->id ?? null,
+                'referred_by' => $referred_by,
+                'account_type' => $account_type,
+            ]);
+            return false;
+        }
     }
+
     
     public function referrals()
     {

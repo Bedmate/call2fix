@@ -64,18 +64,14 @@ class User extends Authenticatable
         'is_banned',
         'password',
         'remember_token',
-        // 'updated_at',
-        // 'created_at',
         'two_factor_secret',
         'two_factor_recovery_codes',
-        // 'device_id',
         'google2fa_secret',
         'paystack_customer_id',
         'password_reset_code',
         'virtual_account_number',
         'virtual_bank_name',
         'verification_webhook_data',
-        // 'parent_account_id',
         'deleted_at'
     ];
 
@@ -218,8 +214,6 @@ class User extends Authenticatable
     {
         return $this->hasOne(Message::class)->latest();
     }
-
-
 
     // Relationship: User belongs to many departments
     public function departments()
