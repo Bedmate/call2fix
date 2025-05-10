@@ -218,6 +218,22 @@ class AuthController extends Controller
                 }
             }
 
+            $default_balance = ['co-operate_accounts', 'private_accounts'];
+            if(in_array($request->account_type, $default_balance)) {
+                $user_wallet = Wallet::where([
+                    'user_id' => $referrer->id,
+                    'role' => $request->account_type
+                ])->where('currency', 'ngn')->first();
+
+                if ($user_wallet) {
+                    $user_wallet->deposit(
+                        1000 * 100,
+                        ['description' => 'Welcome Bonus']
+                    );
+                } else {
+                    Log::info("User Wallet not found");
+                }
+            }
 
             return get_success_response(
                 array_merge($user->toArray(), ['wallets' => $user->my_wallets()]),
@@ -807,6 +823,9 @@ class AuthController extends Controller
         $users = User::where('referred_by', $refId)
             ->get();
 
-        return get_success_response($users, "Referral data fetched successfully");
+        $total_earnings = $users->sum('referred_by_earnings');
+
+        // return get_success_response($users, "Referral data fetched successfully");
+        return get_success_response(['users' => $users, 'earnings' => $total_earnings], "Referral data fetched successfully");
     }
 }

@@ -30,6 +30,13 @@ class TasksController extends Controller
 
         return get_success_response($tasks, "Affiliate tasks retrieved successfully");
     }
+
+    public function goalForTheMonth() 
+    {
+        $user = auth()->user();
+        $total = $user->task_subscriptions()->sum('ref_required_to_complete');
+        return get_success_response(['goal_for_month' => $total], "Goal for then month retrieved successfully");
+    }
     
     // Subscribe to a task and generate a unique referral code
     public function subscribeToTask(Request $request, $taskId)

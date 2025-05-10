@@ -253,6 +253,7 @@ Route::middleware(['api'])->domain(env('API_URL'))->prefix('v1')->group(function
             Route::get('suppliers-items-sold', [ChartController::class, 'suppliers_items_sold'])->name('chart.suppliers_items_sold');
             Route::get('products-count', [ChartController::class, 'products_count'])->name('chart.products_count');
             Route::get('wallets', [ChartController::class, 'wallets'])->name('chart.wallets');
+            Route::get('goal-for-the-month', [TasksController::class, 'goalForTheMonth'])->name('chart.taks.goal');
             Route::get('wallet-transactions', [ChartController::class, 'wallet_transactions'])->name('chart.wallet_transactions');
         });
 
