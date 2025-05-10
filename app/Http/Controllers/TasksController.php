@@ -31,16 +31,19 @@ class TasksController extends Controller
         return get_success_response($tasks, "Affiliate tasks retrieved successfully");
     }
 
+        
     public function goalForTheMonth() 
     {
         $user = auth()->user();
 
-        $total = DB::table('task_subscriptions')
-            ->join('tasks', 'task_subscriptions.task_id', '=', 'tasks.id')
-            ->where('task_subscriptions.user_id', $user->id)
-            ->whereMonth('task_subscriptions.created_at', now()->month)
-            ->whereYear('task_subscriptions.created_at', now()->year)
-            ->sum('tasks.ref_required_to_complete');
+        $total = $user->task_subscriptions()
+            ->with('task')
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->get()
+            ->sum(function ($subscription) {
+                return $subscription->task->ref_required_to_complete ?? 0;
+            });
 
         return get_success_response(
             ['goal_for_month' => $total],
