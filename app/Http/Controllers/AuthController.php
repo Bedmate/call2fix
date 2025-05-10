@@ -196,23 +196,26 @@ class AuthController extends Controller
 
                 // Create a referral record for the user
                 $referral = $user->createReferralAccount($referred_by);
+                $baseUser = User::find($referrer->user_id);
+                // Credit the referring user's bonus wallet
+                $wallet = Wallet::where([
+                    'user_id' => $referrer->user_id,
+                    'role' => 'private_accounts'
+                ])->where('currency', 'ngn')->first();
 
-                if ($referrer) {
-                    // Credit the referring user's bonus wallet
-                    $wallet = $user->getWallet('bonus');
-                    if ($wallet) {
-                        $user->notify(new CustomNotification(
-                            'Referral Commission',
-                            "You've successfully referred a new customer"
-                        ));
+                if ($wallet) {
+                    $wallet->deposit(
+                        get_settings_value('referal_commission', 0) * 100,
+                        ['description' => 'Referral Bonus']
+                    );
 
-                        $wallet->deposit(
-                            get_settings_value('referal_commission', 0.1) * 100,
-                            ['description' => 'Referral Bonus']
-                        );
-                    }
+                    $user->notify(new CustomNotification(
+                        'Referral Commission',
+                        "You've successfully referred a new customer"
+                    ));
+                } else {
+                    Log::info("Wallet not found");
                 }
-
             }
 
 
