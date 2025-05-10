@@ -52,6 +52,8 @@ class AuthController extends Controller
                 ]);
             }
 
+            $referred_by = $request->referred_by ?? null;
+
             // Common validation rules
             $rules = [
                 'first_name' => 'required|string|max:255',
@@ -180,7 +182,10 @@ class AuthController extends Controller
             // Determine code type by length
             $codeLength = strlen($referred_by);
 
-            if ($codeLength == 6) {
+            if ($request->has('referred_by') && $codeLength == 6) {
+                // Process as user referral
+                $referred_by = $request->referred_by;
+
                 // Process as user referral
                 $referrer = Referral::userByReferralCode($referred_by);
 
