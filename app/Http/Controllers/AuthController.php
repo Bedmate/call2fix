@@ -176,6 +176,41 @@ class AuthController extends Controller
                 return $user;
             });
 
+
+            // Determine code type by length
+            $codeLength = strlen($referred_by);
+
+            if ($codeLength == 6) {
+                // Process as user referral
+                $referrer = Referral::userByReferralCode($referred_by);
+
+                $user->update([
+                    'referred_by' => $referred_by,
+                    'referred_by_earnings' => (int)$user->referred_by_earnings + floatval(get_settings_value('referal_commission', 0.1))
+                ]);
+
+                // Create a referral record for the user
+                $referral = $user->createReferralAccount($referred_by);
+
+                if ($referrer) {
+                    // Credit the referring user's bonus wallet
+                    $wallet = $user->getWallet('bonus');
+                    if ($wallet) {
+                        $user->notify(new CustomNotification(
+                            'Referral Commission',
+                            "You've successfully referred a new customer"
+                        ));
+
+                        $wallet->deposit(
+                            get_settings_value('referal_commission', 0.1) * 100,
+                            ['description' => 'Referral Bonus']
+                        );
+                    }
+                }
+
+            }
+
+
             return get_success_response(
                 array_merge($user->toArray(), ['wallets' => $user->my_wallets()]),
                 'User registered successfully'
@@ -720,35 +755,7 @@ class AuthController extends Controller
                 // Determine code type by length
                 $codeLength = strlen($referred_by);
 
-                if ($codeLength == 6) {
-                    // Process as user referral
-                    $referrer = Referral::userByReferralCode($referred_by);
-
-                    $user->update([
-                        'referred_by' => $referred_by,
-                        'referred_by_earnings' => (int)$user->referred_by_earnings + floatval(get_settings_value('referal_commission', 0.1))
-                    ]);
-
-                    // Create a referral record for the user
-                    $referral = $user->createReferralAccount($referred_by);
-
-                    if ($referrer) {
-                        // Credit the referring user's bonus wallet
-                        $wallet = $user->getWallet('bonus');
-                        if ($wallet) {
-                            $user->notify(new CustomNotification(
-                                'Referral Commission',
-                                "You've successfully referred a new customer"
-                            ));
-
-                            $wallet->deposit(
-                                get_settings_value('referal_commission', 0.1) * 100,
-                                ['description' => 'Referral Bonus']
-                            );
-                        }
-                    }
-
-                } elseif ($codeLength == 8) {
+                if ($codeLength == 8) {
                     // Process as subscription task referral
                     $subscription = Subscription::where('referral_code', $referred_by)->first();
                     if ($subscription && isset($subscription->id)) {
