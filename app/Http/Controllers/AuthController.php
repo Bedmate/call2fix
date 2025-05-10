@@ -196,10 +196,10 @@ class AuthController extends Controller
 
                 // Create a referral record for the user
                 $referral = $user->createReferralAccount($referred_by);
-                $baseUser = User::find($referrer->user_id);
+                $baseUser = User::find($referrer->id);
                 // Credit the referring user's bonus wallet
                 $wallet = Wallet::where([
-                    'user_id' => $referrer->user_id,
+                    'user_id' => $referrer->id,
                     'role' => 'private_accounts'
                 ])->where('currency', 'ngn')->first();
 
