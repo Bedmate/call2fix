@@ -116,13 +116,21 @@
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> 
 
         <!-- Service areas -->
         <li class="menu-item">
             <a href="{{ route('admin.service_areas.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons ti ti-list"></i>
                 <div data-i18n="Service Areas">Service Areas</div>
+            </a>
+        </li>
+
+        <!-- Service areas -->
+        <li class="menu-item">
+            <a href="{{ route('admin.tasks.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons ti ti-list"></i>
+                <div data-i18n="Task Management">Task Management</div>
             </a>
         </li>
 

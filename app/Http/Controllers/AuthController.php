@@ -801,7 +801,6 @@ class AuthController extends Controller
             return false;
         }
     }
-
     
     public function referrals()
     {

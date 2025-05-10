@@ -19,6 +19,7 @@ use App\Http\Controllers\FaqsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\WalletController;
+use App\Http\Controllers\Admin\TaskController;
 
 
 
@@ -60,6 +61,9 @@ Route::domain(env('ADMIN_URL'))->group(function () {
             Route::get('orders/{order}/track', [OrdersController::class, 'trackOrder'])->name('orders.track');
         });
 
+        Route::group([], function () {
+            Route::resource('tasks', TaskController::class);
+        });
         
         Route::prefix('wallet')->group(function () {
             Route::post('fund-customer', [WalletController::class, 'creditUser'])->name('wallet.fund');
