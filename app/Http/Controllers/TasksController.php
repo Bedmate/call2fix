@@ -35,19 +35,19 @@ class TasksController extends Controller
     {
         $user = auth()->user();
 
-        // Load tasks and manually sum the ref_required_to_complete values
-        $total = $user->task_subscriptions()
-            ->with('task')
-            ->get()
-            ->sum(function ($subscription) {
-                return $subscription->task->ref_required_to_complete ?? 0;
-            });
+        $total = DB::table('task_subscriptions')
+            ->join('tasks', 'task_subscriptions.task_id', '=', 'tasks.id')
+            ->where('task_subscriptions.user_id', $user->id)
+            ->whereMonth('task_subscriptions.created_at', now()->month)
+            ->whereYear('task_subscriptions.created_at', now()->year)
+            ->sum('tasks.ref_required_to_complete');
 
         return get_success_response(
             ['goal_for_month' => $total],
             "Goal for the month retrieved successfully"
         );
     }
+
 
     // Subscribe to a task and generate a unique referral code
     public function subscribeToTask(Request $request, $taskId)
