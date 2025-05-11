@@ -25,9 +25,9 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        if (!Schema::hasColumn('users', 'referred_by_earnings')) {
+        if (!Schema::hasColumn('users', 'apple_identifier')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->string('referred_by_earnings')->default(0);
+                $table->string('apple_identifier')->nullable();
             });
         }
     }
@@ -371,7 +371,7 @@ class AuthController extends Controller
 
             Log::info("Incoming data for social login is as follow: ", ['incoming' => $request]);
 
-            if(!User::whereEmail($request->email)->exists()) {
+            if(!User::whereEmail($request->email)->orWhere('apple_identifier', $request->email)->exists()) {
                 $notRegistered = Validator::make($request->all(), [
                     'account_type' => 'required|string|in:co-operate_accounts,private_accounts,affiliates,providers,suppliers',
                     'country_code' => 'required|string|max:255',
