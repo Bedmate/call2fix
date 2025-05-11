@@ -421,11 +421,11 @@ class AuthController extends Controller
                 // if (!$appleValidation['success']) {
                 //     return get_error_response('Invalid Apple access token', ['error' => $appleValidation['error']]);
                 // }
-                // $socialData = [
-                //     'email' => $request->email,
-                //     'first_name' => $appleValidation['first_name'] ?? 'Apple',
-                //     'last_name' => $appleValidation['last_name'] ?? 'User',
-                // ];
+                $socialData = [
+                    'email' => $request->email,
+                    'first_name' => $appleValidation['first_name'] ?? 'Apple',
+                    'last_name' => $appleValidation['last_name'] ?? 'User',
+                ];
             }
 
             // Proceed with user creation or update
