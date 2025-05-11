@@ -369,6 +369,8 @@ class AuthController extends Controller
                 // 'referred_by' => 'sometimes|string|max:255',
             ]);
 
+            Log::info("Incoming data for social login is as follow: ", ['incoming' => $request]);
+
             if(!User::whereEmail($request->email)->exists()) {
                 $notRegistered = Validator::make($request->all(), [
                     'account_type' => 'required|string|in:co-operate_accounts,private_accounts,affiliates,providers,suppliers',

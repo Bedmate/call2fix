@@ -80,8 +80,8 @@ Route::middleware(['api'])->domain(env('API_URL'))->prefix('v1')->group(function
             Route::get("/", [BankController::class, 'getBanks']);
             Route::post("validate-account", [BankController::class, 'validateAccountNumber']);
             Route::get('accounts', [WalletController::class, 'getBankAccount']);
-            Route::get('accounts/{accountId}', [WalletController::class, 'getSingleBankAccount']);
             Route::post('accounts', [WalletController::class, 'addBankAccount']);
+            Route::get('accounts/{accountId}', [WalletController::class, 'getSingleBankAccount']);
             Route::delete('accounts/{accountId}', [WalletController::class, 'deleteBankAccount']);
         });
 
