@@ -42,11 +42,13 @@ class ServiceRequestController extends Controller
             });
         }
 
-        if (!Schema::hasColumn('service_requests', 'old_featured_providers_id')) {
+        if (!Schema::hasColumn('service_requests', 'bidding_start_date')) {
             Schema::table('service_requests', function (Blueprint $table) {
-                $table->json('old_featured_providers_id')->nullable();
+                $table->date('bidding_start_date')->nullable();
+                $table->date('bidding_end_date')->nullable();
             });
         }
+
         $this->radiusLimitKm = get_settings_value('max_provider_radius') ?? 30;
     }
 
@@ -254,6 +256,15 @@ class ServiceRequestController extends Controller
     {
         try {
             $serviceRequest = ServiceRequestModel::with('reworkMessages', 'submittedQuotes', 'service_provider', 'invited_artisan')->whereId($serviceRequest)->first();
+
+            if (now()->lte($serviceRequest->bidding_end_date)) {
+                return get_error_response(
+                    "Request bidding process must end to perform this action.",
+                    ["error" => "Request bidding process must end to perform this action!"],
+                    422
+                );
+            }
+
             return get_success_response($serviceRequest);
         } catch (\Throwable $th) {
             return get_error_response($th->getMessage(), ['error' => $th->getMessage()]);
@@ -462,6 +473,15 @@ class ServiceRequestController extends Controller
             $service_request = ServiceRequest::whereId($requestId)->with('user')->first();
             $service_requester = $service_request->user;
 
+            if (now()->lte($service_request->bidding_end_date)) {
+                return get_error_response(
+                    "Request bidding process must end to perform this action.",
+                    ["error" => "Request bidding process must end to perform this action!"],
+                    422
+                );
+            }
+
+
     
             // Check if 'read_by' column exists, if not, add it (This should be done in a migration)
             if (!Schema::hasColumn('submitted_quotes', 'status')) {
@@ -537,6 +557,15 @@ class ServiceRequestController extends Controller
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
+            if (now()->lte($request->bidding_end_date)) {
+                return get_error_response(
+                    "Request bidding process must end to perform this action.",
+                    ["error" => "Request bidding process must end to perform this action!"],
+                    422
+                );
+            }
+
+
             $request->status = "rejected";
             if ($request->save()) {
                 return get_success_response($request, "Request rejected successfully");
@@ -567,6 +596,15 @@ class ServiceRequestController extends Controller
             if (!$request) {
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
+
+            if (now()->lte($request->bidding_end_date)) {
+                return get_error_response(
+                    "Request bidding process must end to perform this action.",
+                    ["error" => "Request bidding process must end to perform this action!"],
+                    422
+                );
+            }
+
 
             return get_success_response($request, "Quote retrieved successfully");
         } catch (\Throwable $th) {
