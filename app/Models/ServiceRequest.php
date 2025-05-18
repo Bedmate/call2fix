@@ -40,6 +40,8 @@ class ServiceRequest extends BaseModel
         'old_featured_providers_id' => 'array',
         'use_featured_providers' => 'boolean',
         'inspection_date' => 'date',
+        'bidding_start_date' => 'date',
+        'bidding_end_date' => 'date',
     ];
     
     

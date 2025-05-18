@@ -41,6 +41,8 @@ class ServiceRequestModel extends Model
         'use_featured_providers' => 'boolean',
         'old_featured_providers_id' => 'array',
         'inspection_date' => 'date',
+        'bidding_start_date' => 'date',
+        'bidding_end_date' => 'date',
     ];
     
     

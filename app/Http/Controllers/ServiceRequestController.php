@@ -115,7 +115,11 @@ class ServiceRequestController extends Controller
                 'featured_providers_id' => 'nullable|array',
                 'department_id' => 'nullable|exists:departments,id',
                 "alternative_date" => "sometimes",
-                "alternative_time" => "sometimes"
+                "alternative_time" => "sometimes",
+                "bidding_start_date" => "sometimes",
+                "bidding_end_date" => "sometimes",
+                "bidding_start_time" => "sometimes",
+                "bidding_end_time" => "sometimes",
             ]);
 
             Log::debug("Incoming request payload is: ", ['payload' => $request->all()]);
