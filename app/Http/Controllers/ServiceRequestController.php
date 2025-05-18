@@ -49,10 +49,10 @@ class ServiceRequestController extends Controller
             });
         }
 
-        if (!Schema::hasColumn('service_requests', 'bidding_start_time')) {
+        if (Schema::hasColumn('service_requests', 'bidding_start_time')) {
             Schema::table('service_requests', function (Blueprint $table) {
-                $table->string('bidding_start_time')->nullable();
-                $table->string('bidding_end_time')->nullable();
+                $table->string('bidding_start_time')->nullable()->change();
+                $table->string('bidding_end_time')->nullable()->change();
             });
         }
 

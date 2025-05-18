@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Services\GeoLocationService;
 
 class ServiceRequest extends BaseModel
 {
@@ -107,5 +108,11 @@ class ServiceRequest extends BaseModel
     public function getFeaturedProvidersAttribute()
     {
         return User::whereIn('id', $this->featured_providers_id ?? [])->get();
+    }
+
+    public function getCreatedAtAttribute($value)
+    {
+        $timezone = app()->make('App\Services\GeoLocationService')->getUserTimezoneByIp();
+        return Carbon::parse($value)->timezone($timezone);
     }
 }
