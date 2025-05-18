@@ -27,7 +27,11 @@ class ServiceRequest extends BaseModel
         'approved_providers_id',
         'approved_artisan_id',
         'total_cost',
-        'old_featured_providers_id'
+        'old_featured_providers_id',
+        'bidding_start_date',
+        'bidding_end_date',
+        'bidding_start_time',
+        'bidding_end_time'
     ];
 
     protected $casts = [
