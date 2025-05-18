@@ -49,6 +49,13 @@ class ServiceRequestController extends Controller
             });
         }
 
+        if (!Schema::hasColumn('service_requests', 'bidding_start_time')) {
+            Schema::table('service_requests', function (Blueprint $table) {
+                $table->date('bidding_start_time')->nullable();
+                $table->date('bidding_end_time')->nullable();
+            });
+        }
+
         $this->radiusLimitKm = get_settings_value('max_provider_radius') ?? 30;
     }
 
@@ -257,7 +264,7 @@ class ServiceRequestController extends Controller
         try {
             $serviceRequest = ServiceRequestModel::with('reworkMessages', 'submittedQuotes', 'service_provider', 'invited_artisan')->whereId($serviceRequest)->first();
 
-            if (now()->lte($serviceRequest->bidding_end_date)) {
+            if (!mepty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -473,7 +480,7 @@ class ServiceRequestController extends Controller
             $service_request = ServiceRequest::whereId($requestId)->with('user')->first();
             $service_requester = $service_request->user;
 
-            if (now()->lte($service_request->bidding_end_date)) {
+            if (!mepty($serviceRequest->bidding_end_date) && now()->lte($service_request->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -557,7 +564,7 @@ class ServiceRequestController extends Controller
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
-            if (now()->lte($request->bidding_end_date)) {
+            if (!mepty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -597,7 +604,7 @@ class ServiceRequestController extends Controller
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
-            if (now()->lte($request->bidding_end_date)) {
+            if (!mepty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -768,7 +775,7 @@ class ServiceRequestController extends Controller
                 // Retrieve the service request
                 $serviceRequest = ServiceRequestModel::findOrFail($negotiation->request_id);
                 
-                if (now()->lte($serviceRequest->bidding_end_date)) {
+                if (!mepty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
                     return get_error_response(
                         "Request bidding process must end to perform this action.",
                         ["error" => "Request bidding process must end to perform this action!"],
@@ -824,7 +831,7 @@ class ServiceRequestController extends Controller
 
             $serviceRequest = ServiceRequest::findOrFail($requestId);
 
-            if (now()->lte($serviceRequest->bidding_end_date)) {
+            if (!mepty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
