@@ -141,8 +141,8 @@ class ServiceRequestController extends Controller
                 $property = Property::findOrFail($propertyId);
                 $radiusLimitMeters = $this->radiusLimitKm * 1000;
 
-                $latitude = $property->property_latitude;
-                $longitude = $property->property_longitude;
+                $latitude = $property->porperty_latitude;
+                $longitude = $property->porperty_longitude;
 
                 // Get nearby providers
                 // $providers = BusinessOfficeAddress::query()
