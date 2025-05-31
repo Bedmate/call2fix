@@ -25,9 +25,9 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        if (!Schema::hasColumn('users', 'referred_by_earnings')) {
+        if (!Schema::hasColumn('users', 'provider')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->string('referred_by_earnings')->default(0);
+                $table->string('provider')->default(0);
             });
         }
     }
@@ -199,7 +199,7 @@ class AuthController extends Controller
                 $baseUser = User::find($referrer->id);
                 // Credit the referring user's bonus wallet
                 $wallet = Wallet::where([
-                    'user_id' => $referrer->id,
+                    'user_id' => $baseUser->id,
                     'role' => 'private_accounts'
                 ])->where('currency', 'ngn')->first();
 
@@ -209,7 +209,7 @@ class AuthController extends Controller
                         ['description' => 'Referral Bonus']
                     );
 
-                    $user->notify(new CustomNotification(
+                    $baseUser->notify(new CustomNotification(
                         'Referral Commission',
                         "You've successfully referred a new customer"
                     ));
@@ -219,7 +219,7 @@ class AuthController extends Controller
             }
 
             $default_balance = ['co-operate_accounts', 'private_accounts'];
-            if(in_array($request->account_type, $default_balance)) {
+            if(in_array($request->account_type, $default_balance) && $user->parent_account_id == null) {
                 $user_wallet = Wallet::where([
                     'user_id' => $referrer->id,
                     'role' => $request->account_type
@@ -366,7 +366,7 @@ class AuthController extends Controller
                 'access_token' => 'required|string',
                 'provider' => 'required|string|in:google,apple',
                 'device_id' => 'required|string|max:255',
-                // 'referred_by' => 'sometimes|string|max:255',
+                'referred_by' => 'sometimes|string|max:255',
             ]);
 
             if(!User::whereEmail($request->email)->exists()) {
@@ -416,11 +416,6 @@ class AuthController extends Controller
                 }
                 $socialData = $response->json();
             } elseif ($request->provider === 'apple') {
-                // Apple token validation (assumes `AppleSignInValidator` is available)
-                // $appleValidation = AppleSignInValidator::validateToken($request->access_token);
-                // if (!$appleValidation['success']) {
-                //     return get_error_response('Invalid Apple access token', ['error' => $appleValidation['error']]);
-                // }
                 $socialData = [
                     'email' => $request->email,
                     'first_name' => $appleValidation['first_name'] ?? 'Apple',
@@ -435,7 +430,7 @@ class AuthController extends Controller
                     'is_social' => true,
                 ];
             
-                // Add fields only if they exist in the input
+                // Add fields only if they exist in the input 
                 if (isset($socialData['picture'])) {
                     $updateData['profile_picture'] = $socialData['picture'];
                 }
@@ -445,6 +440,12 @@ class AuthController extends Controller
                 } else {
                     $updateData['first_name'] = 'Unknown';
                 }
+            
+                if (isset($request->provider)) {
+                    $updateData['provider'] = $request->provider;
+                } else {
+                    $updateData['provider'] = 'email';
+                }                
             
                 if (isset($socialData['last_name'])) {
                     $updateData['last_name'] = $socialData['last_name'];
@@ -477,6 +478,23 @@ class AuthController extends Controller
                 if ($request->has('referred_by')) {
                     $referred_by = $request->referred_by;
                     $this->process_referral($user, $referred_by, $request->account_type);
+                }
+
+                $default_balance = ['co-operate_accounts', 'private_accounts'];
+                if(in_array($request->account_type, $default_balance) && $user->parent_account_id == null) {
+                    $user_wallet = Wallet::where([
+                        'user_id' => $user->id,
+                        'role' => $request->account_type
+                    ])->where('currency', 'ngn')->first();
+
+                    if ($user_wallet) {
+                        $user_wallet->deposit(
+                            1000 * 100,
+                            ['description' => 'Welcome Bonus']
+                        );
+                    } else {
+                        Log::info("User Wallet not found");
+                    }
                 }
             
                 return get_success_response([
@@ -776,7 +794,7 @@ class AuthController extends Controller
                     return true;
                 }
 
-                // Determine code type by length
+                // Determine code type by length 8 - Affiliates & 6 is general customer referal
                 $codeLength = strlen($referred_by);
 
                 if ($codeLength == 8) {
