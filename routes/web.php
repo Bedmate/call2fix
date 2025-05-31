@@ -31,11 +31,11 @@ use Illuminate\Support\Facades\Schema;
 
 
 Route::get('/', function () {
-	$user = User::whereEmail('towojuads@gmail.com')->first();
-	$send = $user->notify(new CustomNotification('Testing email', 'This is a sample test email by Emmanuel'));
-	if($send) {
-		return response()->json(['message' => 'Action completed successfully']);
-	}
+	// $user = User::whereEmail('towojuads@gmail.com')->first();
+	// $send = $user->notify(new CustomNotification('Testing email', 'This is a sample test email by Emmanuel'));
+	// if($send) {
+	// 	return response()->json(['message' => 'Action completed successfully']);
+	// }
 	return view('welcome');
 });
 

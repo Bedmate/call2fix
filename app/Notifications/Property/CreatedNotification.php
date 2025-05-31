@@ -40,14 +40,11 @@ class CreatedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->subject('New Property Added to Your Account')
-                    ->line('A new property has been added to your account.')
-                    ->line('Property Details:')
-                    ->line('Name: ' . $this->property->name)
-                    ->line('Address: ' . $this->property->address)
-                    ->line('Type: ' . $this->property->type)
-                    ->action('View Property', url('/properties/' . $this->property->id))
-                    ->line('Thank you for using our application!');
+            ->subject('New Property Added to Your Account')
+            ->view('vendor.property', [
+                'property' => $this->property,
+                'notifiable' => $notifiable,
+            ]);
     }
 
     /**
@@ -70,9 +67,10 @@ class CreatedNotification extends Notification
     public function toFcm($notifiable): FcmMessage
     {
         return FcmMessage::create()
-            ->setNotification(\NotificationChannels\Fcm\Resources\Notification::create()
-                ->setTitle('New Property Added')
-                ->setBody('A new property has been added to your account: ' . $this->property->name)
+            ->setNotification(
+                \NotificationChannels\Fcm\Resources\Notification::create()
+                    ->setTitle('New Property Added')
+                    ->setBody('A new property has been added to your account: ' . $this->property->name)
             )
             ->setData(['property_id' => $this->property->id]);
     }
