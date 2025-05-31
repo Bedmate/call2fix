@@ -36,12 +36,14 @@ class CustomNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         //send fcm notification
-        // fcm($this->title, $this->body, $notifiable->device_id);
+        fcm($this->title, $this->body, $notifiable->device_id);
 
         return (new MailMessage)
                 ->subject($this->title)
-                ->with(explode("\n", str_replace("# Hello!", "", $this->body)))
-                ->line('');
+                ->markdown('vendor.email', [
+                    'greetings' => "Hello {$notifiable->last_name}",
+                    'body' => $this->body,
+                ]);
     }
 
     /**

@@ -37,7 +37,7 @@
                         <table border="0" cellspacing="0" cellpadding="0" style="font-size:14px" width="100%">
                             <tbody>
                                 <tr>
-                                    <td style="padding:20px 10px 35px">
+                                    <td align="center" style="padding:20px 10px 35px">
                                         <table width="100%">
                                             <tbody>
                                                 <tr style="height:25px">

@@ -32,10 +32,7 @@ use Illuminate\Support\Facades\Schema;
 
 Route::get('/', function () {
 	$user = User::whereEmail('towojuads@gmail.com')->first();
-	$send = $user->notify(new CustomNotification(
-                'Wallet Credited',
-                "Your wallet has been credited with ₦50,000"
-            ));
+	$send = $user->notify(new CustomNotification('Testing email', 'This is a sample test email by Emmanuel'));
 	if($send) {
 		return response()->json(['message' => 'Action completed successfully']);
 	}
