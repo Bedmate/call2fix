@@ -37,22 +37,13 @@ class NewArtisanAddedNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $message = "Welcome to " . config('app.name') . "! Your artisan account has been successfully created.\nHere are your login credentials:\nEmail: " . $this->artisan->email . "\nPassword: " . $this->password . "\nFor security reasons, we recommend changing your password after your first login.\nIf you have any questions, please don't hesitate to contact our support team.";
+
         return (new MailMessage)
             ->subject('Welcome to ' . config('app.name') . ' - Your Account Details')
             ->view('vendor.email', [
                 'greeting' => 'Hello ' . $this->artisan->name,
-                'introLines' => [
-                    'Welcome to ' . config('app.name') . '! Your artisan account has been successfully created.',
-                    'Here are your login credentials:',
-                    'Email: ' . $this->artisan->email,
-                    'Password: ' . $this->password,
-                ],
-                'actionText' => 'Login to Your Account',
-                'actionUrl' => url('/login'),
-                'outroLines' => [
-                    'For security reasons, we recommend changing your password after your first login.',
-                    'If you have any questions, please don\'t hesitate to contact our support team.'
-                ]
+                'body' => $message
             ]);
     }
 
