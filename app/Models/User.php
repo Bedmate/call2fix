@@ -25,7 +25,7 @@ use App\Models\ServiceRequestModel;
 
 class User extends Authenticatable
 {
-    use HasFactory, HasApiTokens, Notifiable, HasWallets, TwoFactorAuthenticatable;
+    use HasFactory, HasApiTokens, Notifiable, HasWallets, SoftDeletes, TwoFactorAuthenticatable;
     use Referrable, HasRoles, HasPlans, HasPlanSubscriptions;
 
 
