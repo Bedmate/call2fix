@@ -141,8 +141,8 @@ class ServiceRequestController extends Controller
                 $property = Property::findOrFail($propertyId);
                 $radiusLimitMeters = $this->radiusLimitKm * 1000;
 
-                $latitude = $property->latitude;
-                $longitude = $property->longitude;
+                $latitude = $property->property_latitude;
+                $longitude = $property->property_longitude;
 
                 // Get nearby providers
                 // $providers = BusinessOfficeAddress::query()
@@ -187,7 +187,7 @@ class ServiceRequestController extends Controller
                     ->pluck('business_office_addresses.user_id')
                     ->toArray();
                 
-                Log::debug("Selected providers and locations are: ", ["providers" => $providers, "latitude" => $latitude, "longitude" => $longitude]);
+                Log::debug("Selected providers and locations are: ", ["providers" => $providers, "latitude" => $latitude, "longitude" => $longitude, "property" => $property]);
 
 
                 // Ensure only provider users
