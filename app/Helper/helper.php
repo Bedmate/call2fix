@@ -126,7 +126,7 @@ if (!function_exists('getGoogleAccessToken')) {
 ;
 
 if (!function_exists('fcm')) {
-    function fcm($title, $body, string $deviceId = null, $data = [])
+    function fcm($title, $body, $deviceId = null, $data = [])
     {
         $user = auth()->user();
         if(isset($user->fcm_notification) && $user->fcm_notification == true) {
