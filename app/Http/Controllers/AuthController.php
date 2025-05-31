@@ -221,7 +221,7 @@ class AuthController extends Controller
             $default_balance = ['co-operate_accounts', 'private_accounts'];
             if(in_array($request->account_type, $default_balance) && $user->parent_account_id == null) {
                 $user_wallet = Wallet::where([
-                    'user_id' => $referrer->id,
+                    'user_id' => $user->id,
                     'role' => $request->account_type
                 ])->where('currency', 'ngn')->first();
 
