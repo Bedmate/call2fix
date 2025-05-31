@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Notifications\CustomNotification;
-use Log;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use App\Models\BusinessOfficeAddress;
@@ -187,7 +187,7 @@ class ServiceRequestController extends Controller
                     ->pluck('business_office_addresses.user_id')
                     ->toArray();
                 
-
+                Log::debug("Selected providers and locations are: ", ["providers" => $providers, "latitude" => $latitude, "longitude" => $longitude]);
 
 
                 // Ensure only provider users

@@ -9,6 +9,9 @@ use App\Services\GeoLocationService;
 use Carbon\Carbon;
 
 
+/**
+ * @method static create(array $validatedData)
+ */
 class ServiceRequest extends BaseModel
 {
     use HasFactory, SoftDeletes;
