@@ -49,6 +49,9 @@ Route::domain(env('ADMIN_URL'))->group(function () {
         Route::resource('categories', CategoryController::class)->names('categories');
         Route::resource('services', ServicesController::class)->names('services');
         Route::get('categories/{category}/services', [CategoryController::class, 'showServices'])->name('categories.services');
+        Route::get('categories/add-category-slider', [CategoryController::class, 'addCategorySlider'])->name('categories.sliders');
+        Route::post('categories/store-category-slider', [CategoryController::class, 'storeCategorySlider'])->name('categories.sliders.add');
+
         Route::resource('users', UsersController::class)->names('users');
         Route::resource('properties', PropertyController::class)->names('properties');
         Route::resource('plans', PlansController::class);

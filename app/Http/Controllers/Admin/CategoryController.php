@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\CategorySlider;
 use App\Models\ServiceArea;
 use App\Models\Service;
 use Illuminate\Http\Request;
@@ -32,20 +33,20 @@ class CategoryController extends Controller
             'category_description' => 'nullable|string',
             'category_image' => 'nullable|image|max:2048'
         ]);
-    
+
         $category = new Category();
-        $category->id = Str::uuid(); 
+        $category->id = Str::uuid();
         $category->category_name = $request->category_name;
         $category->category_slug = $request->category_slug;
         $category->parent_category = $request->parent_category;
         $category->category_description = $request->category_description;
-    
+
         if ($request->hasFile('category_image')) {
             $category->category_image = $request->file('category_image')->store('category_images', 'public');
         }
-    
+
         $category->save();
-    
+
         return redirect()->route('admin.categories.index')->with('success', 'Category created successfully.');
     }
 
@@ -104,4 +105,34 @@ class CategoryController extends Controller
         ]);
     }
 
+    public function addCategorySlider() 
+    {
+        $sliders = CategorySlider::latest()->get();
+        return view('admin.categories.add_category_slider', compact('sliders'));
+    }
+
+    public function storeCategorySlider(Request $request)
+    {
+        $request->validate([
+            'slider_image' => 'required|image|max:2048',
+            'slider_status' => 'required|in:1,0',
+        ]);
+
+        $file = $request->file('slider_image');
+        $filePath = save_media($file);
+
+        if (!$filePath) {
+            return back()->with('error', 'Failed to upload file.');
+        }
+
+        // store the category slider image
+        $categorySlider = new CategorySlider();
+        $categorySlider->slider_image_url = $request->slider_image;
+        $categorySlider->slider_status = $request->slider_status;
+        if ($categorySlider->save()) {
+            return redirect()->back()->with('success', 'Category slider added successfully.');
+        } else {
+            return redirect()->back()->with('error', 'Failed to add category slider.');
+        }
+    }
 }

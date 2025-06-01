@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\UsersImport;
+use Spatie\Permission\Models\Role;
 use Validator;
 use Towoju5\Wallet\Models\Wallet;
 
@@ -22,7 +23,7 @@ class UsersController extends Controller
 {
     public function index()
     {
-        $users = User::with('roles')//->whereNull('parent_account_id')
+        $users = User::with('roles') //->whereNull('parent_account_id')
             ->when(request('roles'), function ($query) {
                 $query->whereHas('roles', function ($q) {
                     $q->whereIn('name', is_array(request('roles')) ? request('roles') : [request('roles')]);
@@ -45,7 +46,7 @@ class UsersController extends Controller
         // $artisans = $user->artisans()->latest()->take(10)->get();
         $bankAccount = $user->bankAccount()->latest()->take(10)->get();
         $business_info = $user->business_info()->latest()->take(10)->get();
-        
+
         $my_wallet = Wallet::where([
             'user_id' => $user->id,
         ])->get();
@@ -151,33 +152,84 @@ class UsersController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }
 
-    public function update(Request $request, User $user)
-    {
+    // public function update(Request $request, User $user)
+    // {
 
-        $validator = Validator::make($request->all(), [
+    //     $validator = Validator::make($request->all(), [
+    //         'first_name' => 'required|string|max:255',
+    //         'lastt_name' => 'required|string|max:255',
+    //         'email' => 'required_without:phone|string|email|max:255|unique:users',
+    //         'phone' => 'required_without:email|string|max:20|unique:users',
+    //         'account_type' => 'required|string|in:artisan,suppliers,providers,affiliate,private_account,corporate_account',
+    //         'device_id' => 'required|string|max:255',
+    //         'password' => 'required|string|min:8',
+    //         'username' => 'required|string|max:255|unique:users',
+    //         'profile_picture' => 'nullable|string',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return get_error_response($validator->errors());
+    //     }
+
+
+    //     $user->update($validator->validated());
+
+    //     if ($request->filled('password')) {
+    //         $user->update(['password' => Hash::make($request->password)]);
+    //     }
+
+    //     return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
+    // }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $data = $request->validate([
             'first_name' => 'required|string|max:255',
-            'lastt_name' => 'required|string|max:255',
-            'email' => 'required_without:phone|string|email|max:255|unique:users',
-            'phone' => 'required_without:email|string|max:20|unique:users',
-            'account_type' => 'required|string|in:artisan,suppliers,providers,affiliate,private_account,corporate_account',
-            'device_id' => 'required|string|max:255',
-            'password' => 'required|string|min:8',
-            'username' => 'required|string|max:255|unique:users',
-            'profile_picture' => 'nullable|string',
+            'last_name' => 'required|string|max:255',
+            'username' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'account_type' => 'nullable|string',
+            'current_role' => 'nullable|string',
+            'main_account_role' => 'nullable|string',
+            'sub_account_type' => 'nullable|string',
+            'profile_picture' => 'nullable|url',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string',
+            'device_id' => 'nullable|string',
+            'country_dialing_code' => 'nullable|string',
+            'description' => 'nullable|string',
+            'department_description' => 'nullable|string',
+            'referred_by' => 'nullable|string',
+            'referred_by_earnings' => 'nullable|string',
+            'current_department_id' => 'nullable|string',
+            'parent_account_id' => 'nullable|string',
+            'service_provider_id' => 'nullable|string',
+
+            // Booleans
+            'is_social' => 'nullable|boolean',
+            'is_department' => 'nullable|boolean',
+            'can_hold_wallet' => 'nullable|boolean',
+            'is_guest' => 'nullable|boolean',
+            'is_notification_enabled' => 'nullable|boolean',
+            'business_verification_status' => 'nullable|boolean',
         ]);
 
-        if ($validator->fails()) {
-            return get_error_response($validator->errors());
-        }
+        $user->update($data);
+
+        return redirect()->route('admin.users.edit', $user->id)
+            ->with('success', 'User updated successfully');
+    }
 
 
-        $user->update($validator->validated());
-
-        if ($request->filled('password')) {
-            $user->update(['password' => Hash::make($request->password)]);
-        }
-
-        return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
+    public function edit($id)
+    {
+        $user = User::findOrFail($id);
+        $roles = Role::all();
+        $account_types = ["artisan", "suppliers", "providers", "affiliate", "private_account", "corporate_account"];
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
     public function destroy(User $user)

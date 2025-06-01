@@ -35,6 +35,8 @@
 
                                 <td>
                                     <div class="btn-group gap-3" role="group">
+                                        <a href="{{ route('admin.users.edit', $user['id']) }}"
+                                            class="btn btn-sm btn-primary">View</a>
                                         <a href="{{ route('admin.users.show', $user['id']) }}"
                                             class="btn btn-sm btn-info">View</a>
                                         @if ($user['is_banned'])

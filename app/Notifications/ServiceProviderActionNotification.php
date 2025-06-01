@@ -46,6 +46,6 @@ class ServiceProviderActionNotification extends Notification
 
     public function toFcm($notifiable)
     {
-        return send_fcm($notifiable, $this->action, $this->data);
+        return fcm($notifiable, $this->action, $this->data);
     }
 }

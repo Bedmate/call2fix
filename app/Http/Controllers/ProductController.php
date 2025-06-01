@@ -6,8 +6,8 @@ use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Log;
 
 class ProductController extends Controller
 {
@@ -54,9 +54,6 @@ class ProductController extends Controller
                 'description' => 'required|string',
                 'price' => 'required_if:rentable_price,null|numeric|min:0',
                 'rentable_price' => 'required_if:price,null|array', // Changed to array for validation
-                // 'rentable_price.days' => 'nullable|numeric|min:0',
-                // 'rentable_price.weekly' => 'nullable|numeric|min:0',
-                // 'rentable_price.months' => 'nullable|numeric|min:0',
                 'category_id' => 'required|exists:categories,id',
                 'stock' => 'required|integer|min:0',
                 'sku' => 'required|string|unique:products,sku',
