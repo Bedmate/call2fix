@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\UsersImport;
 use Spatie\Permission\Models\Role;
 use Validator;
+use App\Jobs\CleanupUserData;
 use Towoju5\Wallet\Models\Wallet;
 
 class UsersController extends Controller
@@ -234,7 +235,10 @@ class UsersController extends Controller
 
     public function destroy(User $user)
     {
-        $user->delete();
+        if($user->delete()) {
+            // Dispatch the cleanup job, this runs in the background
+            CleanupUserData::dispatch($user->id);
+        }
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
 }

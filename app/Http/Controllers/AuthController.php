@@ -19,6 +19,7 @@ use Towoju5\Wallet\Models\Wallet;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Log;
+use App\Jobs\CleanupUserData;
 
 
 class AuthController extends Controller
@@ -701,6 +702,8 @@ class AuthController extends Controller
                 return get_error_response('User not found', ['error' => 'User not found']);
             }
             if ($user->tokens()->delete() && $user->delete()) {
+                // Dispatch the cleanup job, this runs in the background
+                CleanupUserData::dispatch($user->id);
                 Auth::logout();
                 return get_success_response([], "Account deleted successfully");
             } else {

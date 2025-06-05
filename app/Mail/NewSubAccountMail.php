@@ -32,19 +32,21 @@ class NewSubAccountMail extends Mailable
      */
     public function build()
     {
-        $accountType = "sub account";
-        
-        if($this->subAccount->sub_account_type == "department") {
-            $accountType = "department";
-        }
+        $accountType = $this->subAccount->sub_account_type === 'department' ? 'department' : 'sub account';
+
+        $message = 
+            "A new {$accountType} has been created for you.\n\n" .
+            "Name: " . $this->subAccount->name . "\n" .
+            "Email: " . $this->subAccount->email . "\n" .
+            "Role: " . $this->subAccount->role . "\n" .
+            "Password: " . $this->password . "\n\n" .
+            "Please log in and change your password as soon as possible.";
 
         return $this->subject("Your New {$accountType} Has Been Created")
-                    ->view('emails.new-sub-account')
-                    ->with([
-                        'name' => $this->subAccount->name,
-                        'email' => $this->subAccount->email,
-                        'role' => $this->subAccount->role,
-                        'password' => $this->password,
+                    ->view('vendor.property', [
+                        'content' => nl2br(e($message)),
+                        'notifiable' => $this->subAccount,
                     ]);
     }
+
 }

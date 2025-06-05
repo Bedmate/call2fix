@@ -49,6 +49,11 @@ class Product extends Model
         return $this->belongsTo(User::class, 'seller_id');
     }
 
+    public function company()
+    {
+        return $this->belongsTo(BusinessInfo::class, 'seller_id', 'user_id');
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
