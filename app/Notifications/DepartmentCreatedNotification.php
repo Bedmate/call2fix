@@ -36,11 +36,17 @@ class DepartmentCreatedNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $message =
+            "A new department has been created.\n\n" .
+            "Department Name: " . $this->department->name . "\n\n" .
+            "Thank you for using our application!";
+
         return (new MailMessage)
-                    ->line('A new department has been created.')
-                    ->line('Department Name: ' . $this->department->name)
-                    ->action('View Department', url('/departments/' . $this->department->id))
-                    ->line('Thank you for using our application!');
+            ->subject('New Department Created')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
 
     /**

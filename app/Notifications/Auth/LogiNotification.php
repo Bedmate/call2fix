@@ -35,13 +35,20 @@ class LogiNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $message = 
+            "A successful login was detected on your account.\n" .
+            'Time: ' . now()->toDateTimeString() . "\n" .
+            'IP Address: ' . request()->ip() . "\n" .
+            "If this was not you, please contact support immediately.";
+
         return (new MailMessage)
-                    ->subject('Successful Login Notification')
-                    ->line('A successful login was detected on your account.')
-                    ->line('Time: ' . now()->toDateTimeString())
-                    ->line('IP Address: ' . request()->ip())
-                    ->line('If this was not you, please contact support immediately.');
+            ->subject('Successful Login Notification')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
+
 
     /**
      * Get the array representation of the notification.

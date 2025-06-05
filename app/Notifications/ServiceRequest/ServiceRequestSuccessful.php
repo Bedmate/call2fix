@@ -37,12 +37,24 @@ class ServiceRequestSuccessful extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        fcm("New Order on Call2Fix", "Your Service Request has been placed successfully.", auth()->user()->device_id);
+        fcm(
+            "New Order on Call2Fix",
+            "Your Service Request has been placed successfully.",
+            auth()->user()->device_id
+        );
+
+        $message =
+            "Your Service Request has been placed successfully.\n\n" .
+            "Thank you.";
+
         return (new MailMessage)
-                    ->subject('Service Request Placed Successfully')
-                    ->line('Your Service Request has been placed successfully.')
-                    ->line('Thank you.');
+            ->subject('Service Request Placed Successfully')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
+
 
     /**
      * Get the array representation of the notification.

@@ -26,12 +26,19 @@ class PasswordResetComplete extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $message = 
+            "Your password has been successfully reset.\n\n" .
+            "If you did not request a password reset, please contact our support team immediately.\n\n" .
+            "Thank you for using our application!";
+
         return (new MailMessage)
-                    ->line('Your password has been successfully reset.')
-                    ->line('If you did not request a password reset, please contact our support team immediately.')
-                    ->action('Login to Your Account', url('/login'))
-                    ->line('Thank you for using our application!');
+            ->subject('Password Reset Successful')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
+
 
     /**
      * Get the array representation of the notification.

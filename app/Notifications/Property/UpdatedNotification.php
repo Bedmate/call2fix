@@ -39,16 +39,22 @@ class UpdatedNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $message =
+            "A property has been updated on your account.\n\n" .
+            "Property Details:\n" .
+            "Name: " . $this->property->name . "\n" .
+            "Address: " . $this->property->address . "\n" .
+            "Type: " . $this->property->type . "\n\n" .
+            "Thank you for using our application!";
+
         return (new MailMessage)
-                    ->subject('Property Updated')
-                    ->line('A property has been updated on your account.')
-                    ->line('Property Details:')
-                    ->line('Name: ' . $this->property->name)
-                    ->line('Address: ' . $this->property->address)
-                    ->line('Type: ' . $this->property->type)
-                    ->action('View Property', url('/properties/' . $this->property->id))
-                    ->line('Thank you for using our application!');
+            ->subject('Property Updated')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
+
 
     /**
      * Get the array representation of the notification.

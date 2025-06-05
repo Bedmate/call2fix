@@ -37,14 +37,24 @@ class OrderPlacedSuccessfully extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        fcm("New Order on Call2Fix", "Your order has been placed successfully. Tracking Number: ".$this->order->order_id, $notifiable->device_id);
+        fcm(
+            "New Order on Call2Fix",
+            "Your order has been placed successfully. Tracking Number: " . $this->order->order_id,
+            $notifiable->device_id
+        );
+
+        $message = 
+            "Your order has been placed successfully.\n" .
+            "Tracking Number: " . $this->order->order_id . "\n" .
+            "Total Amount: $" . number_format($this->order->total_price, 2) . "\n\n" .
+            "Thank you for your purchase!";
+
         return (new MailMessage)
-                    ->subject('Order Placed Successfully')
-                    ->line('Your order has been placed successfully.')
-                    ->line('Tracking Number: ' . $this->order->order_id)
-                    ->line('Total Amount: $' . number_format($this->order->total_price, 2))
-                    // ->action('View Order Details', url('/orders/' . $this->order->id))
-                    ->line('Thank you for your purchase!');
+            ->subject('Order Placed Successfully')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
 
     /**

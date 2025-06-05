@@ -39,16 +39,22 @@ class DeletedNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $message =
+            "A property has been deleted from your account.\n\n" .
+            "Property Details:\n" .
+            "Name: " . $this->property->name . "\n" .
+            "Address: " . $this->property->address . "\n\n" .
+            "If you believe this was done in error, please contact our support team.\n\n" .
+            "Thank you for using our application!";
+
         return (new MailMessage)
-                    ->subject('Property Deleted from Your Account')
-                    ->line('A property has been deleted from your account.')
-                    ->line('Property Details:')
-                    ->line('Name: ' . $this->property->name)
-                    ->line('Address: ' . $this->property->address)
-                    ->line('If you believe this was done in error, please contact our support team.')
-                    ->action('View Your Properties', url('/properties'))
-                    ->line('Thank you for using our application!');
+            ->subject('Property Deleted from Your Account')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
+
 
     /**
      * Get the array representation of the notification.

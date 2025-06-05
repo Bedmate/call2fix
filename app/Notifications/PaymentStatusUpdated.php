@@ -31,17 +31,23 @@ class PaymentStatusUpdated extends Notification
     }
 
     // Define the email notification (optional)
-    public function toMail($notifiable)
+   public function toMail($notifiable)
     {
-        // make fcm request to send pop notification to mobile app
-        // fcm("Update on Service Request", $this->msg, $notifiable->device_id);
+        fcm("Update on Service Request", $this->msg, $notifiable->device_id);
+
+        $message = 
+            "Your payment status has been updated.\n\n" .
+            "Status: " . $this->status . "\n\n" .
+            "Thank you for using our service!";
+
         return (new MailMessage)
             ->subject('Payment Status Update')
-            ->line('Your payment status has been updated.')
-            ->line('Status: ' . $this->status)
-            ->action('View Request', url('/service-requests/' . $this->negotiation->request_id))
-            ->line('Thank you for using our service!');
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
+
 
     // You can add other notification channels here like SMS, Slack, etc.
     public function via($notifiable)

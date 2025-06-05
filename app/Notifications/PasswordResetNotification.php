@@ -25,11 +25,18 @@ class PasswordResetNotification extends Notification
 
     public function toMail($notifiable)
     {
+        $message = 
+            "Your password reset code is: " . $this->resetCode . "\n\n" .
+            "If you didn't request a password reset, please ignore this message.";
+
         return (new MailMessage)
-                    ->subject('Password Reset Code')
-                    ->line('Your password reset code is: ' . $this->resetCode)
-                    ->line('If you didn\'t request a password reset, please ignore this message.');
+            ->subject('Password Reset Code')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
+
 
     // public function toNexmo($notifiable)
     // {

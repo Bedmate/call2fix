@@ -34,10 +34,16 @@ class ReworkIssued extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $message = 
+            "The introduction to the notification.\n\n" .
+            "Thank you for using our application!";
+
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+            ->subject('Notification')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
 
     /**

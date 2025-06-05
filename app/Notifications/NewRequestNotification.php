@@ -27,19 +27,24 @@ class NewRequestNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        // Send FCM notification to artisan's device
         fcm(
             "New Service Request", 
             "You've received a new service request. Check your dashboard for details.", 
             $notifiable->device_id
         );
 
+        $message = 
+            "Hello Artisan!\n\n" .
+            "A new service request has been submitted that matches your skills:\n" .
+            "Please review the details and submit your quote if interested.\n\n" .
+            "Thank you for using our service platform!";
+
         return (new MailMessage)
             ->subject('New Service Request Received')
-            ->greeting('Hello Artisan!')
-            ->line('A new service request has been submitted that matches your skills:')
-            ->line('Please review the details and submit your quote if interested.')
-            ->line('Thank you for using our service platform!');
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
 
     public function toArray(object $notifiable): array

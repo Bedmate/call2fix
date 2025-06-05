@@ -29,10 +29,18 @@ class ServiceProviderActionNotification extends Notification
 
     public function toMail($notifiable)
     {
+        $message = 
+            "Action: " . $this->action . "\n\n" .
+            "Data: " . json_encode($this->data);
+
         return (new MailMessage)
-            ->line('Action: ' . $this->action)
-            ->line('Data: ' . json_encode($this->data));
+            ->subject('Notification')
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
+
 
     public function toDatabase($notifiable)
     {

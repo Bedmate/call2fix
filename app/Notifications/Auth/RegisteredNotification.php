@@ -33,16 +33,21 @@ class RegisteredNotification extends Notification
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+   public function toMail(object $notifiable): MailMessage
     {
+        $message = 
+            'Thank you for registering with ' . config('app.name') . "!\n" .
+            'Time: ' . now()->toDateTimeString() . "\n" .
+            'IP Address: ' . request()->ip() . "\n" .
+            "We are excited to have you on board.\n\n" .
+            "If you have any questions, feel free to contact our support team.";
+
         return (new MailMessage)
-                    ->subject('Welcome to ' . config('app.name'))
-                    ->line('Thank you for registering with ' . config('app.name') . '!')
-                    ->line('Time: ' . now()->toDateTimeString())
-                    ->line('IP Address: ' . request()->ip())
-                    ->line('We are excited to have you on board.')
-                    ->action('Get Started', url('/dashboard'))
-                    ->line('If you have any questions, feel free to contact our support team.');
+            ->subject('Welcome to ' . config('app.name'))
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable
+            ]);
     }
 
     /**

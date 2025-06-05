@@ -36,15 +36,26 @@ class ReworkIssuedNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        fcm("Rework issued", "A Rework has been issued for a task you (or your artisan) worked on", $notifiable->device_id);
+        fcm(
+            "Rework issued", 
+            "A Rework has been issued for a task you (or your artisan) worked on", 
+            $notifiable->device_id
+        );
+
+        $message = 
+            "A rework has been issued for your service request.\n\n" .
+            "Service Request ID: " . $this->serviceRequest->id . "\n" .
+            "Description: " . $this->serviceRequest->description . "\n\n" .
+            "Please review the rework details and take necessary action.";
+
         return (new MailMessage)
             ->subject('Rework Issued for Service Request #' . $this->serviceRequest->id)
-            ->line('A rework has been issued for your service request.')
-            ->line('Service Request ID: ' . $this->serviceRequest->id)
-            ->line('Description: ' . $this->serviceRequest->description)
-            ->action('View Service Request', url('/service-requests/' . $this->serviceRequest->id))
-            ->line('Please review the rework details and take necessary action.');
+            ->view('vendor.property', [
+                'content' => nl2br(e($message)),
+                'notifiable' => $notifiable,
+            ]);
     }
+
 
     /**
      * Get the array representation of the notification.
