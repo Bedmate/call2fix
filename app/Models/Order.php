@@ -31,7 +31,8 @@ class Order extends BaseModel
         'delivery_latitude',
         'additional_info',
         'shipping_fee',
-        'product_category_id'
+        'product_category_id',
+        'delivery_type'
     ];
 
     protected $hidden = [
@@ -88,6 +89,7 @@ class Order extends BaseModel
         8 => 'DECLINE',
         9 => 'CANCEL',
         10 => 'DELETED',
+        11 => 'REJECTED',
     ];
 
     // Mutator to set status

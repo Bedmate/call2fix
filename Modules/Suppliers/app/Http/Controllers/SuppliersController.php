@@ -121,7 +121,7 @@ class SuppliersController extends Controller
             // Map status to the string value
             $statusMapping = [
                 'accept' => OrderModel::STATUSES[7], // 'ACCEPTED'
-                'reject' => OrderModel::STATUSES[9], // 'CANCEL'
+                'reject' => OrderModel::STATUSES[11], // 'CANCEL'
             ];
             $buyer = User::find($order->user_id);
 
