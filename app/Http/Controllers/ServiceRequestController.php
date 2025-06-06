@@ -568,7 +568,7 @@ class ServiceRequestController extends Controller
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
-            if (!mepty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
+            if (!empty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -608,7 +608,7 @@ class ServiceRequestController extends Controller
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
-            if (!mepty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
+            if (!empty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],

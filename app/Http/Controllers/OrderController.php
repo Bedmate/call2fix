@@ -12,8 +12,7 @@ use App\Services\KwikDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Log;
-
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -258,7 +257,7 @@ class OrderController extends Controller
                 }
 
                 if(!$wallet->deposit($order->total_price * 100, ["description" => "Order refund for ORDER ID: {$order->id}", "Order placement refunded"])){
-                    return ['error' => 'Insufficient Balance'];
+                    return ['error' => 'Insufficient balance'];
                 }
                 
                 $seller = User::find($order->seller_id);
