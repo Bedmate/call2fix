@@ -10,10 +10,13 @@ use App\Models\Property;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\Withdrawal;
+use Illuminate\Bus\Queueable as BusQueueable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
-class CleanupUserData implements \Illuminate\Contracts\Queue\ShouldQueue
+class CleanupUserData implements ShouldQueue
 {
-    use \Illuminate\Bus\Queueable, \Illuminate\Queue\InteractsWithQueue, \Illuminate\Queue\SerializesModels;
+    use BusQueueable, InteractsWithQueue, SerializesModels;
 
     protected $userId;
 

@@ -109,7 +109,8 @@ class User extends Authenticatable
     protected $appends = ['ratings'];
     
     protected $with = [
-        'country'
+        'country',
+        'business_details'
     ];
 
     /**
@@ -195,6 +196,11 @@ class User extends Authenticatable
     }
 
     public function business_info()
+    {
+        return $this->belongsTo(BusinessInfo::class, 'id', 'user_id');
+    }
+
+    public function business_details()
     {
         return $this->belongsTo(BusinessInfo::class, 'id', 'user_id');
     }

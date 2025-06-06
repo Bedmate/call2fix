@@ -16,8 +16,9 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\UsersImport;
 use Spatie\Permission\Models\Role;
-use Validator;
 use App\Jobs\CleanupUserData;
+use Illuminate\Support\Facades\Validator;
+use Throwable;
 use Towoju5\Wallet\Models\Wallet;
 
 class UsersController extends Controller
@@ -76,8 +77,8 @@ class UsersController extends Controller
         try {
             $user->withdraw($request->amount, 'ngn');
             return redirect()->back()->with('success', 'Wallet debited successfully.');
-        } catch (InsufficientFunds $exception) {
-            return redirect()->back()->with('error', 'Insufficient funds in the wallet.');
+        } catch (Throwable $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
         }
     }
 
