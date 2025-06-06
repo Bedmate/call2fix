@@ -13,9 +13,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class OrderController extends Controller
 {
+    public function __construct()
+    {
+        if (Schema::hasColumn('orders', 'delivery_type')) {
+            Schema::table('orders', function (Blueprint $table) {
+                $table->string('delivery_type')->change()->default('home_delivery');
+            });
+        }
+    }
+
     public function index()
     {
         return view('order');
