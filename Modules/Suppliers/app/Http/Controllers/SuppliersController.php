@@ -13,6 +13,7 @@ use Illuminate\Http\Response;
 use Validator, DB;
 use App\Models\OrderModel;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class SuppliersController extends Controller
@@ -125,20 +126,11 @@ class SuppliersController extends Controller
             $buyer = User::find($order->user_id);
 
             if($request->status === "reject") {
-
-                $user = auth()->user();
-                // process customer refund 
-                $wallet = $user->getWallet("ngn");
-
-                // if (!$wallet) {
-                //     return get_error_response("User wallet not found", ["error" => "User wallet not found"], 404);
-                // }
-
-                // if(!$wallet->withdrawal($order->total_price * 100, ["description" => "Order refund for ORDER ID: {$order->id}", "Order placement refunded"])){
-                //     return ['error' => 'Insufficient Balance'];
-                // }
-
-                $buyer->notify(new CustomNotification('Order rejected by Supplier', 'Order rejected by Supplier'));
+                $order->status = $statusMapping[$request->status]; // Store as string
+                if ($order->save()) {                
+                    $buyer->notify(new CustomNotification('Order rejected by Supplier', 'Order rejected by Supplier'));
+                    return get_success_response($order, "Order status updated successfully", 200);
+                }
             }
 
             $order->status = $statusMapping[$request->status]; // Store as string
@@ -158,7 +150,7 @@ class SuppliersController extends Controller
                         $order->seller, 
                         $order->user
                     );
-                    \Log::info("Kwik Order Placement response", $place_order);
+                    Log::info("Kwik Order Placement response", $place_order);
                 } else if (strtolower($request->status) === 'reject') {
                     // Refund customer and cancel order
                 }
