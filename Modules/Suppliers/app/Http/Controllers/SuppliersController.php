@@ -125,9 +125,13 @@ class SuppliersController extends Controller
             ];
             $buyer = User::find($order->user_id);
 
-            if($request->status === "reject") {
+            if(strtolower($request->status) === "reject") {
                 $order->status = $statusMapping[$request->status]; // Store as string
                 if ($order->save()) {                
+                    // refund the buyer.
+                    $buyer = User::find($order->user_id);
+                    $wallet = $buyer->getWallet("ngn");
+                    $wallet->deposit(floor($order->total_price * 100, 2), ["description" => "Order refund", "Order placement refund"]);
                     $buyer->notify(new CustomNotification('Order rejected by Supplier', 'Order rejected by Supplier'));
                     return get_success_response($order, "Order status updated successfully", 200);
                 }

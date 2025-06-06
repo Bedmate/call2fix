@@ -191,6 +191,7 @@ class OrderController extends Controller
     public function getOrdersByStatus($status)
     {
         try {
+            if($status ==a)
             $orders = OrderModel::where('user_id', auth()->id())->where('_account_type', active_role())->where('status', $status)->get();
             return get_success_response($orders, "Orders retrieved successfully");
         } catch (\Exception $e) {
