@@ -80,6 +80,7 @@ class OrderController extends Controller
             }
 
             $orderData["shipping_fee"] = $shippingFee;
+            $orderData["delivery_type"] = $request->delivery_type;
             $orderData["product_category_id"] = $product->category_id;
             $orderData["product_service_category_id"] = $product->category_id;
 
