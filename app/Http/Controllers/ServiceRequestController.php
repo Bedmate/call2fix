@@ -947,6 +947,7 @@ class ServiceRequestController extends Controller
             ]);
 
             $serviceRequest = ServiceRequestModel::whereId($requestId)->first();
+            $service_requester = $serviceRequest->user;
             if (! $serviceRequest) {
                 return get_error_response("Service request not found", ["error" => "Service request not found"], 404);
             }
@@ -1002,6 +1003,25 @@ class ServiceRequestController extends Controller
                     $artisanBio->notify(new CustomNotification("A New Task Has Been Assigned to You", $artisanMessage));
                     $artisanBio->notify(new CustomNotification("Payment confirmed", "Payment has been confirmed for service request ID: {$serviceRequest->id}"));
                 }
+
+
+                $serviceName    = $service_request->problem_title ?? '[Service Name]';
+                $providerName   = "{$provider->first_name} {$provider->last_name}" ?? '[Service Provider\'s Name]';
+                $amountPaid     = number_format($total_cost,2) ?? '[Amount]';
+                $paymentDate    = now() ?? '[Date]';
+                $paymentMethod  = "Wallet Balance" ?? '[Payment Method]';
+
+                $message =
+                    "Thank you for your payment! We have successfully received your payment for the service request.\n\n" .
+                    "Payment Details:\n" .
+                    "\t• Service Requested: {$serviceName}\n" .
+                    "\t• Provider Name: {$providerName}\n" .
+                    "\t• Amount Paid: {$amountPaid}\n" .
+                    "\t• Payment Date: {$paymentDate}\n" .
+                    "\t• Payment Method: {$paymentMethod}\n\n" .
+                    "The service provider will now proceed with the next steps. You can track the progress of your service request through the app.";
+
+                $service_requester->notify(new CustomNotification("Payment Confirmation for Your Service Request", $message));
 
                 // return success data with the transaction and service request data
                 return get_success_response([
