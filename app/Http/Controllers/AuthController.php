@@ -18,9 +18,8 @@ use Jijunair\LaravelReferral\Models\Referral;
 use Towoju5\Wallet\Models\Wallet;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Log;
 use App\Jobs\CleanupUserData;
-
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -329,6 +328,7 @@ class AuthController extends Controller
 
             return get_success_response($response);
         } catch (\Throwable $th) {
+            Log::error("Error fetching profile", ['trace' => $th->getTraceAsString()]);
             return get_error_response($th->getMessage(), ['error' => $th->getMessage()]);
         }
     }
