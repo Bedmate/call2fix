@@ -12,7 +12,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Towoju5\Wallet\Models\Wallet;
 
-
 class ChartController extends Controller
 {
     public function getFilteredData($model, $filter, $hasUserColumn = true)
@@ -199,9 +198,11 @@ class ChartController extends Controller
 
                 foreach ($data as $date => $count) {
                     $date       = Carbon::createFromFormat('Y-m-d', $date);
-                    $weekNumber = floor($date->diffInWeeks($startDate->startOfWeek())) + 1;
+                    $weekNumber = max(1, $date->diffInWeeks($startDate->startOfWeek()) + 1);
                     $weekLabel  = 'w' . $weekNumber;
-                    $allDates[$weekLabel] += $count;
+                    if (isset($allDates[$weekLabel])) {
+                        $allDates[$weekLabel] += $count;
+                    }
                 }
             } elseif ($groupBy === 'month') {
                 $currentMonth = $startDate->copy()->startOfMonth();
