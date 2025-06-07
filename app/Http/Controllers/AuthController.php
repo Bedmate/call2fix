@@ -1,31 +1,30 @@
 <?php
-
 namespace App\Http\Controllers;
 
+use App\Jobs\CleanupUserData;
 use App\Models\BusinessInfo;
 use App\Models\Subscription;
+use App\Models\User;
 use App\Notifications\CustomNotification;
 use App\Notifications\PasswordResetComplete;
 use App\Notifications\PasswordResetNotification;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Jijunair\LaravelReferral\Models\Referral;
 use Towoju5\Wallet\Models\Wallet;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use App\Jobs\CleanupUserData;
-use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
     public function __construct()
     {
-        if (!Schema::hasColumn('users', 'provider')) {
+        if (! Schema::hasColumn('users', 'provider')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->string('provider')->default(0);
             });
@@ -36,18 +35,18 @@ class AuthController extends Controller
     {
         try {
             // Normalize account type
-            $originalType = $request->account_type;
+            $originalType   = $request->account_type;
             $accountTypeMap = [
-                'private_account' => 'private_accounts',
+                'private_account'    => 'private_accounts',
                 'co-operate_account' => 'co-operate_accounts',
-                'affiliate' => 'affiliates',
+                'affiliate'          => 'affiliates',
             ];
             $accountType = $accountTypeMap[$originalType] ?? $originalType;
 
             // Generate username if not present
-            if (!$request->username) {
+            if (! $request->username) {
                 $request->merge([
-                    'username' => explode('@', $request->email ?? $request->phone)[0] . rand(1, 99),
+                    'username'     => explode('@', $request->email ?? $request->phone)[0] . rand(1, 99),
                     'account_type' => $accountType,
                 ]);
             }
@@ -56,35 +55,35 @@ class AuthController extends Controller
 
             // Common validation rules
             $rules = [
-                'first_name' => 'required|string|max:255',
-                'last_name' => 'required|string|max:255',
-                'email' => 'required_without:phone|string|email|max:255|unique:users',
-                'phone' => 'required_without:email|string|regex:/^\+[1-9]\d{1,14}$/|max:20|unique:users',
-                'device_id' => 'required|string|max:255',
-                'password' => 'required|string|min:8',
-                'username' => 'required|string|max:255|unique:users',
+                'first_name'      => 'required|string|max:255',
+                'last_name'       => 'required|string|max:255',
+                'email'           => 'required_without:phone|string|email|max:255|unique:users',
+                'phone'           => 'required_without:email|string|regex:/^\+[1-9]\d{1,14}$/|max:20|unique:users',
+                'device_id'       => 'required|string|max:255',
+                'password'        => 'required|string|min:8',
+                'username'        => 'required|string|max:255|unique:users',
                 'profile_picture' => 'nullable|string',
-                'country_code' => 'required|string|max:255',
-                'referred_by' => 'sometimes|string|min:6|max:8'
+                'country_code'    => 'required|string|max:255',
+                'referred_by'     => 'sometimes|string|min:6|max:8',
             ];
 
             // Validation for account type
             $businessAccountTypes = ['providers', 'suppliers'];
-            $normalAccountTypes = ['co-operate_accounts', 'private_accounts', 'affiliates'];
+            $normalAccountTypes   = ['co-operate_accounts', 'private_accounts', 'affiliates'];
 
             if (in_array($accountType, $businessAccountTypes)) {
                 $rules['account_type'] = 'required|string|in:' . implode(',', $businessAccountTypes);
-                $rules = array_merge($rules, [
-                    'businessName' => 'required|string',
-                    'cacNumber' => 'required|string',
-                    'officeAddress' => 'required|array',
-                    'businessCategory' => 'array|min:5|max:10', 
-                    'businessCategory.*' => 'string|max:100',
+                $rules                 = array_merge($rules, [
+                    'businessName'        => 'required|string',
+                    'cacNumber'           => 'required|string',
+                    'officeAddress'       => 'required|array',
+                    'businessCategory'    => 'array|min:5|max:10',
+                    'businessCategory.*'  => 'string|max:100',
                     'businessDescription' => 'required|string',
-                    'businessIdType' => 'required|string',
-                    'businessIdNumber' => 'required|string',
-                    'businessIdImage' => 'required|string',
-                    'businessBankInfo' => 'required|array',
+                    'businessIdType'      => 'required|string',
+                    'businessIdNumber'    => 'required|string',
+                    'businessIdImage'     => 'required|string',
+                    'businessBankInfo'    => 'required|array',
                 ]);
             } else {
                 $rules['account_type'] = 'required|string|in:' . implode(',', $normalAccountTypes);
@@ -98,16 +97,16 @@ class AuthController extends Controller
             }
 
             $userData = [
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'password' => Hash::make($request->password),
-                'username' => $request->username,
-                'profile_picture' => $request->profile_picture,
-                'is_social' => false,
-                'account_type' => $accountType,
-                'device_id' => $request->device_id,
-                'current_role' => $accountType,
-                'main_account_role' => $accountType,
+                'first_name'           => $request->first_name,
+                'last_name'            => $request->last_name,
+                'password'             => Hash::make($request->password),
+                'username'             => $request->username,
+                'profile_picture'      => $request->profile_picture,
+                'is_social'            => false,
+                'account_type'         => $accountType,
+                'device_id'            => $request->device_id,
+                'current_role'         => $accountType,
+                'main_account_role'    => $accountType,
                 'country_dialing_code' => str_replace("+", "", $request->country_code),
             ];
 
@@ -122,7 +121,7 @@ class AuthController extends Controller
             $user = DB::transaction(function () use ($userData, $request, $accountType, $businessAccountTypes, $normalAccountTypes) {
                 $user = User::create($userData);
 
-                if (!$user) {
+                if (! $user) {
                     return get_error_response('Failed to create user');
                 }
 
@@ -141,9 +140,9 @@ class AuthController extends Controller
                     // Save multiple addresses
                     foreach ($request->officeAddress as $address) {
                         $user->business_office_address()->updateOrCreate([
-                            'user_id' => $user->id,
-                            'address' => $address['address'],
-                            'latitude' => $address['latitude'],
+                            'user_id'   => $user->id,
+                            'address'   => $address['address'],
+                            'latitude'  => $address['latitude'],
                             'longitude' => $address['longitude'],
                         ]);
                     }
@@ -160,24 +159,32 @@ class AuthController extends Controller
                         'businessIdType',
                         'businessIdNumber',
                         'businessIdImage',
-                        'businessBankInfo'
+                        'businessBankInfo',
                     ]));
                 } elseif (in_array($accountType, array_merge($normalAccountTypes, ['co-operate_accounts']))) {
-                    BusinessInfo::updateOrCreate(
+                    // Create or update business info
+                    $businessInfo = BusinessInfo::updateOrCreate(
                         [
-                            'user_id' => $user->id,
+                            'user_id'       => $user->id,
                             '_account_type' => $accountType,
                         ],
                         [
-                            'created_at' => now(),
-                            'updated_at' => now(),
+                            'updated_at' => now(), // created_at is auto-set on create()
                         ]
                     );
+                    // Add bank account information using WalletController
+                    $bankDetails = $businessInfo->businessBankInfo;
+                    app(WalletController::class)->addBankAccount(new Request([
+                        'user_id'        => $user->id,
+                        'account_number' => $bankDetails['account_number'] ?? null,
+                        'account_name'   => $bankDetails['account_name'] ?? null,
+                        'bank_name'      => $bankDetails['bank_name'] ?? null,
+                        'bank_code'      => $bankDetails['bank_code'] ?? null,
+                    ]));
                 }
 
                 return $user;
             });
-
 
             // Determine code type by length
             $codeLength = strlen($referred_by);
@@ -190,8 +197,8 @@ class AuthController extends Controller
                 $referrer = Referral::userByReferralCode($referred_by);
 
                 $user->update([
-                    'referred_by' => $referred_by,
-                    'referred_by_earnings' => (int)$user->referred_by_earnings + floatval(get_settings_value('referal_commission', 0.1))
+                    'referred_by'          => $referred_by,
+                    'referred_by_earnings' => (int) $user->referred_by_earnings + floatval(get_settings_value('referal_commission', 0.1)),
                 ]);
 
                 // Create a referral record for the user
@@ -200,7 +207,7 @@ class AuthController extends Controller
                 // Credit the referring user's bonus wallet
                 $wallet = Wallet::where([
                     'user_id' => $baseUser->id,
-                    'role' => 'private_accounts'
+                    'role'    => 'private_accounts',
                 ])->where('currency', 'ngn')->first();
 
                 if ($wallet) {
@@ -219,10 +226,10 @@ class AuthController extends Controller
             }
 
             $default_balance = ['co-operate_accounts', 'private_accounts'];
-            if(in_array($request->account_type, $default_balance) && $user->parent_account_id == null) {
+            if (in_array($request->account_type, $default_balance) && $user->parent_account_id == null) {
                 $user_wallet = Wallet::where([
                     'user_id' => $user->id,
-                    'role' => $request->account_type
+                    'role'    => $request->account_type,
                 ])->where('currency', 'ngn')->first();
 
                 if ($user_wallet) {
@@ -243,7 +250,7 @@ class AuthController extends Controller
             DB::rollBack();
             return get_error_response($e->getMessage(), [
                 'error' => $e->getMessage(),
-                'trace' => json_encode($e->getTrace())
+                'trace' => json_encode($e->getTrace()),
             ]);
         }
     }
@@ -252,8 +259,8 @@ class AuthController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'login' => 'required|string',
-                'password' => 'required|string',
+                'login'     => 'required|string',
+                'password'  => 'required|string',
                 'device_id' => 'required|string',
             ]);
 
@@ -261,10 +268,10 @@ class AuthController extends Controller
                 return get_error_response($validator->errors());
             }
 
-            $loginField = filter_var($request->input('login'), FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+            $loginField  = filter_var($request->input('login'), FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
             $credentials = [
                 $loginField => $request->input('login'),
-                'password' => $request->input('password'),
+                'password'  => $request->input('password'),
             ];
 
             if (Auth::attempt($credentials)) {
@@ -311,19 +318,19 @@ class AuthController extends Controller
                 "business_info",
                 "business_office_address",
                 "roles",
-                "task_referrals"
+                "task_referrals",
             ])->whereId(auth()->id())->first();
 
-            if (!$user) {
+            if (! $user) {
                 return get_error_response('User not found', ['message' => 'User not found']);
             }
 
-            // Add additional attributes to the response without modifying the model directly
-            $response = $user->toArray(); // Convert model and relations to an array
-            $response['current_plan'] = $user->activeSubscription() ?? get_free_plan();
-            $response['ref_code'] = $user->getReferralCode();
-            $response['wallets'] = Wallet::where('user_id', $user->id)->where('role', active_role())->get();
-            $response['referrer'] = $user->referralAccount?->referrer;
+                                                                            // Add additional attributes to the response without modifying the model directly
+            $response                                   = $user->toArray(); // Convert model and relations to an array
+            $response['current_plan']                   = $user->activeSubscription() ?? get_free_plan();
+            $response['ref_code']                       = $user->getReferralCode();
+            $response['wallets']                        = Wallet::where('user_id', $user->id)->where('role', active_role())->get();
+            $response['referrer']                       = $user->referralAccount?->referrer;
             $response['business_info']['officeAddress'] = $user->business_office_address; // Fetch related addresses
 
             return get_success_response($response);
@@ -336,7 +343,7 @@ class AuthController extends Controller
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
-        if (!Schema::hasColumn('users', 'is_notification_enabled')) {
+        if (! Schema::hasColumn('users', 'is_notification_enabled')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->boolean('is_notification_enabled')->default(true);
             });
@@ -350,7 +357,7 @@ class AuthController extends Controller
     public function verifyEmail(Request $request)
     {
         $user = Auth::user();
-        if (!$user->email_verified_at) {
+        if (! $user->email_verified_at) {
             $user->email_verified_at = now();
             $user->save();
             return get_success_response(['message' => 'Email verified successfully']);
@@ -363,14 +370,14 @@ class AuthController extends Controller
         try {
             // Validate the request
             $validate = Validator::make($request->all(), [
-                'email' => 'required|email',
+                'email'        => 'required|email',
                 'access_token' => 'required|string',
-                'provider' => 'required|string|in:google,apple',
-                'device_id' => 'required|string|max:255',
-                'referred_by' => 'sometimes|string|max:255',
+                'provider'     => 'required|string|in:google,apple',
+                'device_id'    => 'required|string|max:255',
+                'referred_by'  => 'sometimes|string|max:255',
             ]);
 
-            if(!User::whereEmail($request->email)->exists()) {
+            if (! User::whereEmail($request->email)->exists()) {
                 $notRegistered = Validator::make($request->all(), [
                     'account_type' => 'required|string|in:co-operate_accounts,private_accounts,affiliates,providers,suppliers',
                     'country_code' => 'required|string|max:255',
@@ -382,19 +389,19 @@ class AuthController extends Controller
 
             if (in_array($request->account_type, ["providers", "suppliers"])) {
                 $businessValidation = Validator::make($request->all(), [
-                    "businessName" => "required|string",
-                    "cacNumber" => "required|string",
-                    'officeAddress' => 'array',
-                    'officeAddress.*.address' => 'sometimes|string|max:255',
-                    'officeAddress.*.latitude' => 'sometimes|string|max:50',
+                    "businessName"              => "required|string",
+                    "cacNumber"                 => "required|string",
+                    'officeAddress'             => 'array',
+                    'officeAddress.*.address'   => 'sometimes|string|max:255',
+                    'officeAddress.*.latitude'  => 'sometimes|string|max:50',
                     'officeAddress.*.longitude' => 'sometimes|string|max:50',
-                    'businessCategory' => 'array|min:5|max:10', 
-                    'businessCategory.*' => 'string|max:100',
-                    "businessDescription" => "required|string",
-                    "businessIdType" => "required|string",
-                    "businessIdNumber" => "required|string",
-                    "businessIdImage" => "required|string",
-                    "businessBankInfo" => "required|string",
+                    'businessCategory'          => 'array|min:5|max:10',
+                    'businessCategory.*'        => 'string|max:100',
+                    "businessDescription"       => "required|string",
+                    "businessIdType"            => "required|string",
+                    "businessIdNumber"          => "required|string",
+                    "businessIdImage"           => "required|string",
+                    "businessBankInfo"          => "required|string",
                 ]);
                 if ($businessValidation->fails()) {
                     return get_error_response(['error' => $businessValidation->errors()->toArray()]);
@@ -406,21 +413,21 @@ class AuthController extends Controller
             }
 
             $is_registered = false;
-            $socialData = null;
+            $socialData    = null;
 
             // Handle Google or Apple validation
             if ($request->provider === 'google') {
                 $social_url = "https://www.googleapis.com/oauth2/v1/userinfo?access_token={$request->access_token}";
-                $response = Http::get($social_url);
+                $response   = Http::get($social_url);
                 if ($response->failed()) {
                     return get_error_response('Invalid Google access token', ['error' => 'Invalid access token']);
                 }
                 $socialData = $response->json();
             } elseif ($request->provider === 'apple') {
                 $socialData = [
-                    'email' => $request->email,
+                    'email'      => $request->email,
                     'first_name' => $appleValidation['first_name'] ?? 'Apple',
-                    'last_name' => $appleValidation['last_name'] ?? 'User',
+                    'last_name'  => $appleValidation['last_name'] ?? 'User',
                 ];
             }
 
@@ -430,51 +437,51 @@ class AuthController extends Controller
                 $updateData = [
                     'is_social' => true,
                 ];
-            
-                // Add fields only if they exist in the input 
+
+                // Add fields only if they exist in the input
                 if (isset($socialData['picture'])) {
                     $updateData['profile_picture'] = $socialData['picture'];
                 }
-            
+
                 if (isset($socialData['first_name'])) {
                     $updateData['first_name'] = $socialData['first_name'];
                 } else {
                     $updateData['first_name'] = 'Unknown';
                 }
-            
+
                 if (isset($request->provider)) {
                     $updateData['provider'] = $request->provider;
                 } else {
                     $updateData['provider'] = 'email';
-                }                
-            
+                }
+
                 if (isset($socialData['last_name'])) {
                     $updateData['last_name'] = $socialData['last_name'];
                 } else {
                     $updateData['last_name'] = 'User';
                 }
-            
-                if ($request->has('country_code') && !empty($request->country_code)) {
+
+                if ($request->has('country_code') && ! empty($request->country_code)) {
                     $updateData['country_dialing_code'] = str_replace("+", "", $request->country_code);
                 }
-            
+
                 // Update or create the user
                 $user = User::updateOrCreate([
                     'email' => $socialData['email'],
                 ], $updateData);
-            
-                $is_registered = !$user->wasRecentlyCreated;
-            
+
+                $is_registered = ! $user->wasRecentlyCreated;
+
                 // Create token
                 $token = $user->createToken('auth_token')->plainTextToken;
                 $token = explode('|', $token);
-            
+
                 // Handle device ID updates
                 if ($request->has('device_id') && $user->device_id !== $request->device_id) {
-                    $user->tokens()->delete(); // Remove old tokens
+                    $user->tokens()->delete();                           // Remove old tokens
                     $user->update(['device_id' => $request->device_id]); // Update device ID
                 }
-            
+
                 // Implement referral system if referred_by exists
                 if ($request->has('referred_by')) {
                     $referred_by = $request->referred_by;
@@ -482,10 +489,10 @@ class AuthController extends Controller
                 }
 
                 $default_balance = ['co-operate_accounts', 'private_accounts'];
-                if(in_array($request->account_type, $default_balance) && $user->parent_account_id == null) {
+                if (in_array($request->account_type, $default_balance) && $user->parent_account_id == null) {
                     $user_wallet = Wallet::where([
                         'user_id' => $user->id,
-                        'role' => $request->account_type
+                        'role'    => $request->account_type,
                     ])->where('currency', 'ngn')->first();
 
                     if ($user_wallet) {
@@ -497,10 +504,10 @@ class AuthController extends Controller
                         Log::info("User Wallet not found");
                     }
                 }
-            
+
                 return get_success_response([
-                    'user' => $user,
-                    'token' => $token[1],
+                    'user'          => $user,
+                    'token'         => $token[1],
                     "is_registered" => $is_registered,
                 ], "User logged in successfully");
             }
@@ -527,13 +534,13 @@ class AuthController extends Controller
             ->orWhere('phone', $request->identifier)
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return get_error_response('User not found', ['message' => 'No user found with the provided email or phone number']);
         }
 
         $resetCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        $user->password_reset_code = $resetCode;
+        $user->password_reset_code            = $resetCode;
         $user->password_reset_code_expires_at = now()->addMinutes(10);
         $user->save();
 
@@ -569,7 +576,7 @@ class AuthController extends Controller
             ->where('password_reset_code_expires_at', '>', now())
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return get_error_response('Invalid or expired reset code', ['error' => 'Invalid or expired reset code']);
         }
 
@@ -581,7 +588,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'identifier' => 'required|string',
             'reset_code' => 'required|string|size:6',
-            'password' => 'required|confirmed|min:8',
+            'password'   => 'required|confirmed|min:8',
         ]);
 
         if ($validator->fails()) {
@@ -596,12 +603,12 @@ class AuthController extends Controller
             ->where('password_reset_code_expires_at', '>', now())
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return get_error_response('Invalid or expired reset code', ['message' => 'Invalid or expired reset code']);
         }
 
-        $user->password = Hash::make($request->password);
-        $user->password_reset_code = null;
+        $user->password                       = Hash::make($request->password);
+        $user->password_reset_code            = null;
         $user->password_reset_code_expires_at = null;
         $user->save();
 
@@ -615,39 +622,38 @@ class AuthController extends Controller
         try {
             // Validate the input
             $validatedData = $request->validate([
-                'businessName' => 'sometimes|string|max:255',
-                'cacNumber' => 'sometimes|string|max:50',
-                'businessCategory' => 'array|min:5|max:10', 
-                'businessCategory.*' => 'string|max:100',
-                'businessDescription' => 'sometimes|string',
-                'businessIdType' => 'sometimes|string|max:50',
-                'businessIdNumber' => 'sometimes|string|max:50',
-                'businessIdImage' => 'sometimes|url',
-                'businessBankInfo.bank_name' => 'sometimes|string|max:255',
-                'businessBankInfo.bank_code' => 'sometimes|string|max:10',
+                'businessName'                    => 'sometimes|string|max:255',
+                'cacNumber'                       => 'sometimes|string|max:50',
+                'businessCategory'                => 'array|min:5|max:10',
+                'businessCategory.*'              => 'string|max:100',
+                'businessDescription'             => 'sometimes|string',
+                'businessIdType'                  => 'sometimes|string|max:50',
+                'businessIdNumber'                => 'sometimes|string|max:50',
+                'businessIdImage'                 => 'sometimes|url',
+                'businessBankInfo.bank_name'      => 'sometimes|string|max:255',
+                'businessBankInfo.bank_code'      => 'sometimes|string|max:10',
                 'businessBankInfo.account_number' => 'sometimes|string|max:20',
-                'businessBankInfo.account_name' => 'sometimes|string|max:255',
-                'officeAddress' => 'array',
-                'officeAddress.*.address' => 'sometimes|string|max:255',
-                'officeAddress.*.latitude' => 'sometimes|string|max:50',
-                'officeAddress.*.longitude' => 'sometimes|string|max:50',
+                'businessBankInfo.account_name'   => 'sometimes|string|max:255',
+                'officeAddress'                   => 'array',
+                'officeAddress.*.address'         => 'sometimes|string|max:255',
+                'officeAddress.*.latitude'        => 'sometimes|string|max:50',
+                'officeAddress.*.longitude'       => 'sometimes|string|max:50',
             ]);
 
             // Step 1: Handle business info update or create
             $businessInfoData = [
-                'businessName' => $validatedData['businessName'],
-                'cacNumber' => $validatedData['cacNumber'],
-                'businessCategory' => $validatedData['businessCategory'],
+                'businessName'        => $validatedData['businessName'],
+                'cacNumber'           => $validatedData['cacNumber'],
+                'businessCategory'    => $validatedData['businessCategory'],
                 'businessDescription' => $validatedData['businessDescription'] ?? null,
-                'businessIdType' => $validatedData['businessIdType'] ?? null,
-                'businessIdNumber' => $validatedData['businessIdNumber'] ?? null,
-                'businessIdImage' => $validatedData['businessIdImage'] ?? null,
-                'businessBankInfo' => $validatedData['businessBankInfo'],
+                'businessIdType'      => $validatedData['businessIdType'] ?? null,
+                'businessIdNumber'    => $validatedData['businessIdNumber'] ?? null,
+                'businessIdImage'     => $validatedData['businessIdImage'] ?? null,
+                'businessBankInfo'    => $validatedData['businessBankInfo'],
             ];
 
-
             $officeAddresses = $validatedData['officeAddress'] ?? [];
-            $user = auth()->user();
+            $user            = auth()->user();
 
             $businessInfo = $user->business_info()->updateOrCreate(
                 ['user_id' => $user->id],
@@ -657,22 +663,22 @@ class AuthController extends Controller
             // Step 2: Handle multiple office addresses
             foreach ($officeAddresses as $k => $addressData) {
                 $active = false;
-                if($k < 3) {
+                if ($k < 3) {
                     $active = true;
                 }
                 $user->business_office_address()->updateOrCreate(
                     ['address' => $addressData['address']],
                     [
-                        'latitude' => $addressData['latitude'],
+                        'latitude'  => $addressData['latitude'],
                         'longitude' => $addressData['longitude'],
-                        "is_active" => $active
+                        "is_active" => $active,
                     ]
                 );
             }
 
             return get_success_response([
-                'message' => 'Business profile and addresses updated successfully',
-                'businessInfo' => $businessInfo,
+                'message'         => 'Business profile and addresses updated successfully',
+                'businessInfo'    => $businessInfo,
                 'officeAddresses' => $user->business_office_address, // Return all addresses
             ]);
         } catch (\Throwable $th) {
@@ -680,12 +686,11 @@ class AuthController extends Controller
         }
     }
 
-
     public function getUserById($userId)
     {
         try {
             $user = User::find($userId);
-            if (!$user) {
+            if (! $user) {
                 return get_error_response('User not found', ['error' => 'User not found']);
             }
             return get_success_response(['user' => $user]);
@@ -698,7 +703,7 @@ class AuthController extends Controller
     {
         try {
             $user = $request->user();
-            if (!$user) {
+            if (! $user) {
                 return get_error_response('User not found', ['error' => 'User not found']);
             }
             if ($user->tokens()->delete() && $user->delete()) {
@@ -717,7 +722,7 @@ class AuthController extends Controller
     private function sendSMS($phone, $message)
     {
         $dojah = new DojaWebhookController();
-        $send = $dojah->sendSMS($phone, $message);
+        $send  = $dojah->sendSMS($phone, $message);
         return $send;
     }
 
@@ -725,14 +730,14 @@ class AuthController extends Controller
     {
         try {
             $request->validate([
-                'current_password' => 'required',
-                'new_password' => 'required|min:8|different:current_password',
+                'current_password'          => 'required',
+                'new_password'              => 'required|min:8|different:current_password',
                 'new_password_confirmation' => 'required|same:new_password',
             ]);
 
             $user = $request->user();
 
-            if (!Hash::check($request->current_password, $user->password)) {
+            if (! Hash::check($request->current_password, $user->password)) {
                 return get_error_response('Current password is incorrect', ['error' => 'Current password is incorrect']);
             }
 
@@ -749,44 +754,44 @@ class AuthController extends Controller
     {
         try {
             $ref_code = $request->referred_by;
-            $is_task = false;
-    
+            $is_task  = false;
+
             $referrer = Referral::userByReferralCode($ref_code);
-    
-            if (!$referrer) {
+
+            if (! $referrer) {
                 // Check if it's for a task referral
                 $subscription = Subscription::where('referral_code', $ref_code)->first();
                 // return response()->json($subscription);
-    
-                if (!isset($subscription->id)) {
+
+                if (! isset($subscription->id)) {
                     return get_error_response('Referrer not found', ['is_valid_referrer' => false]);
                 }
-    
+
                 $is_task = true;
-                $user = User::find($subscription->user_id);
-    
-                if (!$user) {
+                $user    = User::find($subscription->user_id);
+
+                if (! $user) {
                     return get_error_response('Referrer not found', ['is_valid_referrer' => false]);
                 }
-    
+
                 return get_success_response([
                     'is_valid_referrer' => true,
-                    'owner' => $user->only(['first_name', 'last_name']),
-                    'type' => 'task'
+                    'owner'             => $user->only(['first_name', 'last_name']),
+                    'type'              => 'task',
                 ], 'Referrer found');
             }
-    
+
             return get_success_response([
                 'is_valid_referrer' => true,
-                'owner' => $referrer->only(['first_name', 'last_name']),
-                'type' => 'general_referrer'
+                'owner'             => $referrer->only(['first_name', 'last_name']),
+                'type'              => 'general_referrer',
             ], 'Referrer found');
         } catch (\Throwable $th) {
             return get_error_response('An error occurred while validating the referrer.', [
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ]);
         }
-    }   
+    }
 
     private function process_referral($user, $referred_by, $account_type)
     {
@@ -815,22 +820,22 @@ class AuthController extends Controller
             });
         } catch (\Throwable $e) {
             Log::error('Referral processing failed: ' . $e->getMessage(), [
-                'user_id' => $user->id ?? null,
-                'referred_by' => $referred_by,
+                'user_id'      => $user->id ?? null,
+                'referred_by'  => $referred_by,
                 'account_type' => $account_type,
             ]);
             return false;
         }
     }
-    
+
     public function referrals()
     {
         // Get the current user's referral info
         $userReferral = Referral::where('user_id', auth()->id())->first();
-        
+
         // Get referrer ID from request or user's referral code
         $refId = request()->input('referred_by', $userReferral?->referrer_id);
-        
+
         // Validate ref ID
         if (is_null($refId)) {
             return get_error_response(

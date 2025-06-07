@@ -157,7 +157,7 @@ class OrderController extends Controller
             }
             return get_success_response($orders, "User orders retrieved successfully");
         } catch (\Exception $e) {
-            \Log::error('Error retrieving user orders: ' . $e->getMessage());
+            Log::error('Error retrieving user orders: ' . $e->getMessage());
             return get_error_response("Failed to retrieve user orders", ["error" => $e->getMessage()], 500);
         }
     }
@@ -170,7 +170,7 @@ class OrderController extends Controller
         } catch (ModelNotFoundException $e) {
             return get_error_response("Order not found", ['error' => "Order not found"], 404);
         } catch (\Exception $e) {
-            \Log::error('Error retrieving order: ' . $e->getMessage());
+            Log::error('Error retrieving order: ' . $e->getMessage());
             return get_error_response("Failed to retrieve order", ["error" => $e->getMessage()], 500);
         }
     }
@@ -183,7 +183,7 @@ class OrderController extends Controller
         } catch (ModelNotFoundException $e) {
             return get_error_response("Order not found", [], 404);
         } catch (\Exception $e) {
-            \Log::error('Error retrieving order status: ' . $e->getMessage());
+            Log::error('Error retrieving order status: ' . $e->getMessage());
             return get_error_response("Failed to retrieve order status", ["error" => $e->getMessage()], 500);
         }
     }
@@ -191,11 +191,14 @@ class OrderController extends Controller
     public function getOrdersByStatus($status)
     {
         try {
-            if($status ==a)
-            $orders = OrderModel::where('user_id', auth()->id())->where('_account_type', active_role())->where('status', $status)->get();
+            $query = OrderModel::where('user_id', auth()->id())->where('status', $status);
+            if(strtolower($status) == "cancel" || strtolower($status) == "canceled") {
+                $query->orWhere('status', 'rejected');
+            }
+            $orders = $query->where('_account_type', active_role())->get();
             return get_success_response($orders, "Orders retrieved successfully");
         } catch (\Exception $e) {
-            \Log::error('Error retrieving orders by status: ' . $e->getMessage());
+            Log::error('Error retrieving orders by status: ' . $e->getMessage());
             return get_error_response("Failed to retrieve orders", ["error" => $e->getMessage()], 500);
         }
     }
@@ -206,7 +209,7 @@ class OrderController extends Controller
             $orders = OrderModel::where('user_id', auth()->id())->where('_account_type', active_role())->orderBy('status')->latest()->get();
             return get_success_response($orders, "Sorted orders retrieved successfully");
         } catch (\Exception $e) {
-            \Log::error('Error retrieving sorted orders: ' . $e->getMessage());
+            Log::error('Error retrieving sorted orders: ' . $e->getMessage());
             return get_error_response("Failed to retrieve sorted orders", ["error" => $e->getMessage()], 500);
         }
     }
@@ -221,7 +224,7 @@ class OrderController extends Controller
         } catch (ModelNotFoundException $e) {
             return get_error_response("Order not found", ['error' => "Order not found"], 404);
         } catch (\Exception $e) {
-            \Log::error('Error tracking order: ' . $e->getMessage());
+            Log::error('Error tracking order: ' . $e->getMessage());
             return get_error_response("Failed to track order", ["error" => $e->getMessage()], 400);
         }
     }
