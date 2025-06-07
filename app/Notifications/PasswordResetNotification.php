@@ -1,11 +1,9 @@
 <?php
-
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Messages\NexmoMessage;
+use Illuminate\Notifications\Notification;
 
 class PasswordResetNotification extends Notification
 {
@@ -25,18 +23,21 @@ class PasswordResetNotification extends Notification
 
     public function toMail($notifiable)
     {
-        $message = 
-            "Your password reset code is: " . $this->resetCode . "\n\n" .
-            "If you didn't request a password reset, please ignore this message.";
+        $message =
+            "We received a request to reset your Call2Fix password. No worries—we’ve got you covered!\n\n" .
+            "To reset your password, please use the code below:\n" .
+            "$this->resetCode \n\n" .
+            "For security reasons, this link will expire in 24 hours. If you didn’t request a password reset, please ignore this email. Your account will remain secure.\n\n" .
+            "If you need any further assistance, feel free to reach out to our support team by replying to this email or calling us at 0701-530-0138.";
 
         return (new MailMessage)
-            ->subject('Password Reset Code')
+            ->subject('Reset Your Call2Fix Password')
             ->view('vendor.property', [
-                'content' => nl2br(e($message)),
+                'content'    => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);
-    }
 
+    }
 
     // public function toNexmo($notifiable)
     // {

@@ -52,7 +52,7 @@
                                         </table>
 
                                         {{-- Dynamic Email Content --}}
-                                        <p style="margin-bottom: 16px;">Hello {{ $notifiable->last_name }},</p>
+                                        <p style="margin-bottom: 16px;">Hello {{ $notifiable->first_name }},</p>
 
                                         <p>A new property has been added to your account.</p>
 
@@ -173,7 +173,7 @@
                                         </table>
 
                                         {{-- Dynamic Email Content --}}
-                                        <p style="margin-bottom: 16px;">Hello {{ $notifiable->last_name }},</p>
+                                        <p style="margin-bottom: 16px;">Hello {{ $notifiable->first_name }},</p>
 
                                         <p>A new property has been added to your account.</p>
 

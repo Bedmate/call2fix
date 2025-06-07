@@ -1,11 +1,8 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
 class Order extends BaseModel
 {
@@ -32,7 +29,7 @@ class Order extends BaseModel
         'additional_info',
         'shipping_fee',
         'product_category_id',
-        'delivery_type'
+        'delivery_type',
     ];
 
     protected $hidden = [
@@ -79,15 +76,15 @@ class Order extends BaseModel
     }
 
     public const STATUSES = [
-        0 => 'UPCOMING',
-        1 => 'STARTED',
-        2 => 'ENDED',
-        3 => 'FAILED',
-        4 => 'ARRIVED',
-        6 => 'UNASSIGNED',
-        7 => 'ACCEPTED',
-        8 => 'DECLINE',
-        9 => 'CANCEL',
+        0  => 'UPCOMING',
+        1  => 'STARTED',
+        2  => 'ENDED',
+        3  => 'FAILED',
+        4  => 'ARRIVED',
+        6  => 'UNASSIGNED',
+        7  => 'ACCEPTED',
+        8  => 'DECLINE',
+        9  => 'CANCEL',
         10 => 'DELETED',
         11 => 'REJECTED',
     ];
@@ -98,7 +95,7 @@ class Order extends BaseModel
         // Check if the passed value is an integer (array key)
         if (is_numeric($value) && array_key_exists((int) $value, self::STATUSES)) {
             $this->attributes['status'] = self::STATUSES[(int) $value]; // Convert to string status
-        } 
+        }
         // If the value is a string, map it to the corresponding integer key and then to a string
         elseif (is_string($value)) {
             $statusKey = array_search(strtoupper($value), self::STATUSES);
@@ -112,7 +109,6 @@ class Order extends BaseModel
         }
     }
 
-
     // Accessor to get status description
     public function getStatusDescriptionAttribute()
     {
@@ -124,8 +120,8 @@ class Order extends BaseModel
         parent::boot();
 
         static::creating(function ($model) {
-            if (!$model->order_id) {
-                $model->order_id = (string) (self::count() + 1);
+            if (! $model->order_id) {
+                $model->order_id      = (string) (self::count() + 1);
                 $model->_account_type = active_role();
             }
         });
@@ -134,14 +130,47 @@ class Order extends BaseModel
     public function newQuery($excludeDeleted = true)
     {
         $query = parent::newQuery($excludeDeleted);
-        if (request()->has('category') && !empty(request()->query('category'))) {
+        if (request()->has('category') && ! empty(request()->query('category'))) {
             $query->where('product_category_id', request()->query('category'));
         }
 
-        if (request()->has('status') && !empty(request()->query('status'))) {
+        if (request()->has('status') && ! empty(request()->query('status'))) {
             $query->where('status', request()->query('status'));
         }
-        
+
         return $query;
     }
+
+    // Accessor for created_at
+    public function getCreatedAtAttribute($value)
+    {
+        return $this->convertToCustomerTimezone($value);
+    }
+
+// Accessor for updated_at
+    public function getUpdatedAtAttribute($value)
+    {
+        return $this->convertToCustomerTimezone($value);
+    }
+
+// Accessor for deleted_at
+    public function getDeletedAtAttribute($value)
+    {
+        return $this->convertToCustomerTimezone($value);
+    }
+
+// Helper method to handle conversion
+    protected function convertToCustomerTimezone($value)
+    {
+        if (! $value) {
+            return null;
+        }
+
+        $timezone = $this->user && $this->user->timezone
+        ? $this->user->timezone
+        : config('app.timezone'); // fallback timezone
+
+        return Carbon::parse($value)->timezone($timezone)->toDateTimeString();
+    }
+
 }

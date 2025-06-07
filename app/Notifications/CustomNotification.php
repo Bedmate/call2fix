@@ -41,7 +41,7 @@ class CustomNotification extends Notification
         return (new MailMessage)
                 ->subject($this->title)
                 ->markdown('vendor.email', [
-                    'greetings' => "Hello {$notifiable->last_name}",
+                    'greetings' => "Hello {$notifiable->first_name}",
                     'body' => $this->body,
                 ]);
     }

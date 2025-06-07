@@ -1,13 +1,9 @@
 <?php
-
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Services\GeoLocationService;
 use Carbon\Carbon;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @method static create(array $validatedData)
@@ -28,7 +24,7 @@ class ServiceRequest extends BaseModel
         'problem_images',
         'use_featured_providers',
         'featured_providers_id',
-        'request_status',    // 'Draft','Pending','Processing','Bidding In Progress','Quote Accepted','Awaiting Payment','Payment Confirmed','On Hold','Work In Progress','Cancelled','Completed','Overdue','Closed','Rejected','Rework issued'
+        'request_status', // 'Draft','Pending','Processing','Bidding In Progress','Quote Accepted','Awaiting Payment','Payment Confirmed','On Hold','Work In Progress','Cancelled','Completed','Overdue','Closed','Rejected','Rework issued'
         'department_id',
         'approved_providers_id',
         'approved_artisan_id',
@@ -37,25 +33,24 @@ class ServiceRequest extends BaseModel
         'bidding_start_date',
         'bidding_end_date',
         'bidding_start_time',
-        'bidding_end_time'
+        'bidding_end_time',
     ];
 
     protected $casts = [
-        'problem_images' => 'array',
-        'featured_providers_id' => 'array',
+        'problem_images'            => 'array',
+        'featured_providers_id'     => 'array',
         'old_featured_providers_id' => 'array',
-        'use_featured_providers' => 'boolean',
-        'inspection_date' => 'date',
-        'bidding_start_date' => 'date',
-        'bidding_end_date' => 'date',
+        'use_featured_providers'    => 'boolean',
+        'inspection_date'           => 'date',
+        'bidding_start_date'        => 'date',
+        'bidding_end_date'          => 'date',
     ];
-    
-    
+
     protected $with = [
         'negotiations',
         'submittedQuotes',
         'user',
-        'service_provider'
+        'service_provider',
     ];
 
     public function negotiations()
@@ -120,4 +115,31 @@ class ServiceRequest extends BaseModel
         $timezone = app()->make('App\Services\GeoLocationService')->getUserTimezoneByIp();
         return Carbon::parse($value)->timezone($timezone);
     }
+
+// Accessor for updated_at
+    public function getUpdatedAtAttribute($value)
+    {
+        return $this->convertToCustomerTimezone($value);
+    }
+
+// Accessor for deleted_at
+    public function getDeletedAtAttribute($value)
+    {
+        return $this->convertToCustomerTimezone($value);
+    }
+
+// Helper method to handle conversion
+    protected function convertToCustomerTimezone($value)
+    {
+        if (! $value) {
+            return null;
+        }
+
+        $timezone = $this->user && $this->user->timezone
+        ? $this->user->timezone
+        : config('app.timezone'); // fallback timezone
+
+        return Carbon::parse($value)->timezone($timezone)->toDateTimeString();
+    }
+
 }

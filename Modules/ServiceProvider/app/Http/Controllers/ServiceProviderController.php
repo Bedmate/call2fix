@@ -1,5 +1,4 @@
 <?php
-
 namespace Modules\ServiceProvider\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -9,18 +8,15 @@ use App\Models\Property;
 use App\Models\ServiceRequest;
 use App\Models\SubmittedQuotes;
 use App\Models\User;
-use DB, Str;
-use Illuminate\Http\RedirectResponse;
+use App\Notifications\CustomNotification;
+use App\Notifications\NewArtisanAddedNotification;
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Validator;
 use Modules\Artisan\Models\ArtisanQuotes;
 use Modules\ServiceProvider\Models\ServiceLocations;
-use Validator;
-use App\Notifications\NewArtisanAddedNotification;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use App\Notifications\CustomNotification;
-
+use Str;
 
 class ServiceProviderController extends Controller
 {
@@ -48,7 +44,7 @@ class ServiceProviderController extends Controller
             ->with('artisan_quotes')
             ->first();
 
-        if (!$artisan) {
+        if (! $artisan) {
             return get_error_response("Artisan not found", [], 404);
         }
 
@@ -61,7 +57,7 @@ class ServiceProviderController extends Controller
             ->where('service_provider_id', auth()->id())
             ->first();
 
-        if (!$artisan) {
+        if (! $artisan) {
             return get_error_response("Artisan not found", [], 404);
         }
 
@@ -73,71 +69,70 @@ class ServiceProviderController extends Controller
     /**
      * Add new artisan
      * @param \Illuminate\Http\Request $request
-     * @return 
+     * @return
      */
     public function addArtisan(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
-                "first_name" => "required|string|max:255",
-                "last_name" => "required|string|max:255",
-                "email" => "required|email|unique:users,email",
-                "phone" => "required|string|max:20|unique:artisans,phone",
-                "trade" => "required|string|max:255", // category the artisan is registered under - max.
-                "location" => "required|array|max:255", // locations service provider offers services.
-                "id_type" => "required|string|in:national_id,drivers_license,passport,voters_card",
-                "id_image" => "required",
+                "first_name"        => "required|string|max:255",
+                "last_name"         => "required|string|max:255",
+                "email"             => "required|email|unique:users,email",
+                "phone"             => "required|string|max:20|unique:artisans,phone",
+                "trade"             => "required|string|max:255", // category the artisan is registered under - max.
+                "location"          => "required|array|max:255",  // locations service provider offers services.
+                "id_type"           => "required|string|in:national_id,drivers_license,passport,voters_card",
+                "id_image"          => "required",
                 "trade_certificate" => "required",
-                "payment_plan" => "required|string|in:percentage,fixed",
-                "payment_amount" => "required|numeric|min:1",
-                "bank_code" => "required|string|max:20",
-                "account_number" => "required|string|max:20",
-                "account_name" => "required|string|max:255",
-                "artisan_category" => "sometimes|exists:categories,id"
+                "payment_plan"      => "required|string|in:percentage,fixed",
+                "payment_amount"    => "required|numeric|min:1",
+                "bank_code"         => "required|string|max:20",
+                "account_number"    => "required|string|max:20",
+                "account_name"      => "required|string|max:255",
+                "artisan_category"  => "sometimes|exists:categories,id",
             ]);
 
             if ($validator->fails()) {
                 return get_error_response("Validation error", $validator->errors()->toArray(), 422);
             }
 
-            $validateData = $validator->validated();
-            $validateData['user_id'] = auth()->id();
+            $validateData                        = $validator->validated();
+            $validateData['user_id']             = auth()->id();
             $validateData['service_provider_id'] = auth()->id();
 
             DB::beginTransaction(); // Start transaction
-
 
             if ($request->has('phone')) {
                 $userData['phone'] = str_replace(" ", "", $request->phone);
             }
 
-            $user = auth()->user();
-            $officeAddresses = Artisans::where(['artisan_category' => $request->artisan_category, 'user_id' => $user->id])->count();
-            $subscription = $user->activeSubscription();
+            $user                   = auth()->user();
+            $officeAddresses        = Artisans::where(['artisan_category' => $request->artisan_category, 'user_id' => $user->id])->count();
+            $subscription           = $user->activeSubscription();
             $allowedOfficeAddresses = $subscription->getRemainingOf('artisans');
-            if($officeAddresses > $allowedOfficeAddresses) {
+            if ($officeAddresses > $allowedOfficeAddresses) {
                 return get_error_response('Feature limit reached', ['error' => 'Feature limit reached'], 403);
             }
 
             // Add Artisan to user DB
-            $artisanPassword = "!".Str::random(8);
-            $userData = [
-                'first_name' => $validateData['first_name'],
-                'last_name' => $validateData['last_name'],
-                'email' => $validateData['email'],
-                'phone' => $validateData['phone'],
-                'password' => bcrypt($artisanPassword),
-                'username' => $validateData['first_name'] . rand(23, 999),
-                'is_social' => false,
-                'account_type' => 'artisan',
-                'device_id' => 'device_id',
-                'current_role' => 'artisan',
+            $artisanPassword = "!" . Str::random(8);
+            $userData        = [
+                'first_name'        => $validateData['first_name'],
+                'last_name'         => $validateData['last_name'],
+                'email'             => $validateData['email'],
+                'phone'             => $validateData['phone'],
+                'password'          => bcrypt($artisanPassword),
+                'username'          => $validateData['first_name'] . rand(23, 999),
+                'is_social'         => false,
+                'account_type'      => 'artisan',
+                'device_id'         => 'device_id',
+                'current_role'      => 'artisan',
                 'main_account_role' => 'artisan',
             ];
 
             $newArtisan = User::updateOrCreate([
                 'email' => $validateData['email'],
-                'phone' => $validateData['phone']
+                'phone' => $validateData['phone'],
             ], $userData);
             if ($newArtisan) {
                 $newArtisan->assignRole('artisan');
@@ -164,54 +159,53 @@ class ServiceProviderController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                "first_name" => "sometimes|string|max:255",
-                "last_name" => "sometimes|string|max:255",
-                "trade" => "sometimes|string|max:255", // category the artisan is registered under - max.
-                "location" => "sometimes|array|max:255", // locations service provider offers services.
-                "id_type" => "sometimes|string|in:national_id,drivers_license,passport,voters_card",
-                "id_image" => "sometimes",
+                "first_name"        => "sometimes|string|max:255",
+                "last_name"         => "sometimes|string|max:255",
+                "trade"             => "sometimes|string|max:255", // category the artisan is registered under - max.
+                "location"          => "sometimes|array|max:255",  // locations service provider offers services.
+                "id_type"           => "sometimes|string|in:national_id,drivers_license,passport,voters_card",
+                "id_image"          => "sometimes",
                 "trade_certificate" => "sometimes",
-                "payment_plan" => "sometimes|string|in:percentage,fixed",
-                "payment_amount" => "sometimes|numeric|min:0",
-                "bank_code" => "sometimes|string|max:20",
-                "account_number" => "sometimes|string|max:20",
-                "account_name" => "sometimes|string|max:255",
-                "artisan_category" => "sometimes|exists:categories,id"
+                "payment_plan"      => "sometimes|string|in:percentage,fixed",
+                "payment_amount"    => "sometimes|numeric|min:0",
+                "bank_code"         => "sometimes|string|max:20",
+                "account_number"    => "sometimes|string|max:20",
+                "account_name"      => "sometimes|string|max:255",
+                "artisan_category"  => "sometimes|exists:categories,id",
             ]);
 
             if ($validator->fails()) {
                 return get_error_response("Validation error", $validator->errors()->toArray(), 422);
             }
 
-            $validateData = $validator->validated();
+            $validateData                        = $validator->validated();
             $validateData['service_provider_id'] = auth()->id();
 
             DB::beginTransaction(); // Start transaction
 
-
             if ($request->has('phone')) {
                 $userData['phone'] = str_replace(" ", "", $request->phone);
             }
-            
+
             // Add Artisan to user DB
             $artisanPassword = Str::random(8);
-            $userData = [
-                'first_name' => $validateData['first_name'],
-                'last_name' => $validateData['last_name'],
-                'password' => bcrypt($artisanPassword),
-                'username' => $validateData['first_name'] . rand(23, 999),
-                'is_social' => false,
-                'account_type' => 'artisan',
-                'device_id' => 'device_id',
-                'current_role' => 'artisan',
+            $userData        = [
+                'first_name'        => $validateData['first_name'],
+                'last_name'         => $validateData['last_name'],
+                'password'          => bcrypt($artisanPassword),
+                'username'          => $validateData['first_name'] . rand(23, 999),
+                'is_social'         => false,
+                'account_type'      => 'artisan',
+                'device_id'         => 'device_id',
+                'current_role'      => 'artisan',
                 'main_account_role' => 'artisan',
             ];
 
             $newArtisan = User::whereId($artisanId)->first();
-            if(!$newArtisan) {
+            if (! $newArtisan) {
                 return get_error_response("Artisan not found", [], 404);
             }
-            
+
             if ($newArtisan->update($userData)) {
                 $newArtisan->assignRole('artisan');
                 $validateData['artisan_id'] = $newArtisan->id;
@@ -237,10 +231,10 @@ class ServiceProviderController extends Controller
     {
         try {
             $user = auth()->user();
-    
+
             // Ensure the user has a business_info relationship
             $office_address = $user->business_office_address();
-            if (!$office_address) {
+            if (! $office_address) {
                 return get_error_response("Business information not found.");
             }
             return get_success_response(['locations' => $office_address], "Addresses retrieved successfully.");
@@ -253,24 +247,24 @@ class ServiceProviderController extends Controller
     {
         try {
             $user = auth()->user();
-    
+
             // Ensure the user has a business_info relationship
             $businessInfo = $user->business_info;
-            if (!$businessInfo) {
+            if (! $businessInfo) {
                 return get_error_response("Business information not found.");
             }
-    
+
             // Decode the businessCategory JSON field
             $businessCategoryIds = $businessInfo->businessCategory;
-    
+
             // Ensure businessCategoryIds is an array
-            if (!is_array($businessCategoryIds) || empty($businessCategoryIds)) {
+            if (! is_array($businessCategoryIds) || empty($businessCategoryIds)) {
                 return get_error_response("No business categories found.");
             }
-    
+
             // Fetch categories from the database
             $categories = Category::whereIn('id', $businessCategoryIds)->get();
-    
+
             return get_success_response(['categories' => $categories], "Categories retrieved successfully.");
         } catch (\Exception $e) {
             return get_error_response("An error occurred while retrieving categories.", ['error' => $e->getMessage()]);
@@ -306,65 +300,82 @@ class ServiceProviderController extends Controller
     {
         try {
             $validate = Validator::make(request()->all(), [
-                "request_id" => "required",
-                'workmanship' => 'required',
-                'items' => 'array|required',
-                'sla_duration' => 'required',
+                "request_id"     => "required",
+                'workmanship'    => 'required',
+                'items'          => 'array|required',
+                'sla_duration'   => 'required',
                 'sla_start_date' => 'required',
-                'attachments' => 'nullable',
-                'summary_note' => 'required',
-                'total_charges' => 'required',
-                'service_vat' => 'required',
+                'attachments'    => 'nullable',
+                'summary_note'   => 'required',
+                'total_charges'  => 'required',
+                'service_vat'    => 'required',
             ]);
 
             if ($validate->fails()) {
                 return get_error_response("Validation failed", $validate->errors());
             }
+            // get the autuhenticated service provider
+            $user = $request->user();
 
-            // Check if quote already submitted    
-            if (SubmittedQuotes::where(["provider_id" => auth()->id(), "request_id" => $request->request_id])->exists()) {
+            // Check if quote already submitted
+            if (SubmittedQuotes::where(["provider_id" => $user->id, "request_id" => $request->request_id])->exists()) {
                 return get_error_response("You have already submitted a quote for this request", ["error" => "You have already submitted a quote for this request"]);
             }
 
             $service_vat = ($request->workmanship + get_settings_value('administrative_fee')) * 0.075;
-
             $items_total = 0;
-            if ($request->has('items') && !empty($request->items)) {
+            if ($request->has('items') && ! empty($request->items)) {
                 $items = $request->items;
                 foreach ($items as $item) {
                     $items_total += $item['quantity'] * $item['price'];
                 }
                 $service_vat += $items_total * 0.075;
             }
-              
-            // Process quote submission  
+
+            // Process quote submission
             // $items_total = $request->total_charges ?? $items_total;
             $createQuote = SubmittedQuotes::updateOrCreate(
                 [
-                    "provider_id" => auth()->id(),
-                    "request_id" => $request->request_id,
+                    "provider_id" => $user->id,
+                    "request_id"  => $request->request_id,
                 ],
                 [
-                    "provider_id" => auth()->id(),
-                    "request_id" => $request->request_id,
-                    "workmanship" => $request->workmanship,
-                    "sla_duration" => $request->sla_duration,
-                    "sla_start_date" => $request->sla_start_date,
-                    "attachments" => $request->attachments,
-                    "summary_note" => $request->summary_note,
+                    "provider_id"        => $user->id,
+                    "request_id"         => $request->request_id,
+                    "workmanship"        => $request->workmanship,
+                    "sla_duration"       => $request->sla_duration,
+                    "sla_start_date"     => $request->sla_start_date,
+                    "attachments"        => $request->attachments,
+                    "summary_note"       => $request->summary_note,
                     "administrative_fee" => $request->administrative_fee, //get_settings_value('administrative_fee', 500),
-                    "service_vat" => $request->service_vat,
-                    "items" => $request->items,
-                    "old_price" => $request->total_charges, // ?? $request->workmanship + $items_total + get_settings_value('administrative_fee') + $service_vat,
-                    "total_charges" => $request->total_charges, // ?? $request->workmanship + $items_total + get_settings_value('administrative_fee') + $service_vat,
+                    "service_vat"        => $request->service_vat,
+                    "items"              => $request->items,
+                    "old_price"          => $request->total_charges, // ?? $request->workmanship + $items_total + get_settings_value('administrative_fee') + $service_vat,
+                    "total_charges"      => $request->total_charges, // ?? $request->workmanship + $items_total + get_settings_value('administrative_fee') + $service_vat,
                 ]
             );
 
             // $createQuote->items()->save($request->items);
             // get customer who created service request
             $serviceRequest = ServiceRequest::whereId($request->request_id)->first();
-            if($serviceRequest) {
+            if ($serviceRequest) {
                 $customer = User::find($serviceRequest->user_id);
+
+                $serviceName  = $serviceRequest->problem_title ?? '[Service Name]';
+                $providerName = "{$user->first_name} {$user->last_name}" ?? '[Service Provider\'s Name]';
+                $quoteAmount  = $request->total_charges ?? '[Amount]';
+                $quoteDate    = now() ?? '[Date]';
+
+                $message =
+                    "{$providerName} has submitted a quote for your service request.\n\n" .
+                    "Request Details:\n" .
+                    "\t• Service Requested: {$serviceName}\n" .
+                    "\t• Provider Name: {$providerName}\n" .
+                    "\t• Quote Amount: {$quoteAmount}\n" .
+                    "\t• Quote Submission Date: {$quoteDate}\n\n" .
+                    "You can review the quote and choose to approve it, negotiate the terms, or request changes directly through the app.\n\n" .
+                    "Should you have any questions or need help with the quote, please contact us at 0701-530-0138 or reply to this email.";
+
                 $customer->notify(new CustomNotification("Quote submitted by provider", "Quote submitted by provider."));
             }
             return get_success_response($createQuote, "Quote submitted successfully");
@@ -375,9 +386,9 @@ class ServiceProviderController extends Controller
     }
 
     /**
-     * Return quotes by service providers from 
+     * Return quotes by service providers from
      * model: SubmittedQuotes
-     * 
+     *
      * @return mixed
      */
     public function getQuotes()
@@ -400,7 +411,7 @@ class ServiceProviderController extends Controller
             $user = auth()->user();
 
             // Get the radius limit in kilometers from settings and convert to meters
-            $radiusLimitKm = get_settings_value('max_provider_radius');
+            $radiusLimitKm     = get_settings_value('max_provider_radius');
             $radiusLimitMeters = $radiusLimitKm * 1000; // Convert km to meters
 
             // Get service providers within the radius limit
@@ -408,7 +419,7 @@ class ServiceProviderController extends Controller
                 ->whereRaw('ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= ?', [
                     $property->longitude,
                     $property->latitude,
-                    $radiusLimitMeters
+                    $radiusLimitMeters,
                 ])
                 ->orderBy('distance')
                 ->get();
@@ -428,7 +439,7 @@ class ServiceProviderController extends Controller
             // Get the authenticated user
             $user = auth()->user();
 
-            // Get the radius limit in kilometers from settings and convert to meters
+                                                              // Get the radius limit in kilometers from settings and convert to meters
             $radiusLimitMeters = $this->radiusLimitKm * 1000; // Convert km to meters
 
             // Get the closest featured service provider within the radius limit
@@ -437,12 +448,12 @@ class ServiceProviderController extends Controller
                 ->whereRaw('ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= ?', [
                     $property->longitude,
                     $property->latitude,
-                    $radiusLimitMeters
+                    $radiusLimitMeters,
                 ])
                 ->orderBy('distance')
                 ->first();
 
-            if (!$featuredProvider) {
+            if (! $featuredProvider) {
                 return get_error_response("No featured service provider found nearby", [], 404);
             }
 
@@ -456,8 +467,8 @@ class ServiceProviderController extends Controller
     {
         try {
             $requests = ServiceRequest::whereJsonContains('featured_providers_id', [auth()->id()])
-                        ->orWhere('approved_providers_id', auth()->id())
-                        ->paginate(get_settings_value('per_page', 10));
+                ->orWhere('approved_providers_id', auth()->id())
+                ->paginate(get_settings_value('per_page', 10));
             return get_success_response($requests, "Service provider requests retrieved successfully");
         } catch (\Throwable $th) {
             return get_error_response($th->getMessage(), ["error" => $th->getMessage()]);
@@ -468,20 +479,20 @@ class ServiceProviderController extends Controller
     {
         try {
             $validate = Validator::make($request->all(), [
-                "address" => "required|string",
-                "latitude" => "required|string",
-                "longitude" => "required|string"
+                "address"   => "required|string",
+                "latitude"  => "required|string",
+                "longitude" => "required|string",
             ]);
 
             if ($validate->fails()) {
                 return get_error_response("Validation Error", ['error' => $validate->errors()->toArray()]);
             }
 
-            $location = new ServiceLocations();
-            $location->address = $request->address;
-            $location->latitude = $request->latitude;
+            $location            = new ServiceLocations();
+            $location->address   = $request->address;
+            $location->latitude  = $request->latitude;
             $location->longitude = $request->longitude;
-            $location->user_id = auth()->id();
+            $location->user_id   = auth()->id();
 
             if ($location->save()) {
                 return get_success_response($location, "Service location added successfully");
@@ -509,17 +520,17 @@ class ServiceProviderController extends Controller
     {
         try {
             $validate = Validator::make($request->all(), [
-                "request_id" => "required|exists:service_requests,id",
-                "artisan_id" => "required|exists:users,id",
-                "service_provider_id" => "required|exists:users,id"
+                "request_id"          => "required|exists:service_requests,id",
+                "artisan_id"          => "required|exists:users,id",
+                "service_provider_id" => "required|exists:users,id",
             ]);
 
-            $checkExists =  ArtisanCanSubmitQuote::where([
+            $checkExists = ArtisanCanSubmitQuote::where([
                 "request_id" => $request->request_id,
                 "artisan_id" => $request->artisan_id,
             ])->exists();
 
-            if($checkExists) {
+            if ($checkExists) {
                 return get_error_response("An Artisan has already been added to this project", ['error' => "An Artisan has already been added to this project"]);
             }
 

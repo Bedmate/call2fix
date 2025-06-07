@@ -1,19 +1,16 @@
 <?php
-
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Services\GeoLocationService;
-use Carbon\Carbon;
-
 
 class ServiceRequestModel extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = "service_requests";
+    protected $table    = "service_requests";
     protected $fillable = [
         'user_id',
         'property_id',
@@ -35,27 +32,26 @@ class ServiceRequestModel extends Model
         'bidding_start_date',
         'bidding_end_date',
         'bidding_start_time',
-        'bidding_end_time'
+        'bidding_end_time',
     ];
 
     protected $casts = [
-        'problem_images' => 'array',
-        'featured_providers_id' => 'array',
-        'use_featured_providers' => 'boolean',
+        'problem_images'            => 'array',
+        'featured_providers_id'     => 'array',
+        'use_featured_providers'    => 'boolean',
         'old_featured_providers_id' => 'array',
-        'inspection_date' => 'date',
-        'bidding_start_date' => 'date',
-        'bidding_end_date' => 'date',
+        'inspection_date'           => 'date',
+        'bidding_start_date'        => 'date',
+        'bidding_end_date'          => 'date',
     ];
-    
-    
+
     protected $with = [
         'negotiations',
         'ratings',
         'user',
         'service_provider',
         'checkIns',
-        'aportionment'
+        'aportionment',
     ];
 
     public function negotiations()
@@ -79,19 +75,18 @@ class ServiceRequestModel extends Model
     // Disable auto-incrementing for the primary key
     public $incrementing = false;
 
-
     // Automatically generate a UUID when creating a new model instance
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($model) {
-            if (!$model->getKey()) {
-                $model->{$model->getKeyName()} = (string) Uuid::uuid4();
+            if (! $model->getKey()) {
+                $model->{$model->getKeyName()} = (string) generate_uuid();
             }
         });
     }
-    
+
     // Relationships
     public function user()
     {
@@ -133,7 +128,6 @@ class ServiceRequestModel extends Model
         return $this->hasMany(CheckIn::class, 'service_request_id');
     }
 
-
     public function invited_artisan()
     {
         return $this->hasMany(ArtisanCanSubmitQuote::class, 'request_id');
@@ -149,4 +143,37 @@ class ServiceRequestModel extends Model
     {
         return $this->hasMany(ServiceRequestRatings::class, 'service_request_id', 'id');
     }
+
+    // Accessor for created_at
+    public function getCreatedAtAttribute($value)
+    {
+        return $this->convertToCustomerTimezone($value);
+    }
+
+// Accessor for updated_at
+    public function getUpdatedAtAttribute($value)
+    {
+        return $this->convertToCustomerTimezone($value);
+    }
+
+// Accessor for deleted_at
+    public function getDeletedAtAttribute($value)
+    {
+        return $this->convertToCustomerTimezone($value);
+    }
+
+// Helper method to handle conversion
+    protected function convertToCustomerTimezone($value)
+    {
+        if (! $value) {
+            return null;
+        }
+
+        $timezone = $this->user && $this->user->timezone
+        ? $this->user->timezone
+        : config('app.timezone'); // fallback timezone
+
+        return Carbon::parse($value)->timezone($timezone)->toDateTimeString();
+    }
+
 }
