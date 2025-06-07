@@ -63,7 +63,9 @@ class ChatController extends Controller
         $notifiables = $chat->participants();
 
         foreach ($notifiables as $notify) {
-            $notify->notify(new CustomNotification("New message from another user", 'New message from another user'));
+            if($notify && isset($notify->email)) {
+                $notify->notify(new CustomNotification("New message from another user", 'New message from another user'));
+            }
         }
 
         return get_success_response($message->load('user'));
