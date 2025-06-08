@@ -27,7 +27,7 @@ class LogiNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'fcm'];
+        return ['mail', 'database'];
     }
 
     /**
@@ -64,12 +64,12 @@ class LogiNotification extends Notification
         ];
     }
 
-    public function toFcm($notifiable)
-    {
-        return FcmMessage::create()
-            ->setData(['action' => "Successful Login", 'data' => 'A successful login was detected on your account at ' . now()->toDateTimeString() . ' from IP: ' . request()->ip()])
-            ->setNotification(\NotificationChannels\Fcm\Resources\Notification::create()
-                ->title('Successful Login')
-                ->body('A successful login was detected on your account at ' . now()->toDateTimeString() . ' from IP: ' . request()->ip()));
-    }
+    // public function toFcm($notifiable)
+    // {
+    //     return FcmMessage::create()
+    //         ->setData(['action' => "Successful Login", 'data' => 'A successful login was detected on your account at ' . now()->toDateTimeString() . ' from IP: ' . request()->ip()])
+    //         ->setNotification(\NotificationChannels\Fcm\Resources\Notification::create()
+    //             ->title('Successful Login')
+    //             ->body('A successful login was detected on your account at ' . now()->toDateTimeString() . ' from IP: ' . request()->ip()));
+    // }
 }

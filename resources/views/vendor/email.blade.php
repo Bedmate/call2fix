@@ -61,7 +61,7 @@
                                         </table>
 
                                         {{-- Dynamic Email Content --}}
-                                        {{ $greeting ?? $notifiable->first_name }}, <br>
+                                        Hello {{ $greeting ?? $notifiable->first_name }}, <br>
                                         {{ $body ?? $content ?? $message }}
                                     </td>
                                 </tr>
