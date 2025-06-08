@@ -5,9 +5,11 @@ use App\Jobs\CleanupUserData;
 use App\Models\BusinessInfo;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\Auth\LogiNotification;
 use App\Notifications\CustomNotification;
 use App\Notifications\PasswordResetComplete;
 use App\Notifications\PasswordResetNotification;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -287,7 +289,9 @@ class AuthController extends Controller
                     // Update device_id
                     $user->update(['device_id' => $request->device_id]);
                 }
-
+                
+                $user->notify(new LogiNotification());
+                
                 $token = $user->createToken('auth_token')->plainTextToken;
                 $token = explode('|', $token);
                 return get_success_response(['user' => $user, 'token' => $token[1]], 'Login successful');
