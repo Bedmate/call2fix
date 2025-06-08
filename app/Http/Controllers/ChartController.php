@@ -167,8 +167,20 @@ class ChartController extends Controller
             $endDate = now()->endOfDay();
 
             // Get raw data grouped by day
-            $data = $query
-                ->whereBetween('created_at', [$startDate, $endDate])
+            // $data = $query
+            //     ->whereBetween('created_at', [$startDate, $endDate])
+            //     ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count, amount as amount")
+            //     ->groupBy('date')
+            //     ->orderBy('date')
+            //     ->get()
+            //     ->pluck('count', 'date')
+            //     ->toArray();
+
+            // $total_income = $query->sum('amount');
+
+            $baseQuery = $query->whereBetween('created_at', [$startDate, $endDate]);
+
+            $data = (clone $baseQuery)
                 ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count, amount as amount")
                 ->groupBy('date')
                 ->orderBy('date')
@@ -176,7 +188,8 @@ class ChartController extends Controller
                 ->pluck('count', 'date')
                 ->toArray();
 
-            $total_income = $query->sum('amount');
+            $total_income = (clone $baseQuery)->sum('amount');
+
 
             $allDates    = [];
             $currentDate = $startDate->copy();
