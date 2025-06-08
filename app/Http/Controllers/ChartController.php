@@ -132,7 +132,7 @@ class ChartController extends Controller
             $user       = auth()->user();
             $wallet     = $user->getWallet($walletType);
 
-            $query = WalletTransaction::query()->where('wallet_id', $wallet->id);
+            $query = WalletTransaction::query()->where(['wallet_id' => $wallet->id, "type" => "deposit"]);
 
             $groupBy   = 'day';
             $startDate = now();
@@ -176,6 +176,8 @@ class ChartController extends Controller
                 ->pluck('count', 'date')
                 ->toArray();
 
+            $total_income = $query->sum('amount');
+
             $allDates    = [];
             $currentDate = $startDate->copy();
 
@@ -217,8 +219,8 @@ class ChartController extends Controller
                     $allDates[$month] += $count;
                 }
             }
-
-            return get_success_response($allDates);
+            $finalData = array_merge($allDates, ['total_income' => $total_income]);
+            return get_success_response($finalData);
         } catch (\Throwable $th) {
             return get_error_response($th->getMessage());
         }
