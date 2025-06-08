@@ -37,11 +37,11 @@
                                     <div class="btn-group gap-3" role="group">
                                         <a href="{{ route('admin.users.edit', $user['id']) }}"
                                             class="btn btn-sm btn-primary">
-                                            <i class="fa fa edit"></i>
+                                            <i class="fas fa-edit"></i>
                                         </a>
                                         <a href="{{ route('admin.users.show', $user['id']) }}"
                                             class="btn btn-sm btn-info">
-                                            <i class="fa fa eye"></i>
+                                            <i class="fas fa-eye"></i>
                                         </a>
                                         @if ($user['is_banned'])
                                             <a href="{{ route('admin.users.unban', $user['id']) }}"

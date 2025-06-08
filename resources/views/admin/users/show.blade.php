@@ -79,7 +79,7 @@
                                     <td>${{ number_format($transaction->amount, 2) }}</td>
                                     <td>{{ ucfirst($transaction->type) }}</td>
                                     <td>{{ $transaction->description }}</td>
-                                    <td>{{ $transaction->created_at->format('Y-m-d H:i:s') }}</td>
+                                    <td>{{ $transaction->created_at ?? "N/A" }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -109,7 +109,7 @@
                                     <td>{{ $request->id }}</td>
                                     <td>{{ $request->problem_title }}</td>
                                     <td>{{ $request->status }}</td>
-                                    <td>{{ $request->created_at->format('Y-m-d H:i:s') }}</td>
+                                    <td>{{ $request->created_at ?? "N/A" }}</td>
                                     <td>
                                         <a href="{{ route('admin.service-requests.show', $request->id) }}" class="btn btn-sm btn-primary">View</a>
                                     </td>
@@ -178,7 +178,7 @@
                                     <td>{{ $order->id }}</td>
                                     <td>{{ number_format($order->total_price, 2) }}</td>
                                     <td>{{ $order->status }}</td>
-                                    <td>{{ $order->created_at->format('Y-m-d H:i:s') }}</td>
+                                    <td>{{ $order->created_at ?? "N/A" }}</td>
                                     <td>
                                         <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-primary">View</a>
                                     </td>
