@@ -43,7 +43,8 @@ class NewArtisanAddedNotification extends Notification
             ->subject('Welcome to ' . config('app.name') . ' - Your Account Details')
             ->view('vendor.email', [
                 'greeting' => 'Hello ' . $this->artisan->name,
-                'body' => $message
+                'body' => $message,
+                'notifiable' => $notifiable,
             ]);
     }
 

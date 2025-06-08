@@ -28,7 +28,6 @@
 </head>
 
 <body>
-
     <div>
         <table border="0" cellspacing="0" cellpadding="0" style="font-size:14px;max-width:600px;margin:auto;background-color:white" width="100%">
             <tbody>
@@ -61,21 +60,9 @@
                                         </table>
 
                                         {{-- Dynamic Email Content --}}
-                                        Hello {{ $greeting ?? $notifiable->first_name }}, <br>
+                                        Hello {{ $notifiable->first_name }}, <br>
                                         {{ $body ?? $content ?? $message }}
                                     </td>
-                                </tr>
-                                <tr style="height:22px">
-                                    <td>&nbsp;</td>
-                                </tr>
-                                <tr style="height:22px">
-                                    <td>&nbsp;</td>
-                                </tr>
-                                <tr>
-                                    <td style="border-top:1px dashed rgba(0,0,0,0.08)"></td>
-                                </tr>
-                                <tr style="height:22px">
-                                    <td>&nbsp;</td>
                                 </tr>
                                 <tr>
                                     <td>

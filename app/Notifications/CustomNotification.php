@@ -11,6 +11,8 @@ class CustomNotification extends Notification
 {
     use Queueable;
 
+    protected $title, $body;
+
     /**
      * Create a new notification instance.
      */
@@ -43,6 +45,7 @@ class CustomNotification extends Notification
                 ->markdown('vendor.email', [
                     'greetings' => "Hello {$notifiable->first_name}",
                     'body' => $this->body,
+                    'notifiable' => $notifiable,
                 ]);
     }
 
