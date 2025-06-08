@@ -169,7 +169,7 @@ class ChartController extends Controller
             // Get raw data grouped by day
             $data = $query
                 ->whereBetween('created_at', [$startDate, $endDate])
-                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count")
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d') as date, COUNT(*) as count, amount as amount")
                 ->groupBy('date')
                 ->orderBy('date')
                 ->get()
