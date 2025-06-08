@@ -41,7 +41,7 @@ class LogiNotification extends Notification
             'IP Address: ' . request()->ip() . "\n" .
             "If this was not you, please contact support immediately.";
 
-        fcm("Login successfull", $message, $notifiable->device_id);
+        fcm("Login successfull", $message);
         return (new MailMessage)
             ->subject('Successful Login Notification')
             ->view('vendor.email', [
