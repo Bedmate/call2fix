@@ -7,7 +7,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\KwikDeliveryService;
 use Illuminate\Http\Request;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class KwikDeliveryController extends Controller
 {
