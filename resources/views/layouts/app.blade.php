@@ -44,7 +44,8 @@
     <link rel="stylesheet" href="{{ url('/') }}/assets/vendor/libs/%40form-validation/form-validation.css" />
 
     <!-- Page CSS -->
-
+    <!--? Template customizer: To hide customizer set displayCustomizer value false in config.js.  -->
+    <script src="{{ url('/') }}/assets/vendor/js/template-customizer.js"></script>
     <!-- Helpers -->
     <script src="{{ url('/') }}/assets/vendor/js/helpers.js"></script>
     <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
