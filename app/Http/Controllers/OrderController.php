@@ -31,7 +31,7 @@ class OrderController extends Controller
     {
         return view('order');
     }
-    
+
     public function place_order(Request $request)
     {
         try {
@@ -54,7 +54,7 @@ class OrderController extends Controller
             $validator = Validator::make($request->all(), $validationRules);
 
             if ($validator->fails()) {
-                Log::error('Order placement validation error: ', ['error'=> $validator->errors()->toArray()]);
+                Log::error('Order placement validation error: ', ['error' => $validator->errors()->toArray()]);
                 return get_error_response("Validation error", $validator->errors(), 422);
             }
 
@@ -114,7 +114,7 @@ class OrderController extends Controller
             $orderData["total_price"] = round($totalPrice, 2);
 
             // Withdraw from wallet
-            if(!$wallet->withdrawal(round($orderData["total_price"] * 100, 2), ["description" => "Order placed", "Order placement"])){
+            if (!$wallet->withdrawal(round($orderData["total_price"] * 100, 2), ["description" => "Order placed", "Order placement"])) {
                 return ['error' => 'Insufficient Balance'];
             }
 
@@ -136,12 +136,11 @@ class OrderController extends Controller
                 $seller->notify(new CustomNotification('New order from a customer', "New order from a customer"));
                 return get_success_response($order, "Order placed successfully", 201);
             }
-
         } catch (ModelNotFoundException $e) {
             return get_error_response("Product not found", ['error' => "Product not found"], 404);
         } catch (\Exception $e) {
             // Log the actual error for debugging
-            Log::error('Order placement failed error: ', ['error'=> $e->getMessage(), 'trace' => $e->getTrace()]);
+            Log::error('Order placement failed error: ', ['error' => $e->getMessage(), 'trace' => $e->getTrace()]);
             return get_error_response("Order placement failed", ["error" => $e->getMessage()], 500);
         }
     }
@@ -150,7 +149,7 @@ class OrderController extends Controller
     {
         try {
             $orders = Order::with('product', 'seller', 'user');
-            if(request()->user()->current_role == 'suppliers'){
+            if (request()->user()->current_role == 'suppliers') {
                 $orders = $orders->where('_account_type', active_role())->latest()->where('seller_id', auth()->id())->limit(100)->get();
             } else {
                 $orders = $orders->where('_account_type', active_role())->latest()->where('user_id', auth()->id())->limit(100)->get();
@@ -161,7 +160,7 @@ class OrderController extends Controller
             return get_error_response("Failed to retrieve user orders", ["error" => $e->getMessage()], 500);
         }
     }
-    
+
     public function getOrder($orderId)
     {
         try {
@@ -192,7 +191,7 @@ class OrderController extends Controller
     {
         try {
             $query = OrderModel::where('user_id', auth()->id())->where('status', $status);
-            if(strtolower($status) == "cancel" || strtolower($status) == "canceled") {
+            if (strtolower($status) == "cancel" || strtolower($status) == "canceled") {
                 $query->orWhere('status', 'rejected');
             }
             $orders = $query->where('_account_type', active_role())->get();
@@ -250,8 +249,16 @@ class OrderController extends Controller
             }
 
             $orderStatus = [
-                'UPCOMING', 'STARTED', 'ENDED', 'FAILED', 'ARRIVED',
-                'UNASSIGNED', 'ACCEPTED', 'DECLINE', 'CANCEL', 'DELETED'
+                'UPCOMING',
+                'STARTED',
+                'ENDED',
+                'FAILED',
+                'ARRIVED',
+                'UNASSIGNED',
+                'ACCEPTED',
+                'DECLINE',
+                'CANCEL',
+                'DELETED'
             ];
 
             // Ensure the status is compared as a string
@@ -272,22 +279,21 @@ class OrderController extends Controller
                     return get_error_response("User wallet not found", ["error" => "User wallet not found"], 404);
                 }
 
-                if(!$wallet->deposit($order->total_price * 100, ["description" => "Order refund for ORDER ID: {$order->id}", "Order placement refunded"])){
+                if (!$wallet->deposit($order->total_price * 100, ["description" => "Order refund for ORDER ID: {$order->id}", "Order placement refunded"])) {
                     return ['error' => 'Insufficient balance'];
                 }
-                
+
                 $seller = User::find($order->seller_id);
                 $seller->notify(new CustomNotification('Order canceled by customer', 'Order canceled by customer'));
                 return get_success_response($order, "Order canceled successfully", 200);
             }
 
             return get_error_response("Failed to cancel order. Please try again.", [], 500);
-
         } catch (\Exception $e) {
             return get_error_response("An unexpected error occurred.", ['error' => $e->getMessage()], 500);
         }
     }
-    
+
     public function getShippingRate()
     {
         $orderData = request();
@@ -304,13 +310,39 @@ class OrderController extends Controller
             $orderData['delivery_longitude'],
             $product,
             $product->seller,
-            $user, true
+            $user,
+            true
         );
-        $orderData["shipping_fee"] = $shippingFee; 
+        $orderData["shipping_fee"] = $shippingFee;
 
-        if(isset($shippingFee['error'])) {
-            return get_error_response( $shippingFee['error'], ["error" => $shippingFee['error']], 400);
+        if (isset($shippingFee['error'])) {
+            return get_error_response($shippingFee['error'], ["error" => $shippingFee['error']], 400);
         }
         return get_success_response($shippingFee, "Shipping rate retrieved successfully", 200);
+    }
+
+    public function updateStatus(Request $request, $orderId)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return get_error_response("Validation failed", $validator->errors(), 422);
+        }
+
+        try {
+            $order = OrderModel::findOrFail($orderId);
+            if ($order->update([
+                "status" => request()->status
+            ])) {
+                return get_success_response($order, "Order status updated successfully");
+            }
+        } catch (ModelNotFoundException $e) {
+            return get_error_response("Order not found", ['error' => "Order not found"], 404);
+        } catch (\Exception $e) {
+            Log::error('Error retrieving order status: ' . $e->getMessage());
+            return get_error_response("Failed to retrieve order status", ["error" => $e->getMessage()], 500);
+        }
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Artisans;
@@ -188,8 +189,12 @@ class ChartController extends Controller
                 ->pluck('count', 'date')
                 ->toArray();
 
+
             $total_income = (clone $baseQuery)->sum('amount');
 
+            if (request()->has('total_income')) {
+                return get_success_response(['total_income' => floatval($total_income/100)], "Total income fetched successfully");
+            }
 
             $allDates    = [];
             $currentDate = $startDate->copy();
@@ -232,8 +237,8 @@ class ChartController extends Controller
                     $allDates[$month] += $count;
                 }
             }
-            $finalData = array_merge($allDates, ['total_income' => $total_income]);
-            return get_success_response($finalData);
+
+            return get_success_response($allDates);
         } catch (\Throwable $th) {
             return get_error_response($th->getMessage());
         }
@@ -355,15 +360,15 @@ class ChartController extends Controller
                 $q->where('request_status', 'Completed')
                     ->orWhere('request_status', 'Closed');
             })
-        // ->where('_account_type', active_role())
+            // ->where('_account_type', active_role())
             ->count();
 
         $percentageCompleted = $totalServiceRequests > 0
-        ? ($completedServiceRequests / $totalServiceRequests) * 100
-        : 0;
+            ? ($completedServiceRequests / $totalServiceRequests) * 100
+            : 0;
 
         $totalArtisans = Artisans::where('service_provider_id', auth()->id())
-        // ->where('_account_type', active_role())
+            // ->where('_account_type', active_role())
             ->latest()
             ->count();
 
