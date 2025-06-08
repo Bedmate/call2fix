@@ -131,7 +131,7 @@ if (!function_exists('fcm')) {
         try {
             $user = auth()->user();
 
-            if (isset($user->fcm_notification) && $user->fcm_notification == true) {
+            // if (isset($user->fcm_notification) && $user->fcm_notification == true) {
                 $firebase = new FirebaseService();
                 $response = $firebase->sendNotification($title, $body, $deviceId, $data);
                 \Log::info("FCM response", [
@@ -141,7 +141,7 @@ if (!function_exists('fcm')) {
                     'data' => $data,
                 ]);
                 return $response;
-            }
+            // }
         } catch (\Throwable $th) {
             \Log::error('FCM Notification Error', [
                 'message' => $th->getMessage(),
