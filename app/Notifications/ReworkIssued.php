@@ -40,7 +40,7 @@ class ReworkIssued extends Notification
 
         return (new MailMessage)
             ->subject('Notification')
-            ->view('vendor.property', [
+            ->view('vendor.email', [
                 'content' => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);

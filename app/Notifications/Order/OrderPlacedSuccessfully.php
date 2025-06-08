@@ -51,7 +51,7 @@ class OrderPlacedSuccessfully extends Notification
 
         return (new MailMessage)
             ->subject('Order Placed Successfully')
-            ->view('vendor.property', [
+            ->view('vendor.email', [
                 'content' => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);

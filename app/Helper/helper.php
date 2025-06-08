@@ -123,20 +123,39 @@ if (!function_exists('getGoogleAccessToken')) {
         return $accessToken['access_token'];
     }
 }
-;
+
 
 if (!function_exists('fcm')) {
     function fcm($title, $body, $deviceId = null, $data = [])
     {
-        $user = auth()->user();
-        if(isset($user->fcm_notification) && $user->fcm_notification == true) {
-            $firebase = new FirebaseService();
-            $response = $firebase->sendNotification($title, $body, $deviceId, $data);
-            \Log::info("FCM response", ['response' => $response]);
-            return $response;
+        try {
+            $user = auth()->user();
+
+            if (isset($user->fcm_notification) && $user->fcm_notification == true) {
+                $firebase = new FirebaseService();
+                $response = $firebase->sendNotification($title, $body, $deviceId, $data);
+                \Log::info("FCM response", [
+                    'response' => $response,
+                    'user_id' => $user->id ?? null,
+                    'device_id' => $deviceId,
+                    'data' => $data,
+                ]);
+                return $response;
+            }
+        } catch (\Throwable $th) {
+            \Log::error('FCM Notification Error', [
+                'message' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+                'user_id' => $user->id ?? null,
+                'device_id' => $deviceId,
+                'data' => $data,
+            ]);
         }
+
+        return null;
     }
 }
+
 
 
 if (!function_exists('get_settings_value')) {
@@ -180,8 +199,9 @@ if (!function_exists('save_media')) {
 
 
 if (!function_exists('per_page')) {
-    function per_page($perPage = 10) {
-        if(request()->has('perPage')) {
+    function per_page($perPage = 10)
+    {
+        if (request()->has('perPage')) {
             $perPage = request('perPage');
         }
 

@@ -49,7 +49,7 @@ class UpdatedNotification extends Notification
 
         return (new MailMessage)
             ->subject('Property Updated')
-            ->view('vendor.property', [
+            ->view('vendor.email', [
                 'content' => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);

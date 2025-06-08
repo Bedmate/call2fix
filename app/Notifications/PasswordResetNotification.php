@@ -32,7 +32,7 @@ class PasswordResetNotification extends Notification
 
         return (new MailMessage)
             ->subject('Reset Your Call2Fix Password')
-            ->view('vendor.property', [
+            ->view('vendor.email', [
                 'content'    => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);

@@ -43,7 +43,7 @@ class NewSubAccountMail extends Mailable
             "Please log in and change your password as soon as possible.";
 
         return $this->subject("Your New {$accountType} Has Been Created")
-                    ->view('vendor.property', [
+                    ->view('vendor.email', [
                         'content' => nl2br(e($message)),
                         'notifiable' => $this->subAccount,
                     ]);

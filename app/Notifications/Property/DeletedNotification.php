@@ -49,7 +49,7 @@ class DeletedNotification extends Notification
 
         return (new MailMessage)
             ->subject('Property Deleted from Your Account')
-            ->view('vendor.property', [
+            ->view('vendor.email', [
                 'content' => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);

@@ -50,7 +50,7 @@ class ReworkIssuedNotification extends Notification
 
         return (new MailMessage)
             ->subject('Rework Issued for Service Request #' . $this->serviceRequest->id)
-            ->view('vendor.property', [
+            ->view('vendor.email', [
                 'content' => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);

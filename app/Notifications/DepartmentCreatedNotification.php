@@ -43,7 +43,7 @@ class DepartmentCreatedNotification extends Notification
 
         return (new MailMessage)
             ->subject('New Department Created')
-            ->view('vendor.property', [
+            ->view('vendor.email', [
                 'content' => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);

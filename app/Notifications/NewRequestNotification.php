@@ -41,7 +41,7 @@ class NewRequestNotification extends Notification
 
         return (new MailMessage)
             ->subject('New Service Request Received')
-            ->view('vendor.property', [
+            ->view('vendor.email', [
                 'content' => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);

@@ -31,26 +31,8 @@ use Illuminate\Support\Facades\Schema;
 
 
 Route::get('/', function () {
-	// $user = User::whereEmail('towojuads@gmail.com')->first();
-	// $send = $user->notify(new CustomNotification('Testing email', 'This is a sample test email by Emmanuel'));
-	// if($send) {
-	// 	return response()->json(['message' => 'Action completed successfully']);
-	// }
 	return view('welcome');
 });
-
-// Route::get('/fb', function () {
-// 	// Read the SQL file content
-// 	$device = "eHNQuZw2TI6lrJrCti1_vW:APA91bFfmxuqlaWcqhUrNwfXY4bMuhkJ4xDbrdVVWHLYq6HoSVs22zdax4jTMQBg7tVErr8YQlU_j4SfJ998QLW4h6G0-tUDxiPHYozI4DO6CVdBxJJ6g-8";
-// 	$send = fcm("Test mode", "Hello world is a big shit, hello Emmanuel is the real deal", $device, ['message' => 'Hello nation']);
-// 	dd($send);
-// });
-
-
-
-// Schema::table('referrals', function (Blueprint $table) {
-// 	$table->dropForeign(['referrer_id']);
-// });
 
 Route::get('clear', function () {
 	Artisan::call('migrate');

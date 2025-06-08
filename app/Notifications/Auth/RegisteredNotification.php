@@ -50,7 +50,7 @@ class RegisteredNotification extends Notification
 
         return (new MailMessage)
             ->subject('Please Verify Your Email - Call2Fix')
-            ->view('vendor.property', [
+            ->view('vendor.email', [
                 'content'    => nl2br(e($message)),
                 'notifiable' => $notifiable,
             ]);
