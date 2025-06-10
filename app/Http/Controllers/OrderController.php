@@ -78,8 +78,8 @@ class OrderController extends Controller
                 $kwik = new KwikDeliveryController();
                 $shippingFee = $kwik->calculatePricing(
                     $orderData['delivery_address'],
-                    $orderData['delivery_latitude'],
-                    $orderData['delivery_longitude'],
+                    $request->delivery_latitude,
+                    $request->delivery_longitude,
                     $product,
                     $product->seller,
                     $user
