@@ -318,6 +318,7 @@ class OrderController extends Controller
         if (isset($shippingFee['error'])) {
             return get_error_response($shippingFee['error'], ["error" => $shippingFee['error']], 400);
         }
+
         return get_success_response($shippingFee, "Shipping rate retrieved successfully", 200);
     }
 
