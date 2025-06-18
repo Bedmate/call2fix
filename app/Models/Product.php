@@ -38,6 +38,10 @@ class Product extends Model
         'rentable_price' => 'array'
     ];
 
+    protected $with = [
+        "seller",
+    ];
+
     protected $hidden = [
         // "created_at",
         // "updated_at",
