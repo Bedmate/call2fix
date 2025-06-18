@@ -421,11 +421,12 @@ class WalletController extends Controller
                 "bank_name" => "required|string",
                 "account_number" => "required|string",
                 "bank_code" => "required|string",
+                "user_id" => "sometimes|exists:users,id",
             ]);
 
             $validate = $validate->validated();
 
-            $validate['user_id'] = auth()->id();
+            $validate['user_id'] = $request->user_id ?? auth()->id();
             $validate['account_type'] = 'withdrawal';
 
             // create the account as a paystack recipient
@@ -459,6 +460,7 @@ class WalletController extends Controller
             if (
                 $account = BankAccounts::updateOrCreate(
                     [
+                        "user_id" => $validate["user_id"],
                         "account_number" => $validate["account_number"],
                         "bank_code" => $validate["bank_code"],
                         "account_reference" => $responseBody['data']['recipient_code']
