@@ -16,6 +16,7 @@ use App\Observers\ServiceRequestModelObserver;
 use App\Observers\WalletModelObserver;
 use Towoju5\Wallet\Models\Wallet as ModelsWallet;
 use App\Models\User;
+use App\Observers\UserObserver;
 use App\Services\GeoLocationService;
 use Jijunair\LaravelReferral\Traits\Referrable;
 
