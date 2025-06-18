@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Services\GeoLocationService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -152,30 +153,32 @@ class Order extends BaseModel
         return $this->convertToCustomerTimezone($value);
     }
 
-// Accessor for updated_at
+    // Accessor for updated_at
     public function getUpdatedAtAttribute($value)
     {
         return $this->convertToCustomerTimezone($value);
     }
 
-// Accessor for deleted_at
+    // Accessor for deleted_at
     public function getDeletedAtAttribute($value)
     {
         return $this->convertToCustomerTimezone($value);
     }
 
-// Helper method to handle conversion
+    // Helper method to handle conversion
     protected function convertToCustomerTimezone($value)
     {
-        if (! $value) {
+        if (blank($value)) {
             return null;
         }
 
-        $timezone = $this->user && $this->user->timezone
-        ? $this->user->timezone
-        : config('app.timezone'); // fallback timezone
+        // Ensure it's a Carbon instance
+        $carbon = $value instanceof Carbon ? $value : Carbon::parse($value);
 
-        return Carbon::parse($value)->timezone($timezone)->toDateTimeString();
+        // Resolve GeoLocationService directly via Laravel's service container
+        $timezone = app(GeoLocationService::class)->getUserTimezoneByIp();
+
+        // Convert to user's timezone
+        return $carbon->shiftTimezone($timezone);
     }
-
 }

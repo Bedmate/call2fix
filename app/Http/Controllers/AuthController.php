@@ -163,7 +163,7 @@ class AuthController extends Controller
                         'businessIdImage',
                         'businessBankInfo',
                     ]));
-                } elseif (in_array($accountType, array_merge($normalAccountTypes, ['co-operate_accounts']))) {
+                } elseif (in_array($accountType, array_merge($normalAccountTypes, ['providers', 'co-operate_accounts']))) {
                     // Create or update business info
                     $businessInfo = BusinessInfo::updateOrCreate(
                         [

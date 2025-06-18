@@ -802,7 +802,7 @@ class ServiceRequestController extends Controller
                 // Retrieve the service request
                 $serviceRequest = ServiceRequestModel::findOrFail($negotiation->request_id);
 
-                if (! mepty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
+                if (!empty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
                     return get_error_response(
                         "Request bidding process must end to perform this action.",
                         ["error" => "Request bidding process must end to perform this action!"],

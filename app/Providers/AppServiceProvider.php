@@ -16,6 +16,7 @@ use App\Observers\ServiceRequestModelObserver;
 use App\Observers\WalletModelObserver;
 use Towoju5\Wallet\Models\Wallet as ModelsWallet;
 use App\Models\User;
+use App\Services\GeoLocationService;
 use Jijunair\LaravelReferral\Traits\Referrable;
 
 class AppServiceProvider extends ServiceProvider
@@ -37,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         Property::observe(PropertyModelObserver::class);
         ServiceRequest::observe(ServiceRequestModelObserver::class);
         Wallet::observe(WalletModelObserver::class);
+        User::observe(UserObserver::class);
         // ModelsWallet::observe(WalletModelObserver::class);
         // Event::listen(
         //     BalanceUpdatedEventInterface::class => [
@@ -49,6 +51,6 @@ class AppServiceProvider extends ServiceProvider
         if ($user && method_exists($user, 'createReferralAccount')) {
             $user->createReferralAccount();
         }       
-
+        $this->app->singleton(GeoLocationService::class, fn () => new GeoLocationService);
     }
 }

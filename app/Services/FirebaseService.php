@@ -19,11 +19,13 @@ class FirebaseService
     }
 
 
-    public function sendNotification($title, $body, $deviceToken, $data = [])
+    public function sendNotification(string $title, string $body, string $deviceToken, array $data = [])
     {
         try {
             $notification = ['title' => $title, 'body' => $body];
-
+            if($deviceToken == null) {
+                return ['error' => 'Device token is missing'];
+            }
             $message = CloudMessage::new()
                 ->withNotification($notification)
                 ->withData($data)

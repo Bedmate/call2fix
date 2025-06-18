@@ -376,7 +376,7 @@ class ServiceProviderController extends Controller
                     "You can review the quote and choose to approve it, negotiate the terms, or request changes directly through the app.\n\n" .
                     "Should you have any questions or need help with the quote, please contact us at 0701-530-0138 or reply to this email.";
 
-                $customer->notify(new CustomNotification("Quote submitted by provider", "Quote submitted by provider."));
+                $customer->notify(new CustomNotification("Quote submitted by provider", $message));
             }
             return get_success_response($createQuote, "Quote submitted successfully");
 
@@ -539,12 +539,14 @@ class ServiceProviderController extends Controller
             }
 
             if ($artisan = ArtisanCanSubmitQuote::create($validate->validated())) {
-                // $service_request = ServiceRequest::whereId($request->request_id)->first();
-                // if($service_request) {
-                //     $service_request->update([
-                //         "approved_artisan_id" => $request->artisan_id
-                //     ]);
-                // }
+                $service_request = ServiceRequest::whereId($request->request_id)->first();
+                if($service_request && $service_request->request_status == "pending") {
+                    $service_request->update([
+                        "request_status" => "Processing",
+                    ]);
+                }
+                $artisanObj = User::whereId($request->artisan_id)->first();
+                $artisanObj->notify(new CustomNotification("Artisan Invite", "You have been invited to submit a quote for this project"));
                 return get_success_response($artisan, "Artisan invited successfully");
             }
 
