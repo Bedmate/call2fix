@@ -12,6 +12,7 @@ use Illuminate\Database\Schema\Blueprint;
 // use Bavix\Wallet\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 // use Towoju5\LaravelWallet\Services\CurrencyExchangeService;
@@ -636,6 +637,7 @@ class WalletController extends Controller
 
             // To get the response body
             $responseBody = $response->json();
+            Log::info("add bank account response", ['response' => $responseBody]);
             if ($responseBody["status"] != true) {
                 return ['error' => $responseBody["message"]];
             }
