@@ -186,6 +186,7 @@ class PaystackServices
 
         // Find user by email
         $user = User::where('email', $data['customer']['email'])->first();
+        $receiver_account_number = $data['metadata']['receiver_account_number'];
         if (!$user) {
             Log::error('User not found for email', ['email' => $data['customer']['email']]);
             return;
