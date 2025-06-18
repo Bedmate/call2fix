@@ -174,8 +174,16 @@ class AuthController extends Controller
                             'updated_at' => now(), // created_at is auto-set on create()
                         ]
                     );
+                }
+
+                return $user;
+            });
+
+            if ($user && isset($request->businessBankInfo) && ! empty($request->businessBankInfo)) {
+                try {
+                    Log::info('Adding bank account information');
                     // Add bank account information using WalletController
-                    $bankDetails = $businessInfo->businessBankInfo;
+                    $bankDetails = $request->businessBankInfo;
                     app(WalletController::class)->addBankAccount(new Request([
                         'user_id'        => $user->id,
                         'account_number' => $bankDetails['account_number'] ?? null,
@@ -183,10 +191,10 @@ class AuthController extends Controller
                         'bank_name'      => $bankDetails['bank_name'] ?? null,
                         'bank_code'      => $bankDetails['bank_code'] ?? null,
                     ]));
+                } catch (\Throwable $th) {
+                    Log::error('Failed to add bank account: ' . $th->getMessage());
                 }
-
-                return $user;
-            });
+            }
 
             // Determine code type by length
             $codeLength = strlen($referred_by);
@@ -289,9 +297,9 @@ class AuthController extends Controller
                     // Update device_id
                     $user->update(['device_id' => $request->device_id]);
                 }
-                
+
                 $user->notify(new LogiNotification());
-                
+
                 $token = $user->createToken('auth_token')->plainTextToken;
                 $token = explode('|', $token);
                 return get_success_response(['user' => $user, 'token' => $token[1]], 'Login successful');
