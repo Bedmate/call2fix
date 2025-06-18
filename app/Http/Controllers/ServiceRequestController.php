@@ -877,7 +877,7 @@ class ServiceRequestController extends Controller
                 $artisan = User::find($serviceRequest->approved_artisan_id);
                 if ($artisan) {
                     $artisanMessage = "Hi {$artisan->last_name},\n\nThe customer has reopened the request and asked for a rework due to dissatisfaction. Please check the updated request details in your app and take necessary action as soon as possible.\n\nWe count on you to address this promptly and professionally.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
-                    $artisan->notify(new CustomNotification("Task Reopened – Customer Requests a Rework", $artisanMessage));
+                    $artisan->notify(new CustomNotification("Task Reopened - Customer Requests a Rework", $artisanMessage));
                 }
 
                 $serviceRequest->reworkMessages()->create([
