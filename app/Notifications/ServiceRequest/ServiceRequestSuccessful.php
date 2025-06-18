@@ -38,7 +38,7 @@ class ServiceRequestSuccessful extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         fcm(
-            "New Order on Call2Fix",
+            "New Service Request",
             "Your Service Request has been placed successfully.",
             auth()->user()->device_id
         );
