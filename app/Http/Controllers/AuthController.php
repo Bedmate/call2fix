@@ -181,7 +181,7 @@ class AuthController extends Controller
 
             if ($user && isset($request->businessBankInfo) && ! empty($request->businessBankInfo)) {
                 try {
-                    Log::info('Adding bank account information');
+                    Log::info('Adding bank account information for user: '. $user->id);
                     // Add bank account information using WalletController
                     $bankDetails = $request->businessBankInfo;
                     $payload     = [
@@ -190,8 +190,9 @@ class AuthController extends Controller
                         'account_name'   => $bankDetails['account_name'] ?? null,
                         'bank_name'      => $bankDetails['bank_name'] ?? null,
                         'bank_code'      => $bankDetails['bank_code'] ?? null,
+                        'account_type'   => 'withdrawal'
                     ];
-                    app(WalletController::class)->addBankAccount(new Request($payload));
+                    app(WalletController::class)->processAddBankAccount($payload);
                 } catch (\Throwable $th) {
                     Log::error('Failed to add bank account: ' . $th->getMessage());
                 }
