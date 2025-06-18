@@ -30,7 +30,7 @@ use Modules\Artisan\Http\Controllers\TaskController;
 use Modules\ServiceProvider\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\SettingsController;
-
+use App\Models\SupplierReview;
 
 Route::middleware(['api'])->domain(env('API_URL'))->prefix('v1')->group(function () {
     // Public routes
@@ -168,6 +168,11 @@ Route::middleware(['api'])->domain(env('API_URL'))->prefix('v1')->group(function
             Route::get('{id}/accept-order', [OrderController::class, 'acceptOrder']);
             Route::get('{id}/reject-order', [OrderController::class, 'rejectOrder']);
             Route::put('{id}/cancel-order', [OrderController::class, 'cancelOrder']);
+        });
+
+        Route::prefix('orders')->group(function () {
+            Route::post('{product}/review', [SupplierReview::class, 'store']);
+            Route::get('reviews', [SupplierReview::class, 'index']);
         });
 
         Route::prefix('artisans')->group(function () {
