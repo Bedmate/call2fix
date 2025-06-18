@@ -8,6 +8,7 @@ class GeoLocationService
 {
     public function getUserTimezoneByIp($ip = null)
     {
+        return "Africa/Lagos";
         $ip = $ip ?? request()->ip();
 
         return Cache::remember("ip-timezone-{$ip}", 3600, function () use ($ip) {
