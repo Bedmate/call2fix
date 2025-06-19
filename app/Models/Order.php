@@ -32,6 +32,7 @@ class Order extends BaseModel
         'shipping_fee',
         'product_category_id',
         'delivery_type',
+        'order_accepted_time'
     ];
 
     protected $hidden = [

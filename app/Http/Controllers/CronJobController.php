@@ -1,11 +1,11 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
+use App\Models\Order;
 use App\Models\ServiceRequestModel;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class CronJobController extends Controller
 {
@@ -32,8 +32,8 @@ class CronJobController extends Controller
                         $wallet->deposit(
                             $request->aportionment->warranty_retention * 100,
                             [
-                                "description" => "Service request payment - {$requests->id}", 
-                                "narration" => $request->narration ?? null
+                                "description" => "Service request payment - {$requests->id}",
+                                "narration"   => $request->narration ?? null,
                             ]
                         );
                     }
@@ -43,8 +43,38 @@ class CronJobController extends Controller
         } catch (\Throwable $th) {
             Log::error("Error paying out retention fee for service requests", [
                 'error' => $th->getMessage(),
-                'trace' => $th->getTraceAsString()
+                'trace' => $th->getTraceAsString(),
             ]);
+        }
+    }
+
+    /**
+     * Automatically close service requests that are not accepted within 48 hours
+     */
+    public function autoCloseServiceRequest()
+    {
+        // Get all service requests that are not accepted within 48 hours
+        $serviceRequests = ServiceRequestModel::where('status', 'completed')
+            ->where('updated_at', '<', Carbon::now()->subHours(48))
+            ->get();
+
+        foreach ($serviceRequests as $index => $serviceRequests) {
+            # code...
+        }
+    }
+
+    /**
+     * Automatically close service requests that are not accepted within 48 hours
+     */
+    public function autoCloseOrder()
+    {
+        // Get all orders that are not accepted within 48 hours
+        $serviceRequests = Order::where('status', 'accepted')
+            ->where('updated_at', '<', Carbon::now()->subHours(48))
+            ->get();
+
+        foreach ($serviceRequests as $index => $serviceRequests) {
+            # code...
         }
     }
 
@@ -58,7 +88,7 @@ class CronJobController extends Controller
         } catch (\Throwable $th) {
             Log::error("Error renewing user subscription", [
                 'error' => $th->getMessage(),
-                'trace' => $th->getTraceAsString()
+                'trace' => $th->getTraceAsString(),
             ]);
         }
     }

@@ -1,28 +1,27 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Order;
 use App\Models\OrderModel;
 use App\Models\Product;
+use App\Models\User;
 use App\Notifications\CustomNotification;
-use App\Notifications\Order\OrderPlacedSuccessfully;
 use App\Services\KwikDeliveryService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
     public function __construct()
     {
-        if (Schema::hasColumn('orders', 'delivery_type')) {
+        if (! Schema::hasColumn('orders', 'delivery_type')) {
             Schema::table('orders', function (Blueprint $table) {
-                $table->string('delivery_type')->change()->default('home_delivery');
+                $table->string('delivery_type')->nullable();
+                $table->string('delivery_type')->nullable();
             });
         }
     }
@@ -39,16 +38,16 @@ class OrderController extends Controller
 
             // Validation rules
             $validationRules = [
-                "delivery_type" => "required|in:home_delivery,pick_up",
-                "delivery_address" => "required_if:delivery_type,home_delivery|string",
-                "quantity" => "required|integer|min:1",
-                "product_id" => "required|exists:products,id",
+                "delivery_type"      => "required|in:home_delivery,pick_up",
+                "delivery_address"   => "required_if:delivery_type,home_delivery|string",
+                "quantity"           => "required|integer|min:1",
+                "product_id"         => "required|exists:products,id",
                 "delivery_longitude" => "required_if:delivery_type,home_delivery",
-                "delivery_latitude" => "required_if:delivery_type,home_delivery",
-                "duration_type" => "sometimes",
-                "lease_duration" => "sometimes",
-                "lease_rate" => "sometimes",
-                "lease_notes" => "sometimes",
+                "delivery_latitude"  => "required_if:delivery_type,home_delivery",
+                "duration_type"      => "sometimes",
+                "lease_duration"     => "sometimes",
+                "lease_rate"         => "sometimes",
+                "lease_notes"        => "sometimes",
             ];
 
             $validator = Validator::make($request->all(), $validationRules);
@@ -58,24 +57,24 @@ class OrderController extends Controller
                 return get_error_response("Validation error", $validator->errors(), 422);
             }
 
-            $user = $request->user();
+            $user   = $request->user();
             $wallet = $user->getWallet("ngn");
 
-            if (!$wallet) {
+            if (! $wallet) {
                 return get_error_response("User wallet not found", ["error" => "User wallet not found"], 404);
             }
 
-            $incoming = $orderData = $validator->validated();
-            $orderData["user_id"] = $user->id;
+            $incoming               = $orderData               = $validator->validated();
+            $orderData["user_id"]   = $user->id;
             $orderData["seller_id"] = $product->seller_id;
-            $orderData["status"] = "pending";
+            $orderData["status"]    = "pending";
 
             // Default shipping fee
             $shippingFee = 0;
 
             if ($request->delivery_type === 'home_delivery') {
                 // Calculate total price and shipping fee
-                $kwik = new KwikDeliveryController();
+                $kwik        = new KwikDeliveryController();
                 $shippingFee = $kwik->calculatePricing(
                     $orderData['delivery_address'],
                     $request->delivery_latitude,
@@ -90,43 +89,43 @@ class OrderController extends Controller
                 }
             }
 
-            $orderData["shipping_fee"] = $shippingFee;
-            $orderData["delivery_type"] = $request->delivery_type;
-            $orderData["product_category_id"] = $product->category_id;
+            $orderData["shipping_fee"]                = $shippingFee;
+            $orderData["delivery_type"]               = $request->delivery_type;
+            $orderData["product_category_id"]         = $product->category_id;
             $orderData["product_service_category_id"] = $product->category_id;
 
             // Calculate total price for Rentable and Non-Rentable Products
-            if ($product->is_leasable == true && $request->has('lease_duration') && !empty($request->has('lease_duration'))) {
+            if ($product->is_leasable == true && $request->has('lease_duration') && ! empty($request->has('lease_duration'))) {
                 // Rentable Product
-                $rentingRate = $request->lease_rate;
-                $itemPrice = $request->quantity * $rentingRate;
-                $vatAmount = 0.075 * $itemPrice;
-                $totalPrice = $rentingRate; //$shippingFee + $itemPrice + $vatAmount;
+                $rentingRate                 = $request->lease_rate;
+                $itemPrice                   = $request->quantity * $rentingRate;
+                $vatAmount                   = 0.075 * $itemPrice;
+                $totalPrice                  = $rentingRate; //$shippingFee + $itemPrice + $vatAmount;
                 $orderData['rentable_price'] = $itemPrice;
             } else {
                 // Non-Rentable Product
                 $productPrice = $product->price;
-                $itemPrice = $request->quantity * $productPrice;
-                $vatAmount = 0.075 * $itemPrice;
-                $totalPrice = $shippingFee + $itemPrice + $vatAmount;
+                $itemPrice    = $request->quantity * $productPrice;
+                $vatAmount    = 0.075 * $itemPrice;
+                $totalPrice   = $shippingFee + $itemPrice + $vatAmount;
             }
 
             $orderData["total_price"] = round($totalPrice, 2);
 
             // Withdraw from wallet
-            if (!$wallet->withdrawal(round($orderData["total_price"] * 100, 2), ["description" => "Order placed", "Order placement"])) {
+            if (! $wallet->withdrawal(round($orderData["total_price"] * 100, 2), ["description" => "Order placed", "Order placement"])) {
                 return ['error' => 'Insufficient Balance'];
             }
 
             // Create order
             $order = Order::create($orderData);
             Log::info("Order details is as follow", [
-                "product" => $product,
-                "order" => $order,
-                "amountDue" => $orderData["total_price"],
-                "shipping" => $shippingFee,
+                "product"       => $product,
+                "order"         => $order,
+                "amountDue"     => $orderData["total_price"],
+                "shipping"      => $shippingFee,
                 "delivery_type" => $request->delivery_type,
-                "incoming_data" => $incoming
+                "incoming_data" => $incoming,
             ]);
 
             // Notify the user
@@ -216,8 +215,8 @@ class OrderController extends Controller
     public function trackOrder(Request $request)
     {
         try {
-            $order = OrderModel::where('user_id', auth()->id())->findOrFail($request->orderId);
-            $kwik = new KwikDeliveryService();
+            $order           = OrderModel::where('user_id', auth()->id())->findOrFail($request->orderId);
+            $kwik            = new KwikDeliveryService();
             $trackingDetails = $kwik->getJobDetails($order->kwik_order_id);
             return get_success_response($trackingDetails, "Order tracking details retrieved successfully");
         } catch (ModelNotFoundException $e) {
@@ -230,7 +229,7 @@ class OrderController extends Controller
 
     public function getRentablePrice($productId, $durationKey)
     {
-        $product = Product::findOrFail($productId);
+        $product       = Product::findOrFail($productId);
         $rentablePrice = $product->rentable_price;
         if (isset($rentablePrice) && is_array($rentablePrice)) {
             return $rentablePrice[$durationKey] ?? null;
@@ -244,7 +243,7 @@ class OrderController extends Controller
         try {
             $order = OrderModel::whereId($orderId)->first();
 
-            if (!$order) {
+            if (! $order) {
                 return get_error_response("Order not found", [], 404);
             }
 
@@ -258,7 +257,7 @@ class OrderController extends Controller
                 'ACCEPTED',
                 'DECLINE',
                 'CANCEL',
-                'DELETED'
+                'DELETED',
             ];
 
             // Ensure the status is compared as a string
@@ -272,14 +271,14 @@ class OrderController extends Controller
 
             if ($order->save()) {
                 $user = auth()->user();
-                // process customer refund 
+                // process customer refund
                 $wallet = $user->getWallet("ngn");
 
-                if (!$wallet) {
+                if (! $wallet) {
                     return get_error_response("User wallet not found", ["error" => "User wallet not found"], 404);
                 }
 
-                if (!$wallet->deposit($order->total_price * 100, ["description" => "Order refund for ORDER ID: {$order->id}", "Order placement refunded"])) {
+                if (! $wallet->deposit($order->total_price * 100, ["description" => "Order refund for ORDER ID: {$order->id}", "Order placement refunded"])) {
                     return ['error' => 'Insufficient balance'];
                 }
 
@@ -296,14 +295,14 @@ class OrderController extends Controller
 
     public function getShippingRate()
     {
-        $orderData = request();
-        $product = Product::findOrFail($orderData->product_id);
-        $user = $orderData->user();
-        $orderData["user_id"] = $user->id;
+        $orderData              = request();
+        $product                = Product::findOrFail($orderData->product_id);
+        $user                   = $orderData->user();
+        $orderData["user_id"]   = $user->id;
         $orderData["seller_id"] = $product->seller_id;
 
         // Calculate total price and shipping fee
-        $kwik = new KwikDeliveryController();
+        $kwik        = new KwikDeliveryController();
         $shippingFee = $kwik->calculatePricing(
             $orderData['delivery_address'],
             $orderData['delivery_latitude'],
@@ -335,8 +334,12 @@ class OrderController extends Controller
         try {
             $order = OrderModel::findOrFail($orderId);
             if ($order->update([
-                "status" => request()->status
+                "status" => request()->status,
             ])) {
+                if (strtolower(request()->status) == "completed") {
+                    // apportionment should take place.
+                    $apportionment = $this->apportionment($orderId);
+                }
                 return get_success_response($order, "Order status updated successfully");
             }
         } catch (ModelNotFoundException $e) {
@@ -345,5 +348,56 @@ class OrderController extends Controller
             Log::error('Error retrieving order status: ' . $e->getMessage());
             return get_error_response("Failed to retrieve order status", ["error" => $e->getMessage()], 500);
         }
+    }
+
+    public function apportionment($orderId)
+    {
+        $order = OrderModel::whereStatus()->whereId($orderId)->first();
+        if (! $order) {
+            return get_error_response("Order not found", [], 404);
+        }
+        $shipping_fee = $order->shipping_fee;
+        $total_price  = floor($order->total_price - $shipping_fee);
+
+        $markupRate = 0.10;  // 10%
+        $vatRate    = 0.075; // 7.5%
+
+        // Compute dynamic multiplier
+        $markupMultiplier   = 1 + $markupRate;
+        $vatMultiplier      = 1 + $vatRate;
+        $combinedMultiplier = $markupMultiplier * $vatMultiplier;
+
+        // Reverse calculation from total_price to supplier_price
+        $supplierPrice = $total_price / $combinedMultiplier;
+        $markupAmount  = $supplierPrice * $markupRate;
+        $customerPrice = $supplierPrice + $markupAmount;
+        $vatAmount     = $customerPrice * $vatRate;
+
+        // now pay the seller
+        $seller = User::find($order->seller_id);
+        // $seller->notify(new CustomNotification('Order completed', 'Order completed'));
+        // get seller wallet and credit seller
+        $wallet = $seller->getWallet("ngn");
+        if (! $wallet) {
+            return get_error_response("Seller wallet not found", ["error" => "Seller wallet not found"], 404);
+        }
+        if (! $wallet->deposit($supplierPrice * 100, ["description" => "Order payment for ORDER ID: {$order->id}", "Order payment"])) {
+            Log::info(['error' => "Unable to pay seller for ORDER ID: {$order->id}"]);
+        }
+
+        $order_apportionment = [
+            'supplier_price' => round($supplierPrice, 2),
+            'markup_amount'  => round($markupAmount, 2),
+            'customer_price' => round($customerPrice, 2),
+            'vat_amount'     => round($vatAmount, 2),
+            'checkout_price' => round($total_price, 2),
+            'apportionment'  => [
+                'supplier'       => round($supplierPrice, 2),
+                'call2fix'       => round($markupAmount, 2),
+                'vat_government' => round($vatAmount, 2),
+            ],
+        ];
+
+        return $order_apportionment;
     }
 }

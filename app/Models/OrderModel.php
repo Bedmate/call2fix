@@ -35,6 +35,7 @@ class OrderModel extends Model
         'additional_info',
         'shipping_fee',
         'product_category_id',
+        'order_accepted_time'
     ];
 
     protected $hidden = [

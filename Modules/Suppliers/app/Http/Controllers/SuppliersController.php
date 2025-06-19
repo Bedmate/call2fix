@@ -1,20 +1,18 @@
 <?php
-
 namespace Modules\Suppliers\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\KwikDeliveryController;
-use App\Models\Order;
+use App\Jobs\CloseOrderJob;
+use App\Models\OrderModel;
 use App\Models\User;
 use App\Notifications\CustomNotification;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Validator, DB;
-use App\Models\OrderModel;
+use DB;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator as FacadesValidator;
 
 class SuppliersController extends Controller
 {
@@ -24,8 +22,8 @@ class SuppliersController extends Controller
             $orders = DB::table('orders')
                 ->join('products', 'orders.product_id', '=', 'products.id')
                 ->join('users as sellers', 'orders.seller_id', '=', 'sellers.id') // Seller information
-                ->join('users as users', 'orders.user_id', '=', 'users.id') // User information
-                ->where('sellers.id', auth()->id()) // Authenticated seller
+                ->join('users as users', 'orders.user_id', '=', 'users.id')       // User information
+                ->where('sellers.id', auth()->id())                               // Authenticated seller
                 ->select(
                     'orders.*',
                     DB::raw('JSON_OBJECT(
@@ -70,37 +68,37 @@ class SuppliersController extends Controller
                 )
                 ->latest()
                 ->limit(100) // Keeping a reasonable limit to prevent excessive data load
-                ->get(); // Fetching all records without pagination
-        
+                ->get();     // Fetching all records without pagination
+
             // Transform collection to parse JSON fields
             $orders->transform(function ($order) {
                 $order->product = json_decode($order->product);
-                $order->seller = json_decode($order->seller);
-                $order->user = json_decode($order->user);
+                $order->seller  = json_decode($order->seller);
+                $order->user    = json_decode($order->user);
                 return $order;
             });
-        
+
             return get_success_response($orders, "Orders retrieved successfully", 200);
         } catch (\Throwable $th) {
             return get_error_response("Order retrieval failed!", ['error' => $th->getMessage()], 400);
         }
-        
+
     }
 
     public function updateOrder(Request $request)
     {
 
         // Check if 'read_by' column exists, if not, add it (This should be done in a migration)
-        if (!Schema::hasColumn('orders', 'status')) {
+        if (! Schema::hasColumn('orders', 'order_accepted_time')) {
             Schema::table('orders', function (Blueprint $table) {
-                $table->string('status')->change();
+                $table->string('order_accepted_time')->change();
             });
         }
 
         try {
-            $validate = Validator::make($request->all(), [
+            $validate = FacadesValidator::make($request->all(), [
                 'order_id' => 'required|string',
-                'status' => 'required|in:accept,reject',
+                'status'   => 'required|in:accept,reject',
             ]);
 
             if ($validate->fails()) {
@@ -108,28 +106,28 @@ class SuppliersController extends Controller
             }
 
             $order = OrderModel::with('product', 'seller', 'user')
-                        ->whereId($request->order_id)->first();
-            
+                ->whereId($request->order_id)->first();
+
             if (empty($order)) {
                 return get_error_response("Order not found!", ['error' => "Selected order not found"], 404);
             }
-            
+
             if (strtolower($order->status) === 'reject') {
                 return get_error_response("Order already canceled!", ['error' => "Order already canceled"], 403);
             }
-            
+
             // Map status to the string value
             $statusMapping = [
-                'accept' => OrderModel::STATUSES[7], // 'ACCEPTED'
+                'accept' => OrderModel::STATUSES[7],  // 'ACCEPTED'
                 'reject' => OrderModel::STATUSES[11], // 'CANCEL'
             ];
             $buyer = User::find($order->user_id);
 
-            if(strtolower($request->status) === "reject") {
+            if (strtolower($request->status) === "reject") {
                 $order->status = $statusMapping[$request->status]; // Store as string
-                if ($order->save()) {                
+                if ($order->save()) {
                     // refund the buyer.
-                    $buyer = User::find($order->user_id);
+                    $buyer  = User::find($order->user_id);
                     $wallet = $buyer->getWallet("ngn");
                     $wallet->deposit(floor($order->total_price * 100), ["description" => "Order refund", "Order placement refund"]);
                     $buyer->notify(new CustomNotification('Order rejected by Supplier', 'Order rejected by Supplier'));
@@ -140,25 +138,41 @@ class SuppliersController extends Controller
             $order->status = $statusMapping[$request->status]; // Store as string
 
             if ($order->save()) {
-                if(strtolower($request->status) === 'accept'){
+                if (strtolower($request->status) === 'accept') {
+                    $order->update([
+                        "order_accepted_time" => now(),
+                    ]);
+                    CloseOrderJob::dispatch($order->id)->delay(now()->addHours(48));
                     $buyer->notify(new CustomNotification('Order accepted by Supplier', 'Order accepted by Supplier'));
                 }
                 if (strtolower($request->status) === 'accept' && $order->product->delivery_type === 'home_delivery') {
                     // Create delivery request on behalf of the seller on Kwik Delivery
                     $kwik = new KwikDeliveryController();
+                    Log::info("Placing Kwik Order", [
+                        $order->delivery_address,
+                        $order->delivery_latitude,
+                        $order->delivery_longitude,
+                        $order->product,
+                        $order->seller,
+                        $order->user,
+
+                    ]);
                     $place_order = $kwik->createPickupAndDeliveryTask(
-                        $order->delivery_address, 
-                        $order->delivery_latitude, 
-                        $order->delivery_longitude, 
-                        $order->product, 
-                        $order->seller, 
+                        $order->delivery_address,
+                        $order->delivery_latitude,
+                        $order->delivery_longitude,
+                        $order->product,
+                        $order->seller,
                         $order->user
                     );
                     Log::info("Kwik Order Placement response", $place_order);
                 } else if (strtolower($request->status) === 'reject') {
                     // Refund customer and cancel order
+                    $order->update([
+                        "status" => OrderModel::STATUSES[9],
+                    ]);
                 }
-                
+
                 return get_success_response($order, "Order status updated successfully", 200);
             }
         } catch (\Throwable $th) {
