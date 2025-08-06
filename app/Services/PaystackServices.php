@@ -9,7 +9,7 @@ use Towoju5\Wallet\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\User;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class PaystackServices
 {

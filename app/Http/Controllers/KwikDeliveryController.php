@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\KwikDelivery;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -80,6 +81,20 @@ class KwikDeliveryController extends Controller
 
         Log::error("Kwik Delivery response: ", ["response" => $result, "payload" => $task]);
         // kwik_order_id
+
+        if (isset($result['data']['unique_order_id'])) {
+            $kwikDelivery = KwikDelivery::create([
+                'estimate'         => $result['data']['per_task_cost'],
+                'billed'           => $result['data']['total_amount'],
+                'seller_id'        => $seller->id,
+                'customer_id'      => $user->id,
+                'order_id'         => $product->order_id,
+                'kwik_delivery_id' => $result['data']['unique_order_id'],
+                'metadata'         => array_merge(["request_payload" => $task], ["api_response" => $result]),
+            ]);
+
+            return $kwikDelivery;
+        }
 
         return $result;
     }

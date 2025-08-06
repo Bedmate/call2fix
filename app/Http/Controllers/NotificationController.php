@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendBroadcastNotificationJob;
+use App\Models\Broadcast;
 use Cache;
 use Illuminate\Http\Request;
 
@@ -94,5 +96,37 @@ class NotificationController extends Controller
     
         return get_error_response('Invalid OTP', [], 400);
     }
+    
 
+    public function sendBroadcastNotification(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'message' => 'required|string|max:255',
+            'user_role' => 'required|array',
+            'user_role.*' => 'string|exists:roles,name',
+        ]);
+
+        $title = $request->input('title');
+        $message = $request->input('message');
+        $roles = $request->input('user_role');
+
+
+        $title = $validated['title'];
+        $message = $validated['message'];
+        $roles = $validated['user_role'];
+        $senderId = auth('admin')->id();
+
+        $broadcast = Broadcast::create([
+            'subject' => $title,
+            'message' => $message,
+            'recipients' => $roles,
+            'sender' => $senderId,
+        ]);
+
+        // Dispatch the job to run AFTER response is sent
+        SendBroadcastNotificationJob::dispatchAfterResponse($message, $title, $roles);
+
+        return get_success_response(null, 'Broadcast notification scheduled successfully', 200);
+    }
 }

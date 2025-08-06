@@ -26,6 +26,11 @@ class Category extends Model
         return $this->hasMany(Order::class, 'item_id');
     }
 
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
     protected $hidden = [
         '_account_type',
     ];

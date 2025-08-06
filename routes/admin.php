@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\KwikDeliveryController;
 use App\Http\Controllers\Admin\OrdersController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\PlansController;
 use App\Http\Controllers\Admin\ProductController;
@@ -23,11 +24,7 @@ use App\Http\Controllers\Admin\TaskController;
 
 
 
-Route::domain(env('ADMIN_URL'))->group(function () {
-    Route::get('/', function () {
-        return redirect()->to(env('APP_URL'));
-    });
-
+Route::group([], function () {
     Route::get('admin/login', function () {
         return view('login');
     })->name('admin.login');
@@ -128,8 +125,18 @@ Route::domain(env('ADMIN_URL'))->group(function () {
             Route::post('{id}/restore', 'restore')->name('faq.restore');
             Route::delete('{id}/force', 'forceDelete')->name('faq.force.delete');
         });
+
+        Route::prefix('payments')->controller(PaymentController::class)->group(function () {
+            Route::get('revenue', 'revenue')->name('payments.revenue');
+            Route::get('retention', 'retention')->name('payments.retention');
+            Route::get('transactions', 'transactions')->name('payments.transactions');
+            Route::get('wallet-deposits', 'wallet_deposits')->name('payments.wallet_deposits');
+            Route::get('merchant-withdrawals', 'merchant_withdrawals')->name('payments.merchant_withdrawals');
+            Route::get('artisan-withdrawals', 'artisan_withdrawals')->name('payments.artisan_withdrawals');
+            Route::get('affiliate-withdrawals', 'affiliate_withdrawals')->name('payments.affiliate_withdrawals');
+        });
         
 
         Route::post('logout', [AdminController::class, 'logout'])->name('logout');
     });
-});
+})->domain(env('ADMIN_URL'));

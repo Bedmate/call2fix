@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\MessageSent;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ServiceAreaController;
 use App\Http\Controllers\DojaWebhookController;
 use App\Http\Controllers\FcmController;
@@ -31,6 +32,7 @@ use Illuminate\Support\Facades\Schema;
 
 
 Route::get('/', function () {
+	// dd('Welcome to the API! Please refer to the documentation for usage instructions.');
 	return view('welcome');
 });
 
@@ -51,17 +53,25 @@ Route::get('paystack/processing', [WebhookLogController::class, 'callback'])->na
 
 Route::any('dojah/webhook/verification', [VerificationWebhookController::class, 'handleWebhook'])->withoutMiddleware(VerifyCsrfToken::class);
 
-
+        Route::prefix('payments')->controller(PaymentController::class)->group(function () {
+            Route::get('revenue', 'revenue')->name('payments.revenue');
+            Route::get('retention', 'retention')->name('payments.retention');
+            Route::get('transactions', 'transactions')->name('payments.transactions');
+            Route::get('wallet-deposits', 'wallet_deposits')->name('payments.wallet_deposits');
+            Route::get('merchant-withdrawals', 'merchant_withdrawals')->name('payments.merchant_withdrawals');
+            Route::get('artisan-withdrawals', 'artisan_withdrawals')->name('payments.artisan_withdrawals');
+            Route::get('affiliate-withdrawals', 'affiliate_withdrawals')->name('payments.affiliate_withdrawals');
+        });
 
 
 Route::put('api/v1/update-device-token', [FcmController::class, 'updateDeviceToken'])->withoutMiddleware(VerifyCsrfToken::class);
 Route::post('api/v1/send-fcm-notification', [FcmController::class, 'sendFcmNotification'])->withoutMiddleware(VerifyCsrfToken::class);
 
-Route::middleware(['auth:sanctum'])->domain(env('APP_URL'))->group(function () {
-	Route::get('/', function () {
-		return view('welcome');
-	});
-});
+// Route::middleware(['auth:sanctum'])->domain(env('APP_URL'))->group(function () {
+// 	Route::get('/', function () {
+// 		return view('welcome');
+// 	});
+// });
 
 
 Route::middleware('admin')->group(function () {
