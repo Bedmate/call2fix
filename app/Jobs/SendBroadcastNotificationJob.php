@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Events\BroadcastNotification;
 use App\Models\User;
+use App\Notifications\BroadcastNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -30,7 +30,7 @@ class SendBroadcastNotificationJob implements ShouldQueue
         $users = \App\Models\User::role($this->roles)->get();
 
         foreach ($users as $user) {
-            broadcast(new BroadcastNotification($this->message, $this->title, $user));
+            $user->notify(new BroadcastNotification($this->message, $this->title, $user));
         }
     }
 }
