@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\WalletController;
 use App\Http\Controllers\ExecutiveDashboardController;
 use App\Http\Controllers\FaqsController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([], function () {
@@ -137,6 +138,9 @@ Route::group([], function () {
             Route::get('wallet-transactions', 'wallet_transactions')->name('wallet_transactions');
             Route::get('payments/retention/{id}', 'retentionDetails')->name('payments.retention.show');
         });
+
+        Route::get('send-broadcast-notification', [NotificationController::class, 'sendBroadcast'])->name('sendBroadcast');
+        Route::post('send-broadcast-notification', [NotificationController::class, 'sendBroadcastNotification'])->name('notifications.broadcast.send');
 
 
 

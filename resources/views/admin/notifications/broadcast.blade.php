@@ -1,0 +1,73 @@
+@extends('layouts.app')
+
+@section('title', 'Send Broadcast Notification')
+
+@section('content')
+<div class="container">
+    <h4 class="mb-4">Send Broadcast Notification</h4>
+
+    {{-- Show Validation Errors --}}
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form action="{{ route('admin.notifications.broadcast.send') }}" method="POST">
+        @csrf
+
+        {{-- Title --}}
+        <div class="mb-3">
+            <label for="title" class="form-label">Notification Title</label>
+            <input type="text" 
+                   name="title" 
+                   id="title" 
+                   class="form-control @error('title') is-invalid @enderror"
+                   value="{{ old('title') }}" 
+                   maxlength="255" 
+                   required>
+            @error('title')
+                <small class="text-danger">{{ $message }}</small>
+            @enderror
+        </div>
+
+        {{-- Message --}}
+        <div class="mb-3">
+            <label for="message" class="form-label">Notification Message</label>
+            <textarea name="message" 
+                      id="message" 
+                      rows="4" 
+                      class="form-control @error('message') is-invalid @enderror" 
+                      maxlength="255" 
+                      required>{{ old('message') }}</textarea>
+            @error('message')
+                <small class="text-danger">{{ $message }}</small>
+            @enderror
+        </div>
+
+        {{-- Roles --}}
+        <div class="mb-3">
+            <label class="form-label">Select User Roles</label>
+            <select name="user_role[]" 
+                    class="form-control @error('user_role') is-invalid @enderror" 
+                    multiple required>
+                @foreach(\Spatie\Permission\Models\Role::all() as $role)
+                    <option value="{{ $role->name }}" {{ (collect(old('user_role'))->contains($role->name)) ? 'selected' : '' }}>
+                        {{ ucfirst($role->name) }}
+                    </option>
+                @endforeach
+            </select>
+            @error('user_role')
+                <small class="text-danger">{{ $message }}</small>
+            @enderror
+        </div>
+
+        {{-- Submit --}}
+        <button type="submit" class="btn btn-primary">Send Broadcast</button>
+    </form>
+</div>
+@endsection

@@ -108,12 +108,12 @@
             <ul class="menu-sub">
                 <li class="menu-item">
                     <a href="{{ route('admin.faq.index') }}" class="menu-link">
-                        <div data-i18n="Faqs">Reworks</div>
+                        <div data-i18n="Reworks">Reworks</div>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="#" class="menu-link">
-                        <div data-i18n="Add New Faq">Supports</div>
+                        <div data-i18n="Supports">Supports</div>
                     </a>
                 </li>
             </ul>
@@ -377,6 +377,13 @@
             <a href="{{ route('admin.settings.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons ti ti-settings"></i>
                 <div data-i18n="Settings">Settings</div>
+            </a>
+        </li>
+
+        <li class="menu-item">
+            <a href="{{ route('admin.sendBroadcast') }}" class="menu-link">
+                <i class="menu-icon tf-icons ti ti-settings"></i>
+                <div data-i18n="Broadcast">Broadcast</div>
             </a>
         </li>
     </ul>

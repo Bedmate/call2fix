@@ -98,6 +98,11 @@ class NotificationController extends Controller
     }
     
 
+    public function sendBroadcast(Request $request)
+    {
+        return view('admin.notifications.broadcast');
+    }
+
     public function sendBroadcastNotification(Request $request)
     {
         $validated = $request->validate([
