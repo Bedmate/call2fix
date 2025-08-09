@@ -98,6 +98,18 @@ Route::middleware('auth:admin')->prefix('api/admin/payments')->name('admin.payme
 });
 
 
+Route::middleware('auth:admin')->prefix('api/admin/payments')->name('admin.')->group(function () {
+    Route::get('/revenue/data', [PaymentDataController::class, 'revenueData'])->name('revenue.data');
+    Route::get('/retention/data', [PaymentDataController::class, 'retentionData'])->name('retention.data');
+    Route::get('/transactions/data', [PaymentDataController::class, 'transactionsData'])->name('transactions.data');
+    Route::get('/wallet-deposits/data', [PaymentDataController::class, 'walletDepositsData'])->name('wallet_deposits.data');
+    Route::get('/merchant-withdrawals/data', [PaymentDataController::class, 'merchantWithdrawalsData'])->name('merchant_withdrawals.data');
+    Route::get('/artisan-withdrawals/data', [PaymentDataController::class, 'artisanWithdrawalsData'])->name('artisan_withdrawals.data');
+    Route::get('/affiliate-withdrawals/data', [PaymentDataController::class, 'affiliateWithdrawalsData'])->name('affiliate_withdrawals.data');
+    Route::get('/wallet-transactions/data', [PaymentDataController::class, 'walletTransactionsData'])->name('wallet_transactions.data');
+});
+
+
 
 
 
