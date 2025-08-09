@@ -44,7 +44,7 @@ $(function () {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("admin.transactions.data") }}',
+            url: '{{ route("admin.payments.transactions.data") }}',
             data: function (d) {
                 d.user_type = $('#userTypeFilter').val(); // Pass filter to server
             }
