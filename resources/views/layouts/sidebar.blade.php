@@ -103,7 +103,7 @@
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons ti ti-settings"></i>
-                <div data-i18n="F.A.Qs">Issues</div>
+                <div data-i18n="Issues">Issues</div>
             </a>
             <ul class="menu-sub">
                 <li class="menu-item">
@@ -123,7 +123,7 @@
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons ti ti-settings"></i>
-                <span data-i18n="F.A.Qs">Transactions</span>
+                <span data-i18n="Transactions">Transactions</span>
             </a>
             @php 
                 $routes = [
