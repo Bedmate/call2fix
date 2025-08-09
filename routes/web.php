@@ -2,6 +2,7 @@
 
 use App\Events\MessageSent;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\PaymentDataController;
 use App\Http\Controllers\Admin\ServiceAreaController;
 use App\Http\Controllers\DojaWebhookController;
 use App\Http\Controllers\FcmController;
@@ -30,14 +31,26 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 
+if(Schema::hasTable('payment_apportionments')) {
+	Schema::table('payment_apportionments', function (Blueprint $table) {
+		if (Schema::hasColumn('payment_apportionments', 'service_request_id')) {
+			$table->string('service_request_id')->nullable()->after('id')->change();
+		}
+	});
+} 
+
 
 Route::get('/', function () {
-	// dd('Welcome to the API! Please refer to the documentation for usage instructions.');
-	return view('welcome');
+	$countries = DB::table('countries')->get();
+	return response()->json([
+		'message' => 'Welcome to the API',
+		'countries' => $countries
+	]);
+	// return view('welcome');
 });
 
 Route::get('clear', function () {
-	Artisan::call('migrate');
+	Artisan::call('config:clear');
 	Artisan::call('route:clear');
 	Artisan::call('cache:clear');
 });
@@ -72,6 +85,49 @@ Route::post('api/v1/send-fcm-notification', [FcmController::class, 'sendFcmNotif
 // 		return view('welcome');
 // 	});
 // });
+
+
+// Route::prefix('payments')->controller(PaymentController::class)->group(function () {
+// 	Route::get('revenue', 'revenue')->name('payments.revenue');
+// 	Route::get('retention', 'retention')->name('payments.retention');
+// 	Route::get('transactions', 'transactions')->name('payments.transactions');
+// 	Route::get('wallet-deposits', 'wallet_deposits')->name('payments.wallet_deposits');
+// 	Route::get('merchant-withdrawals', 'merchant_withdrawals')->name('payments.merchant_withdrawals');
+// 	Route::get('artisan-withdrawals', 'artisan_withdrawals')->name('payments.artisan_withdrawals');
+// 	Route::get('affiliate-withdrawals', 'affiliate_withdrawals')->name('payments.affiliate_withdrawals');
+// });
+
+
+Route::prefix('api/admin/payments')->name('admin.payments.')->group(function () {
+    Route::get('/revenue', [PaymentController::class, 'revenue'])->name('revenue');
+    Route::get('/revenue/data', [PaymentDataController::class, 'revenueData'])->name('revenue.data');
+
+    Route::get('/retention', [PaymentController::class, 'retention'])->name('retention');
+    Route::get('/retention/data', [PaymentDataController::class, 'retentionData'])->name('retention.data');
+	Route::get('/admin/payments/retention/{id}', [PaymentController::class, 'retentionDetails'])->name('admin.payments.retention.show');
+
+
+    Route::get('/transactions', [PaymentController::class, 'transactions'])->name('transactions');
+    Route::get('/transactions/data', [PaymentDataController::class, 'transactionsData'])->name('transactions.data');
+
+    Route::get('/wallet-deposits', [PaymentController::class, 'wallet_deposits'])->name('wallet_deposits');
+    Route::get('/wallet-deposits/data', [PaymentDataController::class, 'walletDepositsData'])->name('wallet_deposits.data');
+
+    Route::get('/merchant-withdrawals', [PaymentController::class, 'merchant_withdrawals'])->name('merchant_withdrawals');
+    Route::get('/merchant-withdrawals/data', [PaymentDataController::class, 'merchantWithdrawalsData'])->name('merchant_withdrawals.data');
+
+    Route::get('/artisan-withdrawals', [PaymentController::class, 'artisan_withdrawals'])->name('artisan_withdrawals');
+    Route::get('/artisan-withdrawals/data', [PaymentDataController::class, 'artisanWithdrawalsData'])->name('artisan_withdrawals.data');
+
+    Route::get('/affiliate-withdrawals', [PaymentController::class, 'affiliate_withdrawals'])->name('affiliate_withdrawals');
+    Route::get('/affiliate-withdrawals/data', [PaymentDataController::class, 'affiliateWithdrawalsData'])->name('affiliate_withdrawals.data');
+
+    Route::get('/wallet-transactions', [PaymentController::class, 'wallet_transactions'])->name('wallet_transactions');
+    Route::get('/wallet-transactions/data', [PaymentDataController::class, 'walletTransactionsData'])->name('wallet_transactions.data');
+});
+
+
+
 
 
 Route::middleware('admin')->group(function () {

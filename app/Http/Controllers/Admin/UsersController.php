@@ -25,13 +25,13 @@ class UsersController extends Controller
 {
     public function index()
     {
-        $users = User::with('roles') //->whereNull('parent_account_id')
-            ->when(request('roles'), function ($query) {
-                $query->whereHas('roles', function ($q) {
-                    $q->whereIn('name', is_array(request('roles')) ? request('roles') : [request('roles')]);
-                });
-            })
-            ->get(); //paginate(15);
+        $users = User::with('roles')->whereNull('parent_account_id')->get();
+            // ->when(request('roles'), function ($query) {
+            //     $query->whereHas('roles', function ($q) {
+            //         $q->whereIn('name', is_array(request('roles')) ? request('roles') : [request('roles')]);
+            //     });
+            // })
+            // ->paginate(15);
         return view('admin.users.index', compact('users'));
     }
 

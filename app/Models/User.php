@@ -172,7 +172,7 @@ class User extends Authenticatable
 
     public function artisans()
     {
-        return $this->hasMany(Artisans::class, 'artisans_id', 'id');
+        return $this->hasMany(Artisans::class, 'id', 'artisan_id');
     }
 
     public function bankAccount()
@@ -182,7 +182,7 @@ class User extends Authenticatable
 
     public function referrals()
     {
-        return $this->referrals;
+        return $this?->referrals;
     }
 
     public function my_referral()

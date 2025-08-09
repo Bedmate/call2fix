@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\KwikDeliveryController;
 use App\Http\Controllers\Admin\OrdersController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\PaymentDataController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\PlansController;
 use App\Http\Controllers\Admin\ProductController;
@@ -15,14 +17,12 @@ use App\Http\Controllers\Admin\ServiceRequestController;
 use App\Http\Controllers\Admin\ServicesController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\FaqsController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\WalletController;
-use App\Http\Controllers\Admin\TaskController;
-
-
+use App\Http\Controllers\ExecutiveDashboardController;
+use App\Http\Controllers\FaqsController;
+use Illuminate\Support\Facades\Route;
 
 Route::group([], function () {
     Route::get('admin/login', function () {
@@ -64,7 +64,7 @@ Route::group([], function () {
         Route::group([], function () {
             Route::resource('tasks', TaskController::class);
         });
-        
+
         Route::prefix('wallet')->group(function () {
             Route::post('fund-customer', [WalletController::class, 'creditUser'])->name('wallet.fund');
             Route::post('debit-customer', [WalletController::class, 'debitUser'])->name('wallet.debit');
@@ -135,7 +135,26 @@ Route::group([], function () {
             Route::get('artisan-withdrawals', 'artisan_withdrawals')->name('payments.artisan_withdrawals');
             Route::get('affiliate-withdrawals', 'affiliate_withdrawals')->name('payments.affiliate_withdrawals');
         });
-        
+
+        Route::middleware(['api'])
+            ->prefix('api/v1/executives')
+            ->controller(ExecutiveDashboardController::class)
+            ->group(function () {
+                Route::get('service-requests', 'requests')->name('executive.requests');
+                Route::get('transactions', 'transactions')->name('executive.transactions');
+                Route::get('customers', 'customers')->name('executive.customers');
+                Route::get('customer/{customerID}/details', 'customerDetails')->name('executive.customer.details');
+
+                // Products (optional category ID)
+                Route::get('products/{categoryId?}', 'products')->name('executive.products');
+                Route::get('product/{productID}', 'productDetails')->name('executive.product.details');
+
+                // Revenue
+                Route::get('revenue', 'revenue')->name('executive.revenue');
+
+                // Categories
+                Route::get('categories', 'categories')->name('executive.categories');
+            });
 
         Route::post('logout', [AdminController::class, 'logout'])->name('logout');
     });

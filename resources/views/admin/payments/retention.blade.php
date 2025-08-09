@@ -1,93 +1,117 @@
 @extends('layouts.app')
 
+@section('title', 'Retention Payments')
+
 @section('content')
-    <div class="container my-3">
-        <div class="card">
-            <div class="card-body table-responsive">
-                <table class="table table-striped" id="users-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email/Phone</th>
-                            <th>Account Type</th>
-                            <th>Roles</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($users as $user)
-                            <tr>
-                                <td>{{ $user['id'] }}</td>
-                                <td>{{ $user['first_name'] }} {{ $user['last_name'] }}</td>
-                                <td>{{ $user['email'] ?? $user['phone'] }}</td>
-                                <td>{{ ucfirst($user['account_type']) }}</td>
-                                <td>
-                                    @if (count($user['roles']) > 0)
-                                        @foreach ($user['roles'] as $role)
-                                            <span
-                                                class="badge bg-primary">{{ str_replace('_', ' ', $role->name) }}</span>
-                                        @endforeach
-                                    @else
-                                        <span class="badge bg-secondary">No roles</span>
-                                    @endif
-                                </td>
+<div class="container-fluid">
+    <h4 class="mb-4">Retention Payments</h4>
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-striped" id="retention-table" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Service Request</th>
+                        <th>Amount</th>
+                        <th>Date Created</th>
+                        <th>Release Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
 
-                                <td>
-                                    <div class="btn-group gap-3" role="group">
-                                        <a href="{{ route('admin.users.edit', $user['id']) }}"
-                                            class="btn btn-sm btn-primary">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{{ route('admin.users.show', $user['id']) }}"
-                                            class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        @if ($user['is_banned'])
-                                            <a href="{{ route('admin.users.unban', $user['id']) }}"
-                                                class="btn btn-sm btn-warning">Unban</a>
-                                        @else
-                                            <a href="{{ route('admin.users.ban', $user['id']) }}"
-                                                class="btn btn-sm btn-warning">Ban</a>
-                                        @endif
-                                        <form action="{{ route('admin.users.destroy', $user['id']) }}" method="POST"
-                                            onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
+<!-- Modal -->
+<div class="modal fade" id="retentionDetailsModal" tabindex="-1" aria-labelledby="retentionDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="retentionDetailsLabel">Retention Payment Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="fw-bold">Service Request</h6>
+                <ul class="list-group mb-3" id="serviceRequestDetails">
+                    <!-- Populated by JS -->
+                </ul>
 
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                <h6 class="fw-bold">Payment Apportionment</h6>
+                <ul class="list-group" id="apportionmentDetails">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
+</div>
 @endsection
 
-@push('styles')
-    <!-- DataTables CSS -->
-    <link href="//cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
-@endpush
-
 @push('scripts')
-    <!-- jQuery + DataTables -->
-    <script src="//code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="//cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="//cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(function () {
+    let table = $('#retention-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '{{ route("admin.payments.retention.data") }}',
+        columns: [
+            { data: 'id', name: 'id' },
+            { data: 'service_request.title', name: 'service_request.title', defaultContent: 'N/A' },
+            { data: 'amount', name: 'amount' },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'release_date', name: 'release_date', defaultContent: 'N/A' },
+            { 
+                data: null, 
+                orderable: false, 
+                searchable: false, 
+                render: function(data, type, row) {
+                    return `<button class="btn btn-sm btn-primary view-details" data-id="${row.id}"><i class="bi bi-eye"></i> View</button>`;
+                } 
+            }
+        ],
+        responsive: true
+    });
 
-    <script>
-        $(document).ready(function() {
-            $('#users-table').DataTable({
-                responsive: true,
-                pageLength: 15,
-                ordering: true,
-                columnDefs: [
-                    { orderable: false, targets: -1 } // Disable ordering on the Actions column
-                ]
-            });
+    // Handle View button click
+    $('#retention-table').on('click', '.view-details', function () {
+        let id = $(this).data('id');
+        $.ajax({
+            url: `/admin/payments/retention/${id}`, // backend route to fetch details
+            type: 'GET',
+            success: function (res) {
+                // Populate Service Request details
+                let sr = res.service_request || {};
+                $('#serviceRequestDetails').html(`
+                    <li class="list-group-item"><strong>Title:</strong> ${sr.title ?? 'N/A'}</li>
+                    <li class="list-group-item"><strong>Description:</strong> ${sr.description ?? 'N/A'}</li>
+                    <li class="list-group-item"><strong>Status:</strong> ${sr.status ?? 'N/A'}</li>
+                    <li class="list-group-item"><strong>Created At:</strong> ${sr.created_at ?? 'N/A'}</li>
+                `);
+
+                // Populate Apportionment details
+                let ap = res;
+                $('#apportionmentDetails').html(`
+                    <li class="list-group-item"><strong>Subtotal:</strong> ${ap.subtotal ?? 0}</li>
+                    <li class="list-group-item"><strong>Service Provider Earnings:</strong> ${ap.service_provider_earnings ?? 0}</li>
+                    <li class="list-group-item"><strong>Management Fee:</strong> ${ap.call2fix_management_fee ?? 0}</li>
+                    <li class="list-group-item"><strong>Call2Fix Earnings:</strong> ${ap.call2fix_earnings ?? 0}</li>
+                    <li class="list-group-item"><strong>Warranty Retention:</strong> ${ap.warranty_retention ?? 0}</li>
+                    <li class="list-group-item"><strong>Artisan Earnings:</strong> ${ap.artisan_earnings ?? 0}</li>
+                    <li class="list-group-item"><strong>Date Created:</strong> ${ap.created_at ?? 'N/A'}</li>
+                `);
+
+                // Show modal
+                let modal = new bootstrap.Modal(document.getElementById('retentionDetailsModal'));
+                modal.show();
+            },
+            error: function () {
+                alert('Unable to fetch details.');
+            }
         });
-    </script>
+    });
+});
+</script>
 @endpush

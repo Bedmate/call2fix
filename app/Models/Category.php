@@ -23,7 +23,7 @@ class Category extends Model
 
     public function orders()
     {
-        return $this->hasMany(Order::class, 'item_id');
+        return $this->hasMany(Order::class);
     }
 
     public function products()
