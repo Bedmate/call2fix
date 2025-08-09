@@ -79,7 +79,7 @@ $(function () {
     $('#retention-table').on('click', '.view-details', function () {
         let id = $(this).data('id');
         $.ajax({
-            url: `/admin/payments/retention/${id}`, // backend route to fetch details
+            url: `/cp/payments/retention/${id}`, // backend route to fetch details
             type: 'GET',
             success: function (res) {
                 // Populate Service Request details
