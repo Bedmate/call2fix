@@ -98,6 +98,62 @@
             </ul>
         </li>
 
+
+        <!-- Issues -->
+        <li class="menu-item">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon tf-icons ti ti-settings"></i>
+                <div data-i18n="F.A.Qs">Issues</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item">
+                    <a href="{{ route('admin.faq.index') }}" class="menu-link">
+                        <div data-i18n="Faqs">Reworks</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="#" class="menu-link">
+                        <div data-i18n="Add New Faq">Supports</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Transactions -->
+        <li class="menu-item">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon tf-icons ti ti-settings"></i>
+                <span data-i18n="F.A.Qs">Transactions</span>
+            </a>
+            @php 
+                $routes = [
+                    'revenue',
+                    'retention',
+                    'transactions',
+                    'wallet_deposits',
+                    'merchant_withdrawals',
+                    'artisan_withdrawals',
+                    'affiliate_withdrawals',
+                    'wallet_transactions'
+                ];
+            @endphp
+            <ul class="menu-sub">
+                @foreach($routes as $route)
+                    @php $routeName = 'admin.payments.'.$route; @endphp
+                    @if(Route::has($routeName))
+                        <li class="menu-item">
+                            <a href="{{ route($routeName, ['type' => $route]) }}" class="menu-link">
+                                <span data-i18n="{{ ucfirst(str_replace('_', ' ', $route)) }}">
+                                    {{ ucfirst(str_replace('_', ' ', $route)) }}
+                                </span>
+                            </a>
+                        </li>
+                    @endif
+                @endforeach
+            </ul>
+        </li>
+
+
         <!-- Roles & Permissions -->
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">

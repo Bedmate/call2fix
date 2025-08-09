@@ -31,22 +31,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 
-if(Schema::hasTable('payment_apportionments')) {
-	Schema::table('payment_apportionments', function (Blueprint $table) {
-		if (Schema::hasColumn('payment_apportionments', 'service_request_id')) {
-			$table->string('service_request_id')->nullable()->after('id')->change();
-		}
-	});
-} 
-
-
 Route::get('/', function () {
-	$countries = DB::table('countries')->get();
-	return response()->json([
-		'message' => 'Welcome to the API',
-		'countries' => $countries
-	]);
 	// return view('welcome');
+	auth('admin')->logout();
+	return redirect()->to('https://alphamead.com');
 });
 
 Route::get('clear', function () {
@@ -98,31 +86,14 @@ Route::post('api/v1/send-fcm-notification', [FcmController::class, 'sendFcmNotif
 // });
 
 
-Route::prefix('api/admin/payments')->name('admin.payments.')->group(function () {
-    Route::get('/revenue', [PaymentController::class, 'revenue'])->name('revenue');
+Route::middleware('auth:admin')->prefix('api/admin/payments')->name('admin.payments.')->group(function () {
     Route::get('/revenue/data', [PaymentDataController::class, 'revenueData'])->name('revenue.data');
-
-    Route::get('/retention', [PaymentController::class, 'retention'])->name('retention');
     Route::get('/retention/data', [PaymentDataController::class, 'retentionData'])->name('retention.data');
-	Route::get('/admin/payments/retention/{id}', [PaymentController::class, 'retentionDetails'])->name('admin.payments.retention.show');
-
-
-    Route::get('/transactions', [PaymentController::class, 'transactions'])->name('transactions');
     Route::get('/transactions/data', [PaymentDataController::class, 'transactionsData'])->name('transactions.data');
-
-    Route::get('/wallet-deposits', [PaymentController::class, 'wallet_deposits'])->name('wallet_deposits');
     Route::get('/wallet-deposits/data', [PaymentDataController::class, 'walletDepositsData'])->name('wallet_deposits.data');
-
-    Route::get('/merchant-withdrawals', [PaymentController::class, 'merchant_withdrawals'])->name('merchant_withdrawals');
     Route::get('/merchant-withdrawals/data', [PaymentDataController::class, 'merchantWithdrawalsData'])->name('merchant_withdrawals.data');
-
-    Route::get('/artisan-withdrawals', [PaymentController::class, 'artisan_withdrawals'])->name('artisan_withdrawals');
     Route::get('/artisan-withdrawals/data', [PaymentDataController::class, 'artisanWithdrawalsData'])->name('artisan_withdrawals.data');
-
-    Route::get('/affiliate-withdrawals', [PaymentController::class, 'affiliate_withdrawals'])->name('affiliate_withdrawals');
     Route::get('/affiliate-withdrawals/data', [PaymentDataController::class, 'affiliateWithdrawalsData'])->name('affiliate_withdrawals.data');
-
-    Route::get('/wallet-transactions', [PaymentController::class, 'wallet_transactions'])->name('wallet_transactions');
     Route::get('/wallet-transactions/data', [PaymentDataController::class, 'walletTransactionsData'])->name('wallet_transactions.data');
 });
 

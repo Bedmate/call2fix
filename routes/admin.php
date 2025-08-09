@@ -126,15 +126,19 @@ Route::group([], function () {
             Route::delete('{id}/force', 'forceDelete')->name('faq.force.delete');
         });
 
-        Route::prefix('payments')->controller(PaymentController::class)->group(function () {
-            Route::get('revenue', 'revenue')->name('payments.revenue');
-            Route::get('retention', 'retention')->name('payments.retention');
-            Route::get('transactions', 'transactions')->name('payments.transactions');
-            Route::get('wallet-deposits', 'wallet_deposits')->name('payments.wallet_deposits');
-            Route::get('merchant-withdrawals', 'merchant_withdrawals')->name('payments.merchant_withdrawals');
-            Route::get('artisan-withdrawals', 'artisan_withdrawals')->name('payments.artisan_withdrawals');
-            Route::get('affiliate-withdrawals', 'affiliate_withdrawals')->name('payments.affiliate_withdrawals');
+        Route::prefix('payments')->as('payments.')->controller(PaymentController::class)->group(function () {
+            Route::get('revenue', 'revenue')->name('revenue');
+            Route::get('retention', 'retention')->name('retention');
+            Route::get('transactions', 'transactions')->name('transactions');
+            Route::get('wallet-deposits', 'wallet_deposits')->name('wallet_deposits');
+            Route::get('merchant-withdrawals', 'merchant_withdrawals')->name('merchant_withdrawals');
+            Route::get('artisan-withdrawals', 'artisan_withdrawals')->name('artisan_withdrawals');
+            Route::get('affiliate-withdrawals', 'affiliate_withdrawals')->name('affiliate_withdrawals');
+            Route::get('wallet-transactions', 'wallet_transactions')->name('wallet_transactions');
+            Route::get('admin/payments/retention/{id}', 'retentionDetails')->name('payments.retention.show');
         });
+
+
 
         Route::middleware(['api'])
             ->prefix('api/v1/executives')
