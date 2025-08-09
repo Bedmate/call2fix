@@ -12,7 +12,8 @@
                     <tr>
                         <th>#</th>
                         <th>Service Request</th>
-                        <th>Amount</th>
+                        <th>Call2Fix Earnings</th>
+                        <th>Retention Amount</th>
                         <th>Date Created</th>
                         <th>Release Date</th>
                         <th>Action</th>
@@ -56,11 +57,12 @@ $(function () {
     let table = $('#retention-table').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '{{ route("admin.payments.retention.data") }}',
+        ajax: '{{ route("admin.payments.retention") }}',
         columns: [
             { data: 'id', name: 'id' },
             { data: 'service_request.title', name: 'service_request.title', defaultContent: 'N/A' },
-            { data: 'amount', name: 'amount' },
+            { data: 'call2fix_earnings', name: 'call2fix_earnings' },
+            { data: 'warranty_retention', name: 'warranty_retention' },
             { data: 'created_at', name: 'created_at' },
             { data: 'release_date', name: 'release_date', defaultContent: 'N/A' },
             { 
