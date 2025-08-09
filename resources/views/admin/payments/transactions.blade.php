@@ -24,7 +24,6 @@
                     <tr>
                         <th>ID</th>
                         <th>User</th>
-                        <th>User Type</th>
                         <th>Amount</th>
                         <th>Type</th>
                         <th>Description</th>
