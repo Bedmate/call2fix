@@ -134,7 +134,6 @@
                     'merchant_withdrawals',
                     'artisan_withdrawals',
                     'affiliate_withdrawals',
-                    'wallet_transactions'
                 ];
             @endphp
             <ul class="menu-sub">

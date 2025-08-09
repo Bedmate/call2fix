@@ -27,7 +27,7 @@
                         <th>User Type</th>
                         <th>Amount</th>
                         <th>Type</th>
-                        <th>Status</th>
+                        <th>Description</th>
                         <th>Date</th>
                     </tr>
                 </thead>

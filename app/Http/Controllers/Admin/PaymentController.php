@@ -31,7 +31,7 @@ class PaymentController extends Controller
 
     public function retention()
     {
-        // if (request()->ajax()) {
+        if (request()->ajax()) {
             $apportionments = PaymentApportionment::where('created_at', '<', Carbon::now()->subDays(30))
                 ->with('serviceRequest');
 
@@ -44,8 +44,8 @@ class PaymentController extends Controller
                 ->addColumn('created_at', fn($row) => $row->created_at->format('Y-m-d H:i'))
                 ->addColumn('release_date', fn($row) => $row->created_at->addDays(30)->format('Y-m-d H:i'))
                 ->make(true);
-        // }
-        // return view('admin.payments.retention');
+        }
+        return view('admin.payments.retention');
     }
 
 
@@ -63,10 +63,11 @@ class PaymentController extends Controller
 
             return DataTables::eloquent($transactions)
                 ->addIndexColumn()
-                ->addColumn('user', fn($row) => $row->wallet?->user?->name ?? 'N/A')
-                ->addColumn('type', fn($row) => ucfirst($row->type))
-                ->addColumn('amount', fn($row) => number_format($row->amount, 2))
+                ->addColumn('user', fn($row) => $row->wallet?->user?->first_name .' '. $row->wallet?->user?->last_name ?? 'N/A')
+                ->addColumn('type', fn($row) => ucwords(str_replace("_", " ", $row->_account_type)))
+                ->addColumn('amount', fn($row) => number_format($row->amount/100, 2))
                 ->addColumn('date', fn($row) => $row->created_at->format('Y-m-d H:i'))
+                ->addColumn('status', fn($row) => $row->meta['description'] ?? 'N/A')
                 ->make(true);
         }
         return view('admin.payments.transactions');

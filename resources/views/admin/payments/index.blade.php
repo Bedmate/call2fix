@@ -31,7 +31,7 @@ $(function () {
     $('#depositsTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '{{ route("admin.payments.index.data") }}',
+        ajax: '{{ route("admin.payments.wallet_deposits.data") }}',
         columns: [
             { data: 'id', name: 'id' },
             { data: 'wallet.user.name', name: 'wallet.user.name' },
