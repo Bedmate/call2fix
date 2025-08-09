@@ -26,6 +26,42 @@ class PaymentDataController extends Controller
 
     public function transactionsData()
     {
+        if (request()->ajax()) {
+            $transactions = WalletTransaction::with('wallet.user')->latest();
+
+            // Apply filter
+            if ($type = request('user_type')) {
+                $transactions->whereHas('wallet.user', function ($q) use ($type) {
+                    $q->where('user_type', $type);
+                });
+            }
+
+            return DataTables::eloquent($transactions)
+                ->addIndexColumn()
+                ->addColumn('user', function ($row) {
+                    if ($row->wallet && $row->wallet->user) {
+                        return trim(($row->wallet->user->first_name ?? '') . ' ' . ($row->wallet->user->last_name ?? ''));
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('user_type', function ($row) {
+                    return $row->wallet->user->user_type ?? 'N/A';
+                })
+                ->addColumn('type', function ($row) {
+                    return ucwords(str_replace("_", " ", $row->_account_type));
+                })
+                ->addColumn('amount', function ($row) {
+                    return number_format($row->amount / 100, 2);
+                })
+                ->addColumn('date', function ($row) {
+                    return $row->created_at->format('Y-m-d H:i');
+                })
+                ->addColumn('status', function ($row) {
+                    return $row->meta['description'] ?? 'N/A';
+                })
+                ->rawColumns(['user', 'status']) // allow HTML if needed
+                ->make(true);
+        }
         $data = WalletTransaction::with('wallet', 'wallet.user');
         return DataTables::of($data)->make(true);
     }

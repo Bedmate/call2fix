@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -35,7 +34,7 @@ class PaymentController extends Controller
             $apportionments = PaymentApportionment::where('created_at', '<', Carbon::now()->subDays(30))
                 ->with('serviceRequest');
 
-                // dd($apportionments->get());
+            // dd($apportionments->get());
 
             return DataTables::eloquent($apportionments)
                 ->addIndexColumn()
@@ -48,28 +47,48 @@ class PaymentController extends Controller
         return view('admin.payments.retention');
     }
 
-
     public function retentionDetails($id)
     {
         $apportionment = PaymentApportionment::with('serviceRequest')->findOrFail($id);
         return response()->json($apportionment);
     }
 
-
     public function transactions()
     {
         if (request()->ajax()) {
             $transactions = WalletTransaction::with('wallet.user')->latest();
 
+            // Apply filter
+            if ($type = request('user_type')) {
+                $transactions->whereHas('wallet.user', function ($q) use ($type) {
+                    $q->where('user_type', $type);
+                });
+            }
+
             return DataTables::eloquent($transactions)
                 ->addIndexColumn()
-                ->addColumn('user', fn($row) => $row->wallet?->user?->first_name .' '. $row->wallet?->user?->last_name ?? 'N/A')
-                ->addColumn('type', fn($row) => ucwords(str_replace("_", " ", $row->_account_type)))
-                ->addColumn('amount', fn($row) => number_format($row->amount/100, 2))
-                ->addColumn('date', fn($row) => $row->created_at->format('Y-m-d H:i'))
-                ->addColumn('status', fn($row) => $row->meta['description'] ?? 'N/A')
+                ->addColumn('user', function ($row) {
+                    if ($row->wallet && $row->wallet->user) {
+                        return trim(($row->wallet->user->first_name ?? '') . ' ' . ($row->wallet->user->last_name ?? ''));
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('type', function ($row) {
+                    return ucwords(str_replace("_", " ", $row->_account_type));
+                })
+                ->addColumn('amount', function ($row) {
+                    return number_format($row->amount / 100, 2);
+                })
+                ->addColumn('date', function ($row) {
+                    return $row->created_at->format('Y-m-d H:i');
+                })
+                ->addColumn('status', function ($row) {
+                    return $row->meta['description'] ?? 'N/A';
+                })
+                ->rawColumns(['user', 'status']) // allow HTML if needed
                 ->make(true);
         }
+
         return view('admin.payments.transactions');
     }
 
@@ -97,7 +116,7 @@ class PaymentController extends Controller
             $withdrawals = WalletTransaction::where('type', 'withdrawal')
                 ->whereHas('wallet', function ($q) use ($merchants) {
                     $q->whereIn('user_id', $merchants)
-                      ->where('_account_type', 'merchant');
+                        ->where('_account_type', 'merchant');
                 })
                 ->with('wallet.user');
 
@@ -119,7 +138,7 @@ class PaymentController extends Controller
             $withdrawals = WalletTransaction::where('type', 'withdrawal')
                 ->whereHas('wallet', function ($q) use ($artisans) {
                     $q->whereIn('user_id', $artisans)
-                      ->where('_account_type', 'artisan');
+                        ->where('_account_type', 'artisan');
                 })
                 ->with('wallet.user');
 
@@ -141,7 +160,7 @@ class PaymentController extends Controller
             $withdrawals = WalletTransaction::where('type', 'withdrawal')
                 ->whereHas('wallet', function ($q) use ($affiliates) {
                     $q->whereIn('user_id', $affiliates)
-                      ->where('_account_type', 'affiliate');
+                        ->where('_account_type', 'affiliate');
                 })
                 ->with('wallet.user');
 

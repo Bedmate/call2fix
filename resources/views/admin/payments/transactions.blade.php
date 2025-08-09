@@ -51,12 +51,11 @@ $(function () {
         },
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'wallet.user.name', name: 'wallet.user.name' },
-            { data: 'wallet.user.user_type', name: 'wallet.user.user_type' },
+            { data: 'user', name: 'user' },
             { data: 'amount', name: 'amount' },
             { data: 'type', name: 'type' },
             { data: 'status', name: 'status' },
-            { data: 'created_at', name: 'created_at' },
+            { data: 'date', name: 'date' },
         ]
     });
 
