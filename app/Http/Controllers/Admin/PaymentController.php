@@ -35,7 +35,7 @@ class PaymentController extends Controller
             $apportionments = PaymentApportionment::where('created_at', '<', Carbon::now()->subDays(30))
                 ->with('serviceRequest');
 
-                dd($apportionments->get());
+                // dd($apportionments->get());
 
             return DataTables::eloquent($apportionments)
                 ->addIndexColumn()
