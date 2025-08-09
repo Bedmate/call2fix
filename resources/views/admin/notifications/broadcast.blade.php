@@ -53,7 +53,7 @@
         <div class="mb-3">
             <label class="form-label">Select User Roles</label>
             <select name="user_role[]" 
-                    class="form-control @error('user_role') is-invalid @enderror" 
+                    class="form-control select2 @error('user_role') is-invalid @enderror" 
                     multiple required>
                 @foreach(\Spatie\Permission\Models\Role::all() as $role)
                     <option value="{{ $role->name }}" {{ (collect(old('user_role'))->contains($role->name)) ? 'selected' : '' }}>
@@ -71,3 +71,24 @@
     </form>
 </div>
 @endsection
+
+@push('styles')
+    {{-- Select2 CSS --}}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+@endpush
+
+@push('scripts')
+    {{-- jQuery (required for Select2) --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {{-- Select2 JS --}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({
+                placeholder: "Select one or more roles",
+                allowClear: true
+            });
+        });
+    </script>
+@endpush
