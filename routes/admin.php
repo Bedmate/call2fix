@@ -143,27 +143,6 @@ Route::group([], function () {
         Route::post('send-broadcast-notification', [NotificationController::class, 'sendBroadcastNotification'])->name('notifications.broadcast.send');
 
 
-
-        Route::middleware(['api'])
-            ->prefix('api/v1/executives')
-            ->controller(ExecutiveDashboardController::class)
-            ->group(function () {
-                Route::get('service-requests', 'requests')->name('executive.requests');
-                Route::get('transactions', 'transactions')->name('executive.transactions');
-                Route::get('customers', 'customers')->name('executive.customers');
-                Route::get('customer/{customerID}/details', 'customerDetails')->name('executive.customer.details');
-
-                // Products (optional category ID)
-                Route::get('products/{categoryId?}', 'products')->name('executive.products');
-                Route::get('product/{productID}', 'productDetails')->name('executive.product.details');
-
-                // Revenue
-                Route::get('revenue', 'revenue')->name('executive.revenue');
-
-                // Categories
-                Route::get('categories', 'categories')->name('executive.categories');
-            });
-
         Route::post('logout', [AdminController::class, 'logout'])->name('logout');
     });
 })->domain(env('ADMIN_URL'));

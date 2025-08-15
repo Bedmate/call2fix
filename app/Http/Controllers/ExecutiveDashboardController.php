@@ -47,6 +47,13 @@ class ExecutiveDashboardController extends Controller
 
         return get_success_response($transactions, "Transactions fetched successfully");
     }
+
+    public function transactionDetail($id)
+    {
+        $transactions = WalletTransaction::with('wallet', 'wallet.user')->whereId($id)->first();
+
+        return get_success_response($transactions, "Transactions fetched successfully");
+    }
         
     public function customers()
     {

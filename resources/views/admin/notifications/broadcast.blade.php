@@ -55,8 +55,8 @@
             <select name="user_role[]" 
                     class="form-control select2 @error('user_role') is-invalid @enderror" 
                     multiple required>
-                @foreach(\Spatie\Permission\Models\Role::all() as $role)
-                    <option value="{{ $role->name }}" {{ (collect(old('user_role'))->contains($role->name)) ? 'selected' : '' }}>
+                @foreach(["artisan", "providers", "co-operate_accounts", "private_accounts", "affiliates", "suppliers", "department"] as $role)
+                    <option value="{{ $role }}" {{ $role ? 'selected' : '' }}>
                         {{ ucfirst($role->name) }}
                     </option>
                 @endforeach

@@ -24,6 +24,7 @@ use App\Http\Controllers\TasksController;
 use App\Http\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ExecutiveDashboardController;
 use App\Http\Controllers\ServiceRequestController;
 use Modules\Artisan\Http\Controllers\ArtisanController;
 use Modules\Artisan\Http\Controllers\TaskController;
@@ -268,6 +269,34 @@ Route::middleware(['api'])->domain(env('API_URL'))->prefix('v1')->group(function
         });
 
         Route::post('support/email', [FaqsController::class, 'sendSupportEmail']);
+    });
+
+
+
+    // Protected routes 
+    Route::middleware(['api','auth:sanctum'])->prefix('executives')->group(function () {
+    
+        Route::get('products', [ProductController::class, 'index']);
+        Route::get('products/{productID}', [ProductController::class, 'show'])->name('executive.product.details');
+        Route::get('service-requests/{serviceRequest}', [ServiceRequestController::class, 'show'])->name('executive.requests');
+        Route::post('send-broadcast-notification', [NotificationController::class, 'sendBroadcastNotification']);
+        Route::controller(ExecutiveDashboardController::class)
+            ->group(function () {
+                Route::get('service-requests', 'requests')->name('executive.requests');
+                Route::get('transactions', 'transactions')->name('executive.transactions');
+                Route::get('transactions/{id}', 'transactionDetail')->name('executive.transactions.details');
+                Route::get('customers', 'customers')->name('executive.customers');
+                Route::get('customer/{customerID}/details', 'customerDetails')->name('executive.customer.details');
+
+                // Products (optional category ID)
+                Route::get('products/{categoryId}', 'products')->name('executive.products');
+
+                // Revenue
+                Route::get('revenue', 'revenue')->name('executive.revenue');
+
+                // Categories
+                Route::get('categories', 'categories')->name('executive.categories');
+            });
     });
 
     Route::apiResource('faqs', FaqsController::class);

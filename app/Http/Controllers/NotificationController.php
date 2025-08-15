@@ -109,7 +109,7 @@ class NotificationController extends Controller
             'title' => 'required|string|max:255',
             'message' => 'required|string|max:255',
             'user_role' => 'required|array',
-            'user_role.*' => 'string|exists:roles,name',
+            'user_role.*' => 'string|in:artisan,providers,co-operate_accounts,private_accounts,affiliates,suppliers,department',
         ]);
 
         $title = $request->input('title');
@@ -120,7 +120,7 @@ class NotificationController extends Controller
         $title = $validated['title'];
         $message = $validated['message'];
         $roles = $validated['user_role'];
-        $senderId = auth('admin')->id();
+        $senderId = auth('admin')->id() ?? "0190c396-f99d-40fc-a5e2-89069a07a439";
 
         $broadcast = Broadcast::create([
             'subject' => $title,
@@ -132,6 +132,6 @@ class NotificationController extends Controller
         // Dispatch the job to run AFTER response is sent
         SendBroadcastNotificationJob::dispatchAfterResponse($message, $title, $roles);
 
-        return get_success_response(null, 'Broadcast notification scheduled successfully', 200);
+        return get_success_response($broadcast, 'Broadcast notification scheduled successfully', 200);
     }
 }
