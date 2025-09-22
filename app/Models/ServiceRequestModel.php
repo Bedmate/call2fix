@@ -52,6 +52,7 @@ class ServiceRequestModel extends Model
         'service_provider',
         'checkIns',
         'aportionment',
+        'property',
     ];
 
     public function negotiations()
