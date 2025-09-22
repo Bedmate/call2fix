@@ -185,8 +185,14 @@ class PaystackServices
         Log::info('Webhook received', ['data' => $data]);
 
         // Find user by email
+        if(!isset($data['customer']) || !isset($data['customer']['email'])) {
+            return null;
+        }
         $user = User::where('email', $data['customer']['email'])->first();
-        $receiver_account_number = $data['metadata']['receiver_account_number'];
+        if(isset($data['metadata']) && isset($data['metadata']['receiver_account_number'])) {
+            $receiver_account_number = $data['metadata']['receiver_account_number'];
+        }
+
         if (!$user) {
             Log::error('User not found for email', ['email' => $data['customer']['email']]);
             return;

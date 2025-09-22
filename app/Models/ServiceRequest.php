@@ -51,6 +51,7 @@ class ServiceRequest extends BaseModel
         'submittedQuotes',
         'user',
         'service_provider',
+        'property'
     ];
 
     public function negotiations()
