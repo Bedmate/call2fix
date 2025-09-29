@@ -289,7 +289,7 @@ Route::middleware(['api'])->domain(env('API_URL'))->prefix('v1')->group(function
                 Route::get('customer/{customerID}/details', 'customerDetails')->name('executive.customer.details');
 
                 // Products (optional category ID)
-                Route::get('products/{categoryId}', 'products')->name('executive.products');
+                Route::get('products/category/{categoryId}', 'products')->name('executive.products');
 
                 // Revenue
                 Route::get('revenue', 'revenue')->name('executive.revenue');

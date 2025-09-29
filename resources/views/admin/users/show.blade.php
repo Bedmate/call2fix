@@ -5,7 +5,7 @@
 <div class="container">
     <h1>User Details: {{ $user->name }}</h1>
 
-    <div class="row mb-3">
+    <div class="row mb-3 hidden">
         <div class="col-md-6">
             @foreach($user->my_wallets() as $wallet)
             <div class="card mb-3">
