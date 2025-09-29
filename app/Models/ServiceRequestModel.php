@@ -106,7 +106,7 @@ class ServiceRequestModel extends Model
 
     public function property()
     {
-        return $this->belongsTo(Property::class, 'property_id', 'id');
+        return $this->hasOne(Property::class, 'property_id', 'id');
     }
 
     public function serviceCategory()

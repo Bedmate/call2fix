@@ -57,7 +57,7 @@
                     multiple required>
                 @foreach(["artisan", "providers", "co-operate_accounts", "private_accounts", "affiliates", "suppliers", "department"] as $role)
                     <option value="{{ $role }}" {{ $role ? 'selected' : '' }}>
-                        {{ ucfirst($role->name) }}
+                        {{ ucfirst($role) }}
                     </option>
                 @endforeach
             </select>
