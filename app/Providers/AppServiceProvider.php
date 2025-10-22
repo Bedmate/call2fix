@@ -18,6 +18,8 @@ use Towoju5\Wallet\Models\Wallet as ModelsWallet;
 use App\Models\User;
 use App\Observers\UserObserver;
 use App\Services\GeoLocationService;
+use Google\Service\Walletobjects\Pagination;
+use Illuminate\Pagination\Paginator;
 use Jijunair\LaravelReferral\Traits\Referrable;
 
 class AppServiceProvider extends ServiceProvider
@@ -46,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
         //         WalletUpdatedEventInterface::class,
         //     ]
         // );
+
+        Paginator::useTailwind();
 
         // Http::get(url('generate-ref-accounts'));
         $user = auth()->user();

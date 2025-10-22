@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Jobs\SendBroadcastNotificationJob;
@@ -55,7 +54,7 @@ class NotificationController extends Controller
     public function destroyAll()
     {
         try {
-            if(auth()->user()->notifications()->delete()){
+            if (auth()->user()->notifications()->delete()) {
                 return get_success_response(null, 'All notifications deleted', 200);
             }
             return get_error_response('An error occurred while fetching categories.', ['error' => 'An error occurred while deleting notifications'], 500);
@@ -66,37 +65,36 @@ class NotificationController extends Controller
     public function sendOTP()
     {
         $user = auth()->user();
-        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        
+        $otp  = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
         // Store OTP in cache for 5 minutes
         Cache::put('otp_' . $user->id, $otp, now()->addMinutes(5));
-    
+
         // Send OTP via SMS or email
         // You can implement your preferred method of sending the OTP here
         // For example, using a notification:
         // $user->notify(new OTPNotification($otp));
-    
+
         return get_success_response(null, 'OTP sent successfully', 200);
     }
-    
+
     public function verifyOTP(Request $request)
     {
-        $user = auth()->user();
+        $user         = auth()->user();
         $submittedOTP = $request->input('otp');
-        $storedOTP = Cache::get('otp_' . $user->id);
-    
-        if (!$storedOTP) {
+        $storedOTP    = Cache::get('otp_' . $user->id);
+
+        if (! $storedOTP) {
             return get_error_response('OTP has expired or does not exist', [], 400);
         }
-    
+
         if ($submittedOTP === $storedOTP) {
             Cache::forget('otp_' . $user->id);
             return get_success_response(null, 'OTP verified successfully', 200);
         }
-    
+
         return get_error_response('Invalid OTP', [], 400);
     }
-    
 
     public function sendBroadcast(Request $request)
     {
@@ -106,31 +104,33 @@ class NotificationController extends Controller
     public function sendBroadcastNotification(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'message' => 'required|string|max:255',
-            'user_role' => 'required|array',
+            'title'       => 'required|string|max:255',
+            'message'     => 'required|string|max:255',
+            'user_role'   => 'required|array',
             'user_role.*' => 'string|in:artisan,providers,co-operate_accounts,private_accounts,affiliates,suppliers,department',
         ]);
 
-        $title = $request->input('title');
+        $title   = $request->input('title');
         $message = $request->input('message');
-        $roles = $request->input('user_role');
+        $roles   = $request->input('user_role');
 
-
-        $title = $validated['title'];
-        $message = $validated['message'];
-        $roles = $validated['user_role'];
+        $title    = $validated['title'];
+        $message  = $validated['message'];
+        $roles    = $validated['user_role'];
         $senderId = auth('admin')->id() ?? "0190c396-f99d-40fc-a5e2-89069a07a439";
 
         $broadcast = Broadcast::create([
-            'subject' => $title,
-            'message' => $message,
+            'subject'    => $title,
+            'message'    => $message,
             'recipients' => $roles,
-            'sender' => $senderId,
+            'sender'     => $senderId,
         ]);
 
         // Dispatch the job to run AFTER response is sent
         SendBroadcastNotificationJob::dispatchAfterResponse($message, $title, $roles);
+        if (! $request->expectsJson()) {
+            return back()->with('success', 'Broadcast notification scheduled successfully');
+        }
 
         return get_success_response($broadcast, 'Broadcast notification scheduled successfully', 200);
     }
