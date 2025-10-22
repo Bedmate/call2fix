@@ -26,31 +26,31 @@
                                     @if (count($user['roles']) > 0)
                                         @foreach ($user['roles'] as $role)
                                             <span
-                                                class="badge bg-primary">{{ str_replace('_', ' ', $role->name) }}</span>
+                                                class="badge my-1 bg-primary">{{ str_replace('_', ' ', $role->name) }}</span>
                                         @endforeach
                                     @else
-                                        <span class="badge bg-secondary">No roles</span>
+                                        <span class="badge my-1 bg-secondary">No roles</span>
                                     @endif
                                 </td>
 
                                 <td>
-                                    <div class="btn-group gap-3" role="group">
-                                        <a href="{{ route('admin.users.edit', $user['id']) }}"
+                                    <div class="btn-group gap-2" role="group">
+                                        <a href="{{ route('admin.users.edit', $user->id) }}"
                                             class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="{{ route('admin.users.show', $user['id']) }}"
+                                        <a href="{{ route('admin.users.show', $user->id) }}"
                                             class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         @if ($user['is_banned'])
-                                            <a href="{{ route('admin.users.unban', $user['id']) }}"
+                                            <a href="{{ route('admin.users.unban', $user->id) }}"
                                                 class="btn btn-sm btn-warning">Unban</a>
-                                        @else
-                                            <a href="{{ route('admin.users.ban', $user['id']) }}"
+                                        @else 
+                                            <a href="{{ route('admin.users.ban', $user->id) }}"
                                                 class="btn btn-sm btn-warning">Ban</a>
                                         @endif
-                                        <form action="{{ route('admin.users.destroy', $user['id']) }}" method="POST"
+                                        <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
                                             onsubmit="return confirm('Are you sure you want to delete this user?');">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-danger">Delete</button>

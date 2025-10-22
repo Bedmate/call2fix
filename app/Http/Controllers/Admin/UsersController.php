@@ -31,8 +31,7 @@ class UsersController extends Controller
                 $query->whereHas('roles', function ($q) {
                     $q->whereIn('name', is_array(request('roles')) ? request('roles') : [request('roles')]);
                 });
-            })->get();
-            // ->paginate(15);
+            })->paginate(15);
         return view('admin.users.index', compact('users'));
     }
 
@@ -86,7 +85,7 @@ class UsersController extends Controller
 
     public function ban($user)
     {
-        $user = app(User::class)->whereId($user)->first();
+        $user = User::whereId($user)->first();
         $user->update(['is_banned' => true]);
         return redirect()->back()->with('success', 'User banned successfully.');
     }

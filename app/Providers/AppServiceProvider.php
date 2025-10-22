@@ -49,7 +49,7 @@ class AppServiceProvider extends ServiceProvider
         //     ]
         // );
 
-        Paginator::useTailwind();
+        Paginator::useBootstrapFour();
 
         // Http::get(url('generate-ref-accounts'));
         $user = auth()->user();

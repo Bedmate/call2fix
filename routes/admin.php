@@ -94,7 +94,6 @@ Route::group([], function () {
             Route::put('/{product}', [ProductController::class, 'update'])->name('update');
             Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
             Route::post('order', [ProductController::class, 'order'])->name('products.order');
-
         });
 
         Route::prefix('users')->group(function () {
