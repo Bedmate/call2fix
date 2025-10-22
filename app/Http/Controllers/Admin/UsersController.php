@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\UsersImport;
 use Spatie\Permission\Models\Role;
 use App\Jobs\CleanupUserData;
+use App\View\Components\app;
 use Illuminate\Support\Facades\Validator;
 use Throwable;
 use Towoju5\Wallet\Models\Wallet;
@@ -83,8 +84,9 @@ class UsersController extends Controller
     }
 
 
-    public function ban(User $user)
+    public function ban($user)
     {
+        $user = app(User::class)->whereId($user)->first();
         $user->update(['is_banned' => true]);
         return redirect()->back()->with('success', 'User banned successfully.');
     }
