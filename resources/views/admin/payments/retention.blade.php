@@ -60,7 +60,7 @@ $(function () {
         ajax: '{{ route("admin.payments.retention") }}',
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'service_request.title', name: 'service_request.title', defaultContent: 'N/A' },
+            { data: 'service_request.problem_title', name: 'service_request.problem_title', defaultContent: 'N/A' },
             { data: 'call2fix_earnings', name: 'call2fix_earnings' },
             { data: 'warranty_retention', name: 'warranty_retention' },
             { data: 'created_at', name: 'created_at' },
