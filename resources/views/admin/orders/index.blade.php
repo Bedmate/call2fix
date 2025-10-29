@@ -46,7 +46,7 @@
                     <form action="{{ route('admin.orders.destroy', $order->id) }}" method="POST" class="d-inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return Confirm('Are you sure?')">Delete</button>
                     </form>
                 </td>
             </tr>
@@ -58,6 +58,6 @@
         </tbody>
     </table>
 
-    {{ $orders->links()->withQueryString() }}
+    {{ $orders->links() }}
 </div>
 @endsection
