@@ -154,7 +154,7 @@
 
 
         <!-- Roles & Permissions -->
-        <li class="menu-item hidden">
+        <li class="menu-item hidden" hidden>
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class='menu-icon tf-icons ti ti-settings'></i>
                 <div data-i18n="Roles & Permissions">Roles & Permissions</div>
