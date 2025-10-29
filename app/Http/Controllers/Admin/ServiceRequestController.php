@@ -1,18 +1,31 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Models\ServiceRequest;
 use Illuminate\Support\Facades\Validator;
 
 class ServiceRequestController extends Controller
 {
     public function index()
     {
-        $serviceRequests = ServiceRequest::paginate(get_settings_value('per_page') ?? 10);
+        $query = ServiceRequest::query();
+        if (request()->has('search')) {
+            $search = request()->input('search');
+            $query->where(function ($query) use ($search) {
+                $query->where('problem_title', 'like', "%{$search}%")
+                    ->orWhere('problem_description', 'like', "%{$search}%");
+            });
+        }
+
+        if (request()->has('status')) {
+            $status = request()->input('status');
+            $query->where('request_status', $status);
+        }
+
+        $serviceRequests = $query->paginate(get_settings_value('per_page') ?? 10);
         return view('admin.service-requests.index', compact('serviceRequests'));
     }
 
@@ -24,16 +37,16 @@ class ServiceRequestController extends Controller
     public function store(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'property_id' => 'required|exists:properties,id',
-            'service_category_id' => 'nullable|exists:categories,id',
-            'service_id' => 'nullable|exists:services,id',
-            'problem_title' => 'required|string|max:255',
-            'problem_description' => 'required|string',
-            'inspection_time' => 'required|date_format:H:i',
-            'inspection_date' => 'required|date',
-            'problem_images' => 'nullable|array',
+            'property_id'            => 'required|exists:properties,id',
+            'service_category_id'    => 'nullable|exists:categories,id',
+            'service_id'             => 'nullable|exists:services,id',
+            'problem_title'          => 'required|string|max:255',
+            'problem_description'    => 'required|string',
+            'inspection_time'        => 'required|date_format:H:i',
+            'inspection_date'        => 'required|date',
+            'problem_images'         => 'nullable|array',
             'use_featured_providers' => 'boolean',
-            'featured_providers_id' => 'nullable|array',
+            'featured_providers_id'  => 'nullable|array',
         ]);
 
         if ($validate->fails()) {
@@ -59,16 +72,16 @@ class ServiceRequestController extends Controller
     public function update(Request $request, ServiceRequest $serviceRequest)
     {
         $validate = Validator::make($request->all(), [
-            'property_id' => 'required|exists:properties,id',
-            'service_category_id' => 'nullable|exists:categories,id',
-            'service_id' => 'nullable|exists:services,id',
-            'problem_title' => 'required|string|max:255',
-            'problem_description' => 'required|string',
-            'inspection_time' => 'required|date_format:H:i',
-            'inspection_date' => 'required|date',
-            'problem_images' => 'nullable|array',
+            'property_id'            => 'required|exists:properties,id',
+            'service_category_id'    => 'nullable|exists:categories,id',
+            'service_id'             => 'nullable|exists:services,id',
+            'problem_title'          => 'required|string|max:255',
+            'problem_description'    => 'required|string',
+            'inspection_time'        => 'required|date_format:H:i',
+            'inspection_date'        => 'required|date',
+            'problem_images'         => 'nullable|array',
             'use_featured_providers' => 'boolean',
-            'featured_providers_id' => 'nullable|array',
+            'featured_providers_id'  => 'nullable|array',
         ]);
 
         if ($validate->fails()) {
@@ -95,17 +108,17 @@ class ServiceRequestController extends Controller
     public function storeOnBehalfOfCustomer(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'customer_id' => 'required|exists:customers,id',
-            'property_id' => 'required|exists:properties,id',
-            'service_category_id' => 'nullable|exists:categories,id',
-            'service_id' => 'nullable|exists:services,id',
-            'problem_title' => 'required|string|max:255',
-            'problem_description' => 'required|string',
-            'inspection_time' => 'required|date_format:H:i',
-            'inspection_date' => 'required|date',
-            'problem_images' => 'nullable|array',
+            'customer_id'            => 'required|exists:customers,id',
+            'property_id'            => 'required|exists:properties,id',
+            'service_category_id'    => 'nullable|exists:categories,id',
+            'service_id'             => 'nullable|exists:services,id',
+            'problem_title'          => 'required|string|max:255',
+            'problem_description'    => 'required|string',
+            'inspection_time'        => 'required|date_format:H:i',
+            'inspection_date'        => 'required|date',
+            'problem_images'         => 'nullable|array',
             'use_featured_providers' => 'boolean',
-            'featured_providers_id' => 'nullable|array',
+            'featured_providers_id'  => 'nullable|array',
         ]);
 
         if ($validate->fails()) {

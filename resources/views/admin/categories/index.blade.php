@@ -3,7 +3,10 @@
 @section('content')
 @php $serviceAreas = App\Models\ServiceArea::all(); @endphp
 <div class="container">
-    <h1>Categories</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Categories</h1>
+        <a href="{{ route('admin.categories.create') }}" class="btn btn-success">Add New Category</a>
+    </div>
     
     <table class="table">
         <thead>

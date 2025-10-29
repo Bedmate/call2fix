@@ -25,12 +25,12 @@
         <tbody>
             @forelse($orders as $order)
                 <tr>
-                    <td>{{ $order->id }}</td>
-                    <td>{{ $order->user->first_name .' '.$order->user->last_name }}</td>
-                    <td>{{ $order->seller->first_name .' '.$order->seller->last_name }}</td>
-                    <td>{{ ucfirst($order->status) }}</td>
-                    <td>{{ ucfirst(str_replace('_', ' ', $order->delivery_type)) }}</td>
-                    <td>${{ number_format($order->total_price, 2) }}</td>
+                    <td>{{ $order?->id }}</td>
+                    <td>{{ $order?->user?->first_name .' '.$order?->user?->last_name }}</td>
+                    <td>{{ $order?->seller?->first_name .' '.$order?->seller?->last_name }}</td>
+                    <td>{{ ucfirst($order?->status) }}</td>
+                    <td>{{ ucfirst(str_replace('_', ' ', $order?->delivery_type)) }}</td>
+                    <td>${{ number_format($order?->total_price, 2) }}</td>
                     <td>
                         <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-info btn-sm">View</a>
                         <a href="{{ route('admin.orders.track', $order->id) }}" class="btn btn-primary btn-sm">Track</a>

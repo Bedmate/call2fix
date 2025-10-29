@@ -138,11 +138,8 @@ class Order extends BaseModel
         }
 
         if (request()->has('status') && ! empty(request()->query('status'))) {
-            $query->where('status', request()->query('status'));
-        }
-
-        if (request()->has('status') && ! empty(request()->query('status'))) {
-            $query->where('status', request()->query('status'));
+            $query->where('status', request()->query('status'))
+                ->orWhere('order_status', request()->query('status'));
         }
 
         return $query;

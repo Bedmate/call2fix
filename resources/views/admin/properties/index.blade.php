@@ -5,17 +5,20 @@
 <div class="container">
     <h1>Properties</h1>
 
-    <!-- Search and Filter Form -->
+ <div class="flex gap-3 items-center">
+       <!-- Search and Filter Form -->
     <form method="GET" action="{{ route('admin.properties.index') }}">
         <div class="row mb-3">
             <div class="col-md-4">
-                <input type="text" name="user_id" class="form-control" placeholder="Search by User ID" value="{{ request('user_id') }}">
+                <input type="text" name="search" class="form-control" placeholder="Search by Property name or User ID" value="{{ request('search') }}">
             </div>
             {{-- <div class="col-md-4">
-                <select name="_account_type" class="form-control">
+                <select name="property_type" class="form-control">
                     <option value="">Filter by Property Type</option>
-                    <option value="type1" {{ request('_account_type') == 'type1' ? 'selected' : '' }}>Type 1</option>
-                    <option value="type2" {{ request('_account_type') == 'type2' ? 'selected' : '' }}>Type 2</option>
+                    <option value="Residential" {{ request('property_type') == 'Residential' ? 'selected' : '' }}>Residential</option>
+                    <option value="Recreational" {{ request('property_type') == 'Recreational' ? 'selected' : '' }}>Recreational</option>
+                    <option value="Office" {{ request('property_type') == 'Office' ? 'selected' : '' }}>Office</option>
+                    <option value="commercial" {{ request('property_type') == 'commercial' ? 'selected' : '' }}>commercial</option>
                 </select>
             </div> --}}
             <div class="col-md-4">
@@ -23,6 +26,9 @@
             </div>
         </div>
     </form>
+
+    <a href="{{ route('admin.properties.create') }}" class="btn btn-success mb-3">Add New Property</a>
+ </div>
 
     <table class="table table-bordered">
         <thead>
@@ -47,7 +53,7 @@
                     <form action="{{ route('admin.properties.destroy', $property->id) }}" method="POST" style="display:inline;">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
                     </form>
                 </td>
             </tr>

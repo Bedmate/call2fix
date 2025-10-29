@@ -792,13 +792,13 @@ id="layout-navbar">
 </div>
 
 <!-- Search Small Screens -->
-<div
+<form method="get"
     class="navbar-search-wrapper search-input-wrapper  d-none">
     <input type="text"
         class="form-control search-input container-xxl border-0"
         placeholder="Search..." aria-label="Search...">
     <i
         class="ti ti-x search-toggler cursor-pointer"></i>
-</div>
+</form>
 
 </nav>

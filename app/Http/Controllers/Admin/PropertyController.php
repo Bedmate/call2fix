@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -21,6 +20,15 @@ class PropertyController extends Controller
                 } elseif ($request->status === 'active') {
                     $query->whereNull('deleted_at');
                 }
+            }
+
+            if (request()->has('search')) {
+                $search = request()->input('search');
+                $query->where(function ($query) use ($search) {
+                    $query->where('problem_title', 'like', "%{$search}%")
+                        ->orWhere('problem_description', 'like', "%{$search}%")
+                        ->orWhere('user_id', 'like', "%{$search}%");
+                });
             }
 
             // Search by user_id
@@ -57,13 +65,13 @@ class PropertyController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'property_address' => 'required|string|max:255',
-            'property_type' => 'required|string|max:100',
+            'user_id'                   => 'required|exists:users,id',
+            'property_address'          => 'required|string|max:255',
+            'property_type'             => 'required|string|max:100',
             'property_nearest_landmark' => 'required|string|max:255',
-            'property_name' => 'required|string|max:255',
-            'porperty_longitude' => 'required|string',
-            'porperty_latitude' => 'required|string',
+            'property_name'             => 'required|string|max:255',
+            'porperty_longitude'        => 'required|string',
+            'porperty_latitude'         => 'required|string',
         ]);
 
         try {
@@ -88,13 +96,13 @@ class PropertyController extends Controller
     public function update(Request $request, Property $property)
     {
         $validatedData = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'property_address' => 'required|string|max:255',
-            'property_type' => 'required|string|max:100',
+            'user_id'                   => 'required|exists:users,id',
+            'property_address'          => 'required|string|max:255',
+            'property_type'             => 'required|string|max:100',
             'property_nearest_landmark' => 'required|string|max:255',
-            'property_name' => 'required|string|max:255',
-            'porperty_longitude' => 'required|string',
-            'porperty_latitude' => 'required|string',
+            'property_name'             => 'required|string|max:255',
+            'porperty_longitude'        => 'required|string',
+            'porperty_latitude'         => 'required|string',
         ]);
 
         try {

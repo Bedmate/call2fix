@@ -62,7 +62,7 @@ class ProductController extends Controller
             }
         }
 
-        return redirect()->route('products.index')->with('success', 'Product created successfully.');
+        return back()->with('success', 'Product created successfully.');
     }
 
     public function show(Product $product)
@@ -100,13 +100,13 @@ class ProductController extends Controller
 
         $product->update($validator->validated());
 
-        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+        return back()->with('success', 'Product updated successfully.');
     }
 
     public function destroy(Product $product)
     {
         $product->delete();
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+        return back()->with('success', 'Product deleted successfully.');
     }
 
 
