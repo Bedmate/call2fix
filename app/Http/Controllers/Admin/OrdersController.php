@@ -14,13 +14,15 @@ class OrdersController extends Controller
      */
     public function index()
     {
-        $query = Order::with(['user', 'seller']); // Eager load relationships
+        $query = Order::with(['user', 'seller']);
 
-        if (request()->has('with_deleted') && request()->query('with_deleted') == 'true') {
-            $orders = $query->withTrashed();
+        // Apply soft-deletes condition
+        if (request()->filled('with_deleted') && request()->boolean('with_deleted')) {
+            $query->withTrashed();
         }
 
-        if (request()->has('search')) {
+        // Apply search filter
+        if (request()->filled('search')) {
             $search = request()->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('order_id', 'like', "%{$search}%")
@@ -29,7 +31,8 @@ class OrdersController extends Controller
             });
         }
 
-        $orders = $query->withTrashed()->latest()->paginate(15);
+        // Paginate the final query
+        $orders = $query->latest()->paginate(15);
 
         return view('admin.orders.index', compact('orders'));
     }
