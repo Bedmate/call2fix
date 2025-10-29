@@ -13,23 +13,19 @@ class OrdersController extends Controller
      */
     public function index()
     {
-        // Fetch all orders, including soft-deleted ones for admin
-        $orders = Order::query();
-        // if (request()->has('status')) {
-        //     $search = request()->input('status');
-        //     $orders->where('order_status', $search)
-        //         ->orWhere('status', $search);
-        // }
+        $query = Order::with(['user', 'seller']); // Eager load relationships
+
         if (request()->has('search')) {
             $search = request()->input('search');
-            $orders->where(function ($query) use ($search) {
-                $query->where('order_id', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('order_id', 'like', "%{$search}%")
                     ->orWhere('user_id', 'like', "%{$search}%")
                     ->orWhere('seller_id', 'like', "%{$search}%");
             });
         }
 
-        $orders = $orders->withTrashed()->latest()->paginate(15);
+        $orders = $query->withTrashed()->latest()->paginate(15);
+
         return view('admin.orders.index', compact('orders'));
     }
 
