@@ -6,7 +6,7 @@
 <div class="container">
     <div class="d-flex gap-3 justify-content-between align-items-center">
         <h1 class="mb-4">Manage Orders</h1>
-        // add get query button to include deleted orders
+        <!-- // add get query button to include deleted orders -->
         <form method="GET" action="{{ route('admin.orders.index') }}">
             <input type="hidden" name="with_deleted" value="{{ request()->query('with_deleted') == 'true' ? 'false' : 'true' }}">
             <button type="submit" class="btn btn-secondary">
