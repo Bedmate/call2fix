@@ -116,7 +116,7 @@
         var serviceImage = button.getAttribute('data-service-image');
 
         var modal = editserviceModal.querySelector('form');
-        modal.action = '/admin/services/' + serviceId; // Update action URL
+        modal.action = '/cp/services/' + serviceId; // Update action URL
 
         // Set the modal form fields
         modal.querySelector('#service_name').value = serviceName;
@@ -131,7 +131,7 @@
         var serviceId = button.getAttribute('data-service-id');
 
         // Fetch services related to the service
-        fetch('/admin/services/' + serviceId + '/services')
+        fetch('/cp/services/' + serviceId + '/services')
             .then(response => response.json())
             .then(data => {
                 var servicesList = document.getElementById('services-list');

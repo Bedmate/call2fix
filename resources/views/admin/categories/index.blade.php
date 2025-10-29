@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const parent = button.getAttribute('data-parent-category');
 
         const form = this.querySelector('form');
-        form.action = `/admin/categories/${id}`;
+        form.action = `/cp/categories/${id}`;
 
         form.querySelector('#category_name').value = name;
         form.querySelector('#category_slug').value = slug || name.toLowerCase().replace(/\s+/g, '-');
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         servicesList.innerHTML = '<p>Loading services...</p>';
 
-        fetch(`/admin/categories/${categoryId}/services`)
+        fetch(`/cp/categories/${categoryId}/services`)
             .then(response => {
                 if (!response.ok) throw new Error('Failed to load services');
                 return response.json();
