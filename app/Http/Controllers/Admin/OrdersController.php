@@ -29,7 +29,7 @@ class OrdersController extends Controller
             });
         }
 
-        $orders->withTrashed()->latest()->paginate(15);
+        $orders = $orders->withTrashed()->latest()->paginate(15);
         return view('admin.orders.index', compact('orders'));
     }
 

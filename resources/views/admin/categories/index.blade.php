@@ -7,7 +7,7 @@
         <h1>Categories</h1>
         <a href="{{ route('admin.categories.create') }}" class="btn btn-success">Add New Category</a>
     </div>
-    
+
     <table class="table">
         <thead>
             <tr>
@@ -28,7 +28,7 @@
                     <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-category-id="{{ $category->id }}" data-category-name="{{ $category->category_name }}" data-category-description="{{ $category->category_description }}" data-parent-category="{{ $category->parent_category }}" data-category-image="{{ $category->category_image }}">
                         Edit Category
                     </button>
-                    
+
                     <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#viewServicesModal" data-category-id="{{ $category->id }}">
                         View Services
                     </button>
@@ -109,7 +109,6 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
     // Edit Category Modal
     const editModal = document.getElementById('editCategoryModal');
     editModal.addEventListener('show.bs.modal', function (event) {
@@ -145,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(data => {
                 if (data.services && data.services.length > 0) {
-                    servicesList.innerHTML = data.services.map(s => 
+                    servicesList.innerHTML = data.services.map(s =>
                         `<p><strong>${s.service_name}</strong> — ${s.description || ''}</p>`
                     ).join('');
                 } else {
@@ -157,6 +156,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 servicesList.innerHTML = '<p class="text-danger">Error loading services.</p>';
             });
     });
-});
+
 </script>
 @endpush
