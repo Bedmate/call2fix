@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\KwikDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -14,6 +15,10 @@ class OrdersController extends Controller
     public function index()
     {
         $query = Order::with(['user', 'seller']); // Eager load relationships
+
+        if (request()->has('with_deleted') && request()->query('with_deleted') == 'true') {
+            $orders = $query->withTrashed();
+        }
 
         if (request()->has('search')) {
             $search = request()->input('search');
@@ -117,7 +122,7 @@ class OrdersController extends Controller
      */
     public function destroy($id)
     {
-        $order = Order::findOrFail($id);
+        $order = Order::withTrashed()->findOrFail($id);
         $order->delete();
 
         return redirect()->route('admin.orders.index')->with('success', 'Order deleted successfully.');
@@ -143,5 +148,16 @@ class OrdersController extends Controller
         $order->forceDelete();
 
         return redirect()->route('admin.orders.index')->with('success', 'Order permanently deleted.');
+    }
+
+    public function trackOrder($id)
+    {
+        $order = Order::withTrashed()->findOrFail($id);
+
+        // Assuming there's a method to get tracking info from an external service
+        $trackingInfo = app(KwikDeliveryService::class)->getJobDetails($order->kwik_order_id);
+        return response()->json($trackingInfo);
+
+        // return view('admin.orders.track', compact('order', 'trackingInfo'));
     }
 }

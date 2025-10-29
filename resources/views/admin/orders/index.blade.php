@@ -4,7 +4,16 @@
 
 @section('content')
 <div class="container">
-    <h1 class="mb-4">Manage Orders</h1>
+    <div class="d-flex gap-3 justify-content-between align-items-center">
+        <h1 class="mb-4">Manage Orders</h1>
+        // add get query button to include deleted orders
+        <form method="GET" action="{{ route('admin.orders.index') }}">
+            <input type="hidden" name="with_deleted" value="{{ request()->query('with_deleted') == 'true' ? 'false' : 'true' }}">
+            <button type="submit" class="btn btn-secondary">
+                {{ request()->query('with_deleted') == 'true' ? 'Hide Deleted Orders' : 'Show Deleted Orders' }}
+            </button>
+        </form>
+    </div>
 
     @if(session('success'))
     <div class="alert alert-success">{{ session('success') }}</div>
@@ -49,6 +58,6 @@
         </tbody>
     </table>
 
-    {{ $orders->links() }}
+    {{ $orders->links()->withQueryString() }}
 </div>
 @endsection
