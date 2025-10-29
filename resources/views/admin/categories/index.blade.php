@@ -107,51 +107,56 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-    // Update modal with category data
-    var editCategoryModal = document.getElementById('editCategoryModal');
-    editCategoryModal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget; // Button that triggered the modal
-        var categoryId = button.getAttribute('data-category-id');
-        var categoryName = button.getAttribute('data-category-name');
-        var categoryDescription = button.getAttribute('data-category-description');
-        var parentCategory = button.getAttribute('data-parent-category');
-        var categoryImage = button.getAttribute('data-category-image');
+document.addEventListener('DOMContentLoaded', function () {
+    // Edit Category Modal
+    const editModal = document.getElementById('editCategoryModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-category-id');
+        const name = button.getAttribute('data-category-name');
+        const slug = button.getAttribute('data-category-slug');
+        const desc = button.getAttribute('data-category-description');
+        const parent = button.getAttribute('data-parent-category');
 
-        var modal = editCategoryModal.querySelector('form');
-        modal.action = '/admin/categories/' + categoryId; // Update action URL
+        const form = this.querySelector('form');
+        form.action = `/admin/categories/${id}`;
 
-        // Set the modal form fields
-        modal.querySelector('#category_name').value = categoryName;
-        modal.querySelector('#category_description').value = categoryDescription;
-        modal.querySelector('#parent_category').value = parentCategory;
+        form.querySelector('#category_name').value = name;
+        form.querySelector('#category_slug').value = slug || name.toLowerCase().replace(/\s+/g, '-');
+        form.querySelector('#category_description').value = desc || '';
+        form.querySelector('#parent_category').value = parent || '';
     });
 
-    // Load services under a category
-    var viewServicesModal = document.getElementById('viewServicesModal');
-    viewServicesModal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget; // Button that triggered the modal
-        var categoryId = button.getAttribute('data-category-id');
+    // View Services Modal
+    const viewModal = document.getElementById('viewServicesModal');
+    viewModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const categoryId = button.getAttribute('data-category-id');
+        const servicesList = this.querySelector('#services-list');
 
-        // Fetch services related to the category
-        fetch('/admin/categories/' + categoryId + '/services')
-            .then(response => response.json())
+        servicesList.innerHTML = '<p>Loading services...</p>';
+
+        fetch(`/admin/categories/${categoryId}/services`)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load services');
+                return response.json();
+            })
             .then(data => {
-                var servicesList = document.getElementById('services-list');
-                servicesList.innerHTML = '';
-
-                if (data.services && data.services.length) {
-                    data.services.forEach(function(service) {
-                        var serviceItem = document.createElement('p');
-                        serviceItem.textContent = service.service_name; // Update with your service fields
-                        servicesList.appendChild(serviceItem);
-                    });
+                if (data.services && data.services.length > 0) {
+                    servicesList.innerHTML = data.services.map(s => 
+                        `<p><strong>${s.service_name}</strong> — ${s.description || ''}</p>`
+                    ).join('');
                 } else {
-                    servicesList.innerHTML = '<p>No services found for this category.</p>';
+                    servicesList.innerHTML = '<p class="text-muted">No services found for this category.</p>';
                 }
             })
-            .catch(error => console.error('Error fetching services:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                servicesList.innerHTML = '<p class="text-danger">Error loading services.</p>';
+            });
     });
+});
 </script>
-@endsection
+@endpush

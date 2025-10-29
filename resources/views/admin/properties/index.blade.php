@@ -27,7 +27,7 @@
         </div>
     </form>
 
-    <a href="{{ route('admin.properties.create') }}" class="btn btn-success mb-3">Add New Property</a>
+    <a href="{{ route('admin.properties.create') }}" class="btn btn-success mb-3 hidden" hidden>Add New Property</a>
  </div>
 
     <table class="table table-bordered">
