@@ -7,7 +7,7 @@
 
  <div class="flex gap-3 items-center">
        <!-- Search and Filter Form -->
-    <form method="GET" action="{{ route('admin.properties.index') }}">
+    <!-- <form method="GET" action="{{ route('admin.properties.index') }}">
         <div class="row mb-3">
             <div class="col-md-4">
                 <input type="text" name="search" class="form-control" placeholder="Search by Property name or User ID" value="{{ request('search') }}">
@@ -16,9 +16,9 @@
                 <button type="submit" class="btn btn-primary">Filter</button>
             </div>
         </div>
-    </form>
+    </form> -->
 
-    <a href="{{ route('admin.properties.create') }}" class="btn btn-success mb-3 hidden" hidden>Add New Property</a>
+    <!-- <a href="{{ route('admin.properties.create') }}" class="btn btn-success mb-3 hidden" hidden>Add New Property</a> -->
  </div>
 
     <table class="table table-bordered">
