@@ -4,7 +4,7 @@
   <div class="container py-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
           <h1 class="h2">Service Requests</h1>
-          <a href="{{ route('admin.service-requests.create') }}" class="btn btn-primary">
+          <a href="{{ route('admin.service-requests.create') }}" class="btn btn-primary" hidden>
               Create New Request
           </a>
       </div>

@@ -25,7 +25,7 @@ class ServiceRequestController extends Controller
             $query->where('request_status', $status);
         }
 
-        $serviceRequests = $query->paginate(get_settings_value('per_page') ?? 10);
+        $serviceRequests = $query->latest()->paginate(get_settings_value('per_page') ?? 10);
         return view('admin.service-requests.index', compact('serviceRequests'));
     }
 
