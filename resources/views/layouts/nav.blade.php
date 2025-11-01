@@ -797,8 +797,7 @@ id="layout-navbar">
     <input type="text" name="search"
         class="form-control search-input container-xxl border-0"
         placeholder="Search..." aria-label="Search...">
-    <i
-        class="ti ti-x search-toggler cursor-pointer"></i>
+    <i class="ti ti-x search-toggler cursor-pointer"></i>
 </form>
 
 </nav>
