@@ -135,7 +135,7 @@ Route::group([], function () {
             Route::get('artisan-withdrawals', 'artisan_withdrawals')->name('artisan_withdrawals');
             Route::get('affiliate-withdrawals', 'affiliate_withdrawals')->name('affiliate_withdrawals');
             Route::get('wallet-transactions', 'wallet_transactions')->name('wallet_transactions');
-            Route::get('payments/retention/{id}', 'retentionDetails')->name('payments.retention.show');
+            Route::get('retention/{id}', 'retentionDetails')->name('payments.retention.show');
         });
 
         Route::get('send-broadcast-notification', [NotificationController::class, 'sendBroadcast'])->name('sendBroadcast');
