@@ -11,7 +11,7 @@ class PropertyController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Property::with('user')->withTrashed();
+            $query = Property::with('user');
 
             // Filter for trashed items
             if ($request->filled('status')) {

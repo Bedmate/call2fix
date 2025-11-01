@@ -12,15 +12,6 @@
             <div class="col-md-4">
                 <input type="text" name="search" class="form-control" placeholder="Search by Property name or User ID" value="{{ request('search') }}">
             </div>
-            {{-- <div class="col-md-4">
-                <select name="property_type" class="form-control">
-                    <option value="">Filter by Property Type</option>
-                    <option value="Residential" {{ request('property_type') == 'Residential' ? 'selected' : '' }}>Residential</option>
-                    <option value="Recreational" {{ request('property_type') == 'Recreational' ? 'selected' : '' }}>Recreational</option>
-                    <option value="Office" {{ request('property_type') == 'Office' ? 'selected' : '' }}>Office</option>
-                    <option value="commercial" {{ request('property_type') == 'commercial' ? 'selected' : '' }}>commercial</option>
-                </select>
-            </div> --}}
             <div class="col-md-4">
                 <button type="submit" class="btn btn-primary">Filter</button>
             </div>
