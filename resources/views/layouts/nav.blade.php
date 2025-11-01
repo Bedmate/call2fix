@@ -794,7 +794,7 @@ id="layout-navbar">
 <!-- Search Small Screens -->
 <form method="get"
     class="navbar-search-wrapper search-input-wrapper  d-none">
-    <input type="text"
+    <input type="text" name="search"
         class="form-control search-input container-xxl border-0"
         placeholder="Search..." aria-label="Search...">
     <i

@@ -27,12 +27,13 @@ class OrdersController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('order_id', 'like', "%{$search}%")
                     ->orWhere('user_id', 'like', "%{$search}%")
-                    ->orWhere('seller_id', 'like', "%{$search}%");
+                    ->orWhere('seller_id', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%");
             });
         }
 
         // Paginate the final query
-        $orders = $query->latest()->paginate(15);
+        $orders = $query->latest()->paginate(15)->withQueryString();
 
         return view('admin.orders.index', compact('orders'));
     }
