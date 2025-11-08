@@ -13,6 +13,7 @@ use App\Notifications\NewArtisanAddedNotification;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Modules\Artisan\Models\ArtisanQuotes;
 use Modules\ServiceProvider\Models\ServiceLocations;
@@ -519,39 +520,87 @@ class ServiceProviderController extends Controller
     public function addArtisanToRequest(Request $request)
     {
         try {
+            Log::info("🔹 addArtisanToRequest called", [
+                'payload' => $request->all(),
+                'user_id' => auth()->id(),
+            ]);
+
             $validate = Validator::make($request->all(), [
                 "request_id"          => "required|exists:service_requests,id",
                 "artisan_id"          => "required|exists:users,id",
                 "service_provider_id" => "required|exists:users,id",
             ]);
 
-            $checkExists = ArtisanCanSubmitQuote::where([
-                "request_id" => $request->request_id,
-                "artisan_id" => $request->artisan_id,
-            ])->exists();
-
-            if ($checkExists) {
-                return get_error_response("An Artisan has already been added to this project", ['error' => "An Artisan has already been added to this project"]);
-            }
-
             if ($validate->fails()) {
+                Log::warning("⚠️ Validation failed in addArtisanToRequest", [
+                    'errors' => $validate->errors()->toArray(),
+                ]);
                 return get_error_response("Validation Error", $validate->errors()->toArray());
             }
 
-            if ($artisan = ArtisanCanSubmitQuote::create($validate->validated())) {
-                $service_request = ServiceRequest::whereId($request->request_id)->first();
-                if($service_request && $service_request->request_status == "pending") {
-                    $service_request->update([
-                        "request_status" => "Processing",
-                    ]);
-                }
-                $artisanObj = User::whereId($request->artisan_id)->first();
-                $artisanObj->notify(new CustomNotification("Artisan Invite", "You have been invited to submit a quote for this project"));
-                return get_success_response($artisan, "Artisan invited successfully");
+            $validatedData = $validate->validated();
+            Log::info("✅ Validation passed", ['validated' => $validatedData]);
+
+            $checkExists = ArtisanCanSubmitQuote::where([
+                "request_id" => $validatedData['request_id'],
+                "artisan_id" => $validatedData['artisan_id'],
+            ])->exists();
+
+            if ($checkExists) {
+                Log::warning("⚠️ Artisan already added to project", [
+                    'request_id' => $validatedData['request_id'],
+                    'artisan_id' => $validatedData['artisan_id'],
+                ]);
+                return get_error_response("An Artisan has already been added to this project", ['error' => "An Artisan has already been added to this project"]);
             }
 
-            return get_error_response("Error encountered", ["error" => "Error encountered, please contact support."]);
+            $artisan = ArtisanCanSubmitQuote::create($validatedData);
+            if (! $artisan) {
+                Log::error("❌ Failed to create ArtisanCanSubmitQuote record", [
+                    'data' => $validatedData,
+                ]);
+                return get_error_response("Error encountered", ["error" => "Error encountered, please contact support."]);
+            }
+
+            Log::info("✅ ArtisanCanSubmitQuote created successfully", ['artisan' => $artisan]);
+
+            $service_request = ServiceRequest::find($validatedData['request_id']);
+            if ($service_request) {
+                Log::info("🧾 Found service request", [
+                    'id'     => $service_request->id,
+                    'status' => $service_request->request_status,
+                ]);
+
+                if ($service_request->request_status === "pending") {
+                    $service_request->update(["request_status" => "Processing"]);
+                    Log::info("🔄 Service request status updated to Processing", [
+                        'request_id' => $service_request->id,
+                    ]);
+                }
+            } else {
+                Log::warning("⚠️ Service request not found", ['id' => $validatedData['request_id']]);
+            }
+
+            $artisanObj = User::find($validatedData['artisan_id']);
+            if ($artisanObj) {
+                $artisanObj->notify(new CustomNotification("Artisan Invite", "You have been invited to submit a quote for this project"));
+                Log::info("📩 Notification sent to artisan", ['artisan_id' => $artisanObj->id]);
+            } else {
+                Log::warning("⚠️ Artisan user not found for notification", ['artisan_id' => $validatedData['artisan_id']]);
+            }
+
+            Log::info("✅ addArtisanToRequest completed successfully", [
+                'request_id' => $validatedData['request_id'],
+                'artisan_id' => $validatedData['artisan_id'],
+            ]);
+
+            return get_success_response($artisan, "Artisan invited successfully");
+
         } catch (\Throwable $th) {
+            Log::error("💥 Exception in addArtisanToRequest", [
+                'message' => $th->getMessage(),
+                'trace'   => $th->getTraceAsString(),
+            ]);
             return get_error_response($th->getMessage(), ["error" => $th->getMessage()]);
         }
     }

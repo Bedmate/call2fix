@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\ArtisanCanSubmitQuote;
@@ -94,7 +93,7 @@ class ServiceRequestController extends Controller
 
         if (! RateLimiter::tooManyAttempts($key, $maxAttempts)) {
 
-            // Record the attempt
+                                                        // Record the attempt
             RateLimiter::hit($key, $decayMinutes * 60); // Convert minutes to seconds
 
             $validate = Validator::make($request->all(), [
@@ -546,13 +545,13 @@ class ServiceRequestController extends Controller
                         // $updatedTerms        = $this->updatedTerms ?? '[Details of Updated Terms]';
 
                         $message =
-                            "Your negotiation for the quote provided by {$providerName} has been accepted. The updated terms have been confirmed, and the service will proceed as agreed.\n\n" .
-                            "Request Details:\n" .
-                            "\t• Service Requested: {$serviceName}\n" .
-                            "\t• Provider Name: {$providerName}\n" .
-                            "\t• Accepted Quote Amount: {$acceptedQuoteAmount}\n" .
-                            // "\t• Updated Terms: {$updatedTerms}\n\n" .
-                            "To proceed, please make the payment for the accepted quote amount. Once the payment is made, the service provider will contact you to finalize the arrangements. You can view the details and track the progress of your request on the app.";
+                        "Your negotiation for the quote provided by {$providerName} has been accepted. The updated terms have been confirmed, and the service will proceed as agreed.\n\n" .
+                        "Request Details:\n" .
+                        "\t• Service Requested: {$serviceName}\n" .
+                        "\t• Provider Name: {$providerName}\n" .
+                        "\t• Accepted Quote Amount: {$acceptedQuoteAmount}\n" .
+                        // "\t• Updated Terms: {$updatedTerms}\n\n" .
+                        "To proceed, please make the payment for the accepted quote amount. Once the payment is made, the service provider will contact you to finalize the arrangements. You can view the details and track the progress of your request on the app.";
 
                         $service_requester->notify(new CustomNotification("Quote Negotiation Accepted", $message));
 
@@ -589,7 +588,7 @@ class ServiceRequestController extends Controller
                 $service_request   = ServiceRequestModel::whereId($requestId)->with('user')->first();
                 $service_requester = $service_request->user;
 
-                $service_provider = User::find(auth()->id());
+                $service_provider    = User::find(auth()->id());
                 $serviceName         = $service_request->problem_title ?? '[Service Name]';
                 $providerName        = "{$service_provider->first_name} {$service_provider->last_name}" ?? '[Service Provider\'s Name]';
                 $rejectedQuoteAmount = $amountDue ?? '[Amount]';
@@ -800,9 +799,9 @@ class ServiceRequestController extends Controller
                 $customer->notify(new CustomNotification("Negotiation {$finalStatus} by Provider", "Negotiation {$finalStatus} by Provider."));
 
                 // Retrieve the service request
-                $serviceRequest = ServiceRequestModel::findOrFail($negotiation->request_id);
+                $serviceRequest = ServiceRequestModel::whereId($negotiation->request_id)->with('invited_artisan')->first();
 
-                if (!empty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
+                if (! empty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
                     return get_error_response(
                         "Request bidding process must end to perform this action.",
                         ["error" => "Request bidding process must end to perform this action!"],
@@ -815,11 +814,31 @@ class ServiceRequestController extends Controller
                     return get_error_response("Payment already processed", ["error" => "Payment already processed"], 409);
                 }
 
+                // since 'invited_artisan' is a HasMany relationship
+                $invited_artisan = $serviceRequest->invited_artisan
+                    ->firstWhere('service_provider_id', $negotiation->provider_id);
+
+                if (! $invited_artisan) {
+                    DB::rollBack();
+                    return get_error_response(
+                        "Invited artisan not found for this provider",
+                        ["error" => "Provider was not invited to this request"],
+                        404
+                    );
+                }
+                
+                $serviceRequest->approved_providers_id = $invited_artisan->service_provider_id ?? $invited_artisan->provider_id;
+                $serviceRequest->approved_artisan_id   = $invited_artisan->artisan_id ?? $invited_artisan->user_id;
+
                 // Update request status to "Payment Confirmed"
                 $serviceRequest->request_status = "Payment Confirmed";
 
                 $serviceRequest->total_cost = $amountDue;
                 // $customer->notify(new PaymentStatusUpdated('Payment Confirmed', $negotiation));
+
+                // update the approved service provider and artisan
+                $serviceRequest->approved_providers_id = $invited_artisan->provider_id;
+                $serviceRequest->approved_artisan_id   = $invited_artisan->artisan_id;
 
                 if (! $serviceRequest->save()) {
                     DB::rollBack();
@@ -946,7 +965,7 @@ class ServiceRequestController extends Controller
                 "artisan_id" => "required",
             ]);
 
-            $serviceRequest = ServiceRequestModel::whereId($requestId)->first();
+            $serviceRequest    = ServiceRequestModel::whereId($requestId)->first();
             $service_requester = $serviceRequest->user;
             if (! $serviceRequest) {
                 return get_error_response("Service request not found", ["error" => "Service request not found"], 404);
@@ -1004,12 +1023,11 @@ class ServiceRequestController extends Controller
                     $artisanBio->notify(new CustomNotification("Payment confirmed", "Payment has been confirmed for service request ID: {$serviceRequest->id}"));
                 }
 
-
-                $serviceName    = $service_request->problem_title ?? '[Service Name]';
-                $providerName   = "{$provider->first_name} {$provider->last_name}" ?? '[Service Provider\'s Name]';
-                $amountPaid     = number_format($total_cost,2) ?? '[Amount]';
-                $paymentDate    = now() ?? '[Date]';
-                $paymentMethod  = "Wallet Balance" ?? '[Payment Method]';
+                $serviceName   = $service_request->problem_title ?? '[Service Name]';
+                $providerName  = "{$provider->first_name} {$provider->last_name}" ?? '[Service Provider\'s Name]';
+                $amountPaid    = number_format($total_cost, 2) ?? '[Amount]';
+                $paymentDate   = now() ?? '[Date]';
+                $paymentMethod = "Wallet Balance" ?? '[Payment Method]';
 
                 $message =
                     "Thank you for your payment! We have successfully received your payment for the service request.\n\n" .
@@ -1062,7 +1080,7 @@ class ServiceRequestController extends Controller
         $workmanship = $neg->new_workmanship;
         $quoteTotal  = $itemsTotal + $workmanship;
 
-        // Calculate fees and retention
+                                                 // Calculate fees and retention
         $call2FixFee       = $quoteTotal * 0.10; // 10% of total quote
         $warrantyRetention = $quoteTotal * 0.10; // 10% of total quote
 

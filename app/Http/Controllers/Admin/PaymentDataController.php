@@ -32,7 +32,7 @@ class PaymentDataController extends Controller
             // Apply filter
             if ($type = request('user_type')) {
                 $transactions->whereHas('wallet.user', function ($q) use ($type) {
-                    $q->where('user_type', $type);
+                    $q->where('_account_type', $type);
                 });
             }
 
@@ -44,8 +44,8 @@ class PaymentDataController extends Controller
                     }
                     return 'N/A';
                 })
-                ->addColumn('user_type', function ($row) {
-                    return $row->wallet->user->user_type ?? 'N/A';
+                ->addColumn('_account_type', function ($row) {
+                    return $row->wallet->user?->_account_type ?? 'N/A';
                 })
                 ->addColumn('type', function ($row) {
                     return ucwords(str_replace("_", " ", $row->_account_type));

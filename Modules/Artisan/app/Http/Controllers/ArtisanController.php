@@ -44,6 +44,7 @@ class ArtisanController extends Controller
                 'service',
                 'reworkMessages',
                 'checkIns',
+                'invited_artisan'
             ])->latest()->get();
             if ($requests->count() > 0) {
                 return get_success_response($requests, "All requests retrieved successfully");
