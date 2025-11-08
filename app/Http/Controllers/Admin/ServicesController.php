@@ -12,27 +12,32 @@ class ServicesController extends Controller
 {
     public function index(Request $request)
     {
-        // if (!$request->user()->can('view services')) {
-        //     return back()->with('error', 'Unauthorized action.');
-        // }
-
         try {
-            $services = Service::with('category')->paginate(per_page());
-            // return response()->json($services);
+            $search = trim($request->get('search', ''));
+
+            $query = Service::with('category');
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('service_name', 'LIKE', "%{$search}%")
+                      ->orWhere('service_slug', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $services = $query->paginate(per_page());
             $categories = Category::all();
-            return view('admin.services.index', compact('services', 'categories'));
-            // return back()->with('success', $services);
+
+            return view('admin.services.index', compact('services', 'categories', 'search'));
         } catch (\Exception $e) {
             return back()->with('error', 'An error occurred while fetching services.');
         }
     }
 
+    // `create` method can be removed if you're using modals (optional)
+    // But kept for completeness
+
     public function create(Request $request)
     {
-        // if (!$request->user()->can('create services')) {
-        //     return back()->with('error', 'Unauthorized action.');
-        // }
-
         try {
             $categories = Category::all();
             return view('admin.services.create', compact('categories'));
@@ -43,88 +48,67 @@ class ServicesController extends Controller
 
     public function store(Request $request)
     {
-        // if (!$request->user()->can('create services')) {
-        //     return back()->with('error', 'Unauthorized action.');
-        // }
-
         try {
-            $validatedData = $request->validate([
-                'category_id' => 'required|exists:categories,id',
-                'service_name' => 'required|string|max:255',
-                'metadata' => 'nullable|json',
+            $validated = $request->validate([
+                'service_name'  => 'required|string|max:255',
+                'service_slug'  => 'nullable|string|max:255|unique:services,service_slug',
+                'parent_service' => 'required|exists:categories,id', // matches form field name
             ]);
 
-            $validatedData['service_slug'] = Str::slug($validatedData['service_name']);
+            // Auto-generate slug if not provided
+            if (empty($validated['service_slug'])) {
+                $validated['service_slug'] = Str::slug($validated['service_name']);
+            }
 
-            $service = Service::create($validatedData);
+            // Map form field to DB column
+            $validated['category_id'] = $validated['parent_service'];
+            unset($validated['parent_service']);
 
-            return back()->with('success', $service);
+            $service = Service::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Service created successfully',
+                'service' => $service
+            ]);
         } catch (\Exception $e) {
-            return back()->with('error', 'An error occurred while creating the service.');
-        }
-    }
-
-    public function show(Request $request, Service $service)
-    {
-        // if (!$request->user()->can('view services')) {
-        //     return back()->with('error', 'Unauthorized action.');
-        // }
-
-        try {
-            return back()->with('success', $service->load('category'));
-        } catch (\Exception $e) {
-            return back()->with('error', 'An error occurred while retrieving the service.');
-        }
-    }
-
-    public function edit(Request $request, Service $service)
-    {
-        // if (!$request->user()->can('edit services')) {
-        //     return back()->with('error', 'Unauthorized action.');
-        // }
-
-        try {
-            $categories = Category::all();
-            return view('admin.services.edit', compact('service', 'categories'));
-        } catch (\Exception $e) {
-            return back()->with('error', 'An error occurred while loading the edit form.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create service: ' . $e->getMessage()
+            ], 422);
         }
     }
 
     public function update(Request $request, Service $service)
     {
-        // if (!$request->user()->can('edit services')) {
-        //     return back()->with('error', 'Unauthorized action.');
-        // }
-
         try {
-            $validatedData = $request->validate([
-                'category_id' => 'required|exists:categories,id',
-                'service_name' => 'required|string|max:255',
-                'metadata' => 'nullable|json',
+            $validated = $request->validate([
+                'service_name'  => 'required|string|max:255',
+                'service_slug'  => 'nullable|string|max:255|unique:services,service_slug,' . $service->id,
+                'parent_service' => 'required|exists:categories,id',
             ]);
 
-            $validatedData['service_slug'] = Str::slug($validatedData['service_name']);
+            if (empty($validated['service_slug'])) {
+                $validated['service_slug'] = Str::slug($validated['service_name']);
+            }
 
-            $service->update($validatedData);
+            $validated['category_id'] = $validated['parent_service'];
+            unset($validated['parent_service']);
 
-            return back()->with('success', $service);
-        } catch (\Exception $e) { 
-            return back()->with('error', 'An error occurred while updating the service.');
-        }
-    }
+            $service->update($validated);
 
-    public function destroy(Request $request, Service $service)
-    {
-        // if (!$request->user()->can('delete services')) {
-        //     return back()->with('error', 'Unauthorized action.');
-        // }
-
-        try {
-            $service->delete();
-            return back()->with('success', 'Service deleted successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Service updated successfully',
+                'service' => $service
+            ]);
         } catch (\Exception $e) {
-            return back()->with('error', 'An error occurred while deleting the service.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update service: ' . $e->getMessage()
+            ], 422);
         }
     }
+
+    // Keep show/edit/destroy if used elsewhere, or remove if modals handle everything
 }

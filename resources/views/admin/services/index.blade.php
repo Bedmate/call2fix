@@ -3,7 +3,23 @@
 @section('content')
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Services</h1>
+        <div>
+            <h1>Services</h1>
+            {{-- Search Bar --}}
+            <form method="GET" class="mt-2">
+                <div class="input-group" style="max-width: 400px;">
+                    <input type="text" 
+                           name="search" 
+                           class="form-control" 
+                           placeholder="Search by name or slug..." 
+                           value="{{ request('search') }}">
+                    <button class="btn btn-outline-secondary" type="submit">Search</button>
+                    @if(request('search'))
+                        <a href="{{ route('admin.services.index') }}" class="btn btn-outline-danger">Clear</a>
+                    @endif
+                </div>
+            </form>
+        </div>
         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createServiceModal">
             + Add New Service
         </button>
@@ -14,15 +30,17 @@
             <tr>
                 <th>#</th>
                 <th>Service Name</th>
+                <th>Slug</th>
                 <th>Category</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($services as $service)
+            @forelse($services as $service)
             <tr>
-                <td>{{ $loop->iteration }}</td>
+                <td>{{ $loop->iteration + ($services->currentPage() - 1) * $services->perPage() }}</td>
                 <td>{{ $service->service_name }}</td>
+                <td>{{ $service->service_slug }}</td>
                 <td>{{ $service->category?->category_name }}</td>
                 <td>
                     <button type="button" class="btn btn-primary btn-sm" 
@@ -43,102 +61,101 @@
                     </button>
                 </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+                <td colspan="5" class="text-center">No services found.</td>
+            </tr>
+            @endforelse
         </tbody>
     </table>
 
-    {{ $services->links() }}
+    {{ $services->appends(['search' => request('search')])->links() }}
 
     <!-- Create Service Modal -->
-    <div class="modal fade" id="createServiceModal" tabindex="-1" aria-labelledby="createServiceModalLabel" aria-hidden="true">
+    <div class="modal fade" id="createServiceModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="createServiceModalLabel">Add New Service</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Add New Service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="createServiceForm" method="POST" action="{{ route('admin.services.store') }}">
-                        @csrf
-
+                <form id="createServiceForm">
+                    @csrf
+                    <div class="modal-body">
                         <div class="mb-3">
-                            <label for="create_service_name" class="form-label">Service Name</label>
-                            <input type="text" class="form-control" id="create_service_name" name="service_name" required>
+                            <label class="form-label">Service Name *</label>
+                            <input type="text" name="service_name" class="form-control" required>
                         </div>
-
                         <div class="mb-3">
-                            <label for="create_service_slug" class="form-label">Slug</label>
-                            <input type="text" class="form-control" id="create_service_slug" name="service_slug" required>
+                            <label class="form-label">Slug (auto-generated if empty)</label>
+                            <input type="text" name="service_slug" class="form-control">
                         </div>
-
                         <div class="mb-3">
-                            <label for="create_parent_service" class="form-label">Category</label>
-                            <select class="form-select" id="create_parent_service" name="parent_service" required>
+                            <label class="form-label">Category *</label>
+                            <select name="parent_service" class="form-select" required>
                                 <option value="">Select Category</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}">{{ $category->category_name }}</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->category_name }}</option>
                                 @endforeach
                             </select>
                         </div>
-
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-success">Create Service</button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Create Service</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <!-- Edit Service Modal -->
-    <div class="modal fade" id="editServiceModal" tabindex="-1" aria-labelledby="editServiceModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editServiceModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editServiceModalLabel">Edit Service</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Edit Service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="editServiceForm" method="POST">
-                        @csrf
-                        @method('PUT')
-
+                <form id="editServiceForm">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <input type="hidden" id="edit_service_id">
                         <div class="mb-3">
-                            <label for="edit_service_name" class="form-label">Service Name</label>
-                            <input type="text" class="form-control" id="edit_service_name" name="service_name" required>
+                            <label class="form-label">Service Name *</label>
+                            <input type="text" name="service_name" class="form-control" required>
                         </div>
-
                         <div class="mb-3">
-                            <label for="edit_service_slug" class="form-label">Slug</label>
-                            <input type="text" class="form-control" id="edit_service_slug" name="service_slug" required>
+                            <label class="form-label">Slug</label>
+                            <input type="text" name="service_slug" class="form-control">
                         </div>
-
                         <div class="mb-3">
-                            <label for="edit_parent_service" class="form-label">Category</label>
-                            <select class="form-select" id="edit_parent_service" name="parent_service" required>
+                            <label class="form-label">Category *</label>
+                            <select name="parent_service" class="form-select" required>
                                 <option value="">Select Category</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}">{{ $category->category_name }}</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->category_name }}</option>
                                 @endforeach
                             </select>
                         </div>
-
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- View Services Modal (unchanged) -->
-    <div class="modal fade" id="viewServicesModal" tabindex="-1" aria-labelledby="viewServicesModalLabel" aria-hidden="true">
+    <!-- View Services Modal -->
+    <div class="modal fade" id="viewServicesModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="viewServicesModalLabel">Sub-Services</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Sub-Services</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="services-list">
                     <p>Loading...</p>
@@ -151,66 +168,97 @@
 
 @push('scripts')
 <script>
-    // Auto-generate slug from service name (for both modals)
-    function setupSlugSync(nameInputId, slugInputId) {
-        const nameInput = document.getElementById(nameInputId);
-        const slugInput = document.getElementById(slugInputId);
-        if (!nameInput || !slugInput) return;
-
-        nameInput.addEventListener('input', function () {
-            slugInput.value = this.value
-                ? this.value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-+|-+$/g, '')
+// Auto-slug
+function bindSlug(nameSel, slugSel) {
+    document.querySelector(nameSel)?.addEventListener('input', e => {
+        const slug = document.querySelector(slugSel);
+        if (!slug.dataset.locked) {
+            slug.value = e.target.value
+                ? e.target.value.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').trim()
                 : '';
+        }
+    });
+}
+bindSlug('[name="service_name"]', '[name="service_slug"]');
+
+// Create Service (AJAX)
+document.getElementById('createServiceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    try {
+        const res = await fetch("{{ route('admin.services.store') }}", {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
         });
+        const data = await res.json();
+        
+        if (data.success) {
+            location.reload(); // or update table via JS
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Request failed');
     }
+});
 
-    // Initialize slug sync
-    setupSlugSync('create_service_name', 'create_service_slug');
-    setupSlugSync('edit_service_name', 'edit_service_slug');
+// Edit Modal Populate
+document.getElementById('editServiceModal').addEventListener('show.bs.modal', (e) => {
+    const btn = e.relatedTarget;
+    const id = btn.dataset.serviceId;
+    document.getElementById('edit_service_id').value = id;
+    document.querySelector('#editServiceForm [name="service_name"]').value = btn.dataset.serviceName;
+    document.querySelector('#editServiceForm [name="service_slug"]').value = btn.dataset.serviceSlug;
+    document.querySelector('#editServiceForm [name="parent_service"]').value = btn.dataset.categoryId;
+    
+    // Update form action
+    document.getElementById('editServiceForm').action = `/cp/services/${id}`;
+});
 
-    // Populate Edit Modal
-    document.getElementById('editServiceModal').addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const serviceId = button.getAttribute('data-service-id');
-        const serviceName = button.getAttribute('data-service-name');
-        const serviceSlug = button.getAttribute('data-service-slug');
-        const categoryId = button.getAttribute('data-category-id');
+// Edit Service (AJAX)
+document.getElementById('editServiceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit_service_id').value;
+    const formData = new FormData(e.target);
+    
+    try {
+        const res = await fetch(`/cp/services/${id}`, {
+            method: 'POST',
+            body: formData,
+            headers: { 
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-HTTP-Method-Override': 'PUT'
+            }
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (err) {
+        alert('Update failed');
+    }
+});
 
-        const form = this.querySelector('form');
-        form.action = "{{ route('admin.services.update', '') }}" + '/' + serviceId;
-
-        document.getElementById('edit_service_name').value = serviceName || '';
-        document.getElementById('edit_service_slug').value = serviceSlug || '';
-        document.getElementById('edit_parent_service').value = categoryId || '';
-    });
-
-    // Load Sub-Services
-    document.getElementById('viewServicesModal').addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const serviceId = button.getAttribute('data-service-id');
-        const servicesList = document.getElementById('services-list');
-        servicesList.innerHTML = '<p>Loading...</p>';
-
-        fetch(`/cp/services/${serviceId}/services`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.services?.length) {
-                    servicesList.innerHTML = data.services.map(s => 
-                        `<p class="mb-1">${s.service_name || '[Unnamed]'}</p>`
-                    ).join('');
-                } else {
-                    servicesList.innerHTML = '<p class="text-muted">No sub-services found.</p>';
-                }
-            })
-            .catch(err => {
-                console.error('Failed to load services:', err);
-                servicesList.innerHTML = '<p class="text-danger">Error loading services.</p>';
-            });
-    });
-
-    // Optional: Reset create form on close
-    document.getElementById('createServiceModal').addEventListener('hidden.bs.modal', function () {
-        document.getElementById('createServiceForm').reset();
-    });
+// View Sub-Services (unchanged)
+document.getElementById('viewServicesModal').addEventListener('show.bs.modal', async (e) => {
+    const id = e.relatedTarget.dataset.serviceId;
+    const list = document.getElementById('services-list');
+    list.innerHTML = '<p>Loading...</p>';
+    
+    try {
+        const res = await fetch(`/cp/services/${id}/services`);
+        const data = await res.json();
+        list.innerHTML = data.services?.length 
+            ? data.services.map(s => `<p>${s.service_name}</p>`).join('')
+            : '<p class="text-muted">No sub-services</p>';
+    } catch {
+        list.innerHTML = '<p class="text-danger">Failed to load</p>';
+    }
+});
 </script>
 @endpush
