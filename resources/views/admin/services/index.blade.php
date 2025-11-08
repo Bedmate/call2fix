@@ -25,53 +25,57 @@
         </button>
     </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Service Name</th>
-                <th>Slug</th>
-                <th>Category</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($services as $service)
-            <tr>
-                <td>{{ $loop->iteration + ($services->currentPage() - 1) * $services->perPage() }}</td>
-                <td>{{ $service->service_name }}</td>
-                <td>{{ $service->service_slug }}</td>
-                <td>{{ $service->category?->category_name }}</td>
-                <td>
-                    <button type="button" class="btn btn-primary btn-sm"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editServiceModal"
-                        data-service-id="{{ $service->id }}"
-                        data-service-name="{{ $service->service_name }}"
-                        data-service-slug="{{ $service->service_slug }}"
-                        data-category-id="{{ $service->category_id }}">
-                        Edit
-                    </button>
+    <div class="p-4 card">
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Service Name</th>
+                        <th>Slug</th>
+                        <th>Category</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($services as $service)
+                    <tr>
+                        <td>{{ $loop->iteration + ($services->currentPage() - 1) * $services->perPage() }}</td>
+                        <td>{{ $service->service_name }}</td>
+                        <td>{{ $service->service_slug }}</td>
+                        <td>{{ $service->category?->category_name }}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editServiceModal"
+                                data-service-id="{{ $service->id }}"
+                                data-service-name="{{ $service->service_name }}"
+                                data-service-slug="{{ $service->service_slug }}"
+                                data-category-id="{{ $service->category_id }}">
+                                Edit
+                            </button>
 
-                    <form action="{{ route('admin.services.destroy', $service->id) }}" method="POST" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm"
-                                onclick="return confirm('Are you sure you want to delete this service?')">
-                            Delete
-                        </button>
-                    </form>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="5" class="text-center">No services found.</td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
+                            <form action="{{ route('admin.services.destroy', $service->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Are you sure you want to delete this service?')">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center">No services found.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
 
-    {{ $services->appends(['search' => request('search')])->links() }}
+            {{ $services->appends(['search' => request('search')])->links() }}
+        </div>
+    </div>
 
     <!-- Create Service Modal -->
     <div class="modal fade" id="createServiceModal" tabindex="-1">
