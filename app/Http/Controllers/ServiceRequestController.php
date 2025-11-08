@@ -981,7 +981,7 @@ class ServiceRequestController extends Controller
                 return get_error_response('Invalid total cost for service request', ['error' => 'Invalid amount'], 422);
             }
 
-            // Determine wallet owner: sub-account uses parent's wallet
+            // Determine wallet owner: sub-a ccount uses parent's wallet
             $payer = auth()->user();
             if ($payer->parent_account_id && $payer->sub_account_type === 'normal') {
                 $payer = User::findOrFail($payer->parent_account_id);

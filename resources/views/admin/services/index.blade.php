@@ -103,7 +103,7 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
     // Update modal with service data
     var editserviceModal = document.getElementById('editserviceModal');
@@ -150,4 +150,4 @@
             .catch(error => console.error('Error fetching services:', error));
     });
 </script>
-@endsection
+@endpush
