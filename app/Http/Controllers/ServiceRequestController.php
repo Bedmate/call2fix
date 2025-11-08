@@ -818,6 +818,8 @@ class ServiceRequestController extends Controller
                 $invited_artisan = $serviceRequest->invited_artisan
                     ->firstWhere('service_provider_id', $negotiation->provider_id);
 
+                Log::info('Invited artisan details are: ', ['invited_artisan' => invited_artisan]);
+
                 if (! $invited_artisan) {
                     DB::rollBack();
                     return get_error_response(
@@ -827,8 +829,11 @@ class ServiceRequestController extends Controller
                     );
                 }
                 
-                $serviceRequest->approved_providers_id = $invited_artisan->service_provider_id ?? $invited_artisan->provider_id;
-                $serviceRequest->approved_artisan_id   = $invited_artisan->artisan_id ?? $invited_artisan->user_id;
+                $serviceRequest->approved_providers_id = $invited_artisan->service_provider_id;
+                $serviceRequest->approved_artisan_id   = $invited_artisan->artisan_id;
+
+
+                Log::alert("artisan and providers ID are providers: {$invited_artisan->service_provider_id} & artisan {$invited_artisan->artisan_id}");
 
                 // Update request status to "Payment Confirmed"
                 $serviceRequest->request_status = "Payment Confirmed";
