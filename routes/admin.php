@@ -46,6 +46,8 @@ Route::group([], function () {
         Route::resource('service_areas', ServiceAreaController::class)->names('service_areas');
         Route::resource('categories', CategoryController::class)->names('categories');
         Route::resource('services', ServicesController::class)->names('services');
+        // RouteServiceProvider or explicit route
+        // Route::put('/services/{service}', [ServicesController::class, 'update'])->name('admin.services.update');
         Route::get('categories/{category}/services', [CategoryController::class, 'showServices'])->name('categories.services');
         Route::get('categories/add-category-slider', [CategoryController::class, 'addCategorySlider'])->name('categories.sliders');
         Route::post('categories/store-category-slider', [CategoryController::class, 'storeCategorySlider'])->name('categories.sliders.add');
@@ -140,7 +142,6 @@ Route::group([], function () {
 
         Route::get('send-broadcast-notification', [NotificationController::class, 'sendBroadcast'])->name('sendBroadcast');
         Route::post('send-broadcast-notification', [NotificationController::class, 'sendBroadcastNotification'])->name('notifications.broadcast.send');
-
 
         Route::post('logout', [AdminController::class, 'logout'])->name('logout');
     });

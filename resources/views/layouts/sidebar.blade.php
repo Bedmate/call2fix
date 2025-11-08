@@ -247,41 +247,13 @@
                         <div data-i18n="All Orders">All Orders</div>
                     </a>
                 </li>
+                @foreach(\App\Models\Order::STATUSES as $key => $status)
                 <li class="menu-item">
-                    <a href="{{ route('admin.orders.index', ['status' => 'pending']) }}" class="menu-link">
-                        <div data-i18n="Pending">Pending</div>
+                    <a href="{{ route('admin.orders.index', ['status' => $status]) }}" class="menu-link">
+                        <div data-i18n="Pending">{{ $status }}</div>
                     </a>
                 </li>
-                <li class="menu-item">
-                    <a href="{{ route('admin.orders.index', ['status' => 'UPCOMING']) }}" class="menu-link">
-                        <div data-i18n="Upcoming">Upcoming</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('admin.orders.index', ['status' => 'STARTED']) }}" class="menu-link">
-                        <div data-i18n="Started">Started</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('admin.orders.index', ['status' => 'ENDED']) }}" class="menu-link">
-                        <div data-i18n="Completed">Completed</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('admin.orders.index', ['status' => 'FAILED']) }}" class="menu-link">
-                        <div data-i18n="Failed">Failed</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('admin.orders.index', ['status' => 'CANCELLED']) }}" class="menu-link">
-                        <div data-i18n="Cancelled">Cancelled</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ route('admin.orders.index', ['status' => 'DECLINED']) }}" class="menu-link">
-                        <div data-i18n="Declined">Declined</div>
-                    </a>
-                </li>
+                @endforeach
             </ul>
         </li>
 

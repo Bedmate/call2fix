@@ -2,14 +2,14 @@
 
 @section('content')
 <div class="container">
-    <h1>Categories</h1>
-    
+    <h1>Services</h1> {{-- Fixed title --}}
+
     <table class="table">
         <thead>
             <tr>
                 <th>#</th>
                 <th>Service Name</th>
-                <th>Service service</th>
+                <th>Category</th> {{-- Fixed label --}}
                 <th>Actions</th>
             </tr>
         </thead>
@@ -20,13 +20,23 @@
                 <td>{{ $service->service_name }}</td>
                 <td>{{ $service->category?->category_name }}</td>
                 <td>
-                    <!-- Button trigger modal -->
-                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editserviceModal" data-service-id="{{ $service->id }}" data-service-name="{{ $service->service_name }}" data-service-description="{{ $service->service_description }}" data-parent-service="{{ $service->parent_service }}" data-service-image="{{ $service->service_image }}">
-                        Edit service
+                    <button type="button" class="btn btn-primary btn-sm" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#editserviceModal"
+                        data-service-id="{{ $service->id }}"
+                        data-service-name="{{ $service->service_name }}"
+                        data-service-slug="{{ $service->service_slug }}"
+                        data-service-description="{{ $service->service_description }}"
+                        data-category-id="{{ $service->category_id }}"
+                        data-service-image="{{ $service->service_image }}">
+                        Edit Service
                     </button>
-                    
-                    <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#viewServicesModal" data-service-id="{{ $service->id }}">
-                        View Services
+
+                    <button type="button" class="btn btn-info btn-sm" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#viewServicesModal" 
+                        data-service-id="{{ $service->id }}">
+                        View Sub-Services
                     </button>
                 </td>
             </tr>
@@ -36,32 +46,33 @@
 
     {{ $services->links() }}
 
-    <!-- Edit service Modal -->
+    <!-- Edit Service Modal -->
     <div class="modal fade" id="editserviceModal" tabindex="-1" aria-labelledby="editserviceModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editserviceModalLabel">Edit service</h5>
+                    <h5 class="modal-title" id="editserviceModalLabel">Edit Service</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="{{ route('admin.services.update', 'placeholder') }}" method="POST" enctype="multipart/form-data" id="editserviceForm">
+                    <form id="editserviceForm" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
                         <div class="mb-3">
-                            <label for="service_name" class="form-label">service Name</label>
-                            <input type="text" class="form-control" id="service_name" name="service_name" {{ old('service_name') }} required>
+                            <label for="service_name" class="form-label">Service Name</label>
+                            <input type="text" class="form-control" id="service_name" name="service_name" required>
                         </div>
 
                         <div class="mb-3">
                             <label for="service_slug" class="form-label">Slug</label>
-                            <input type="text" class="form-control" id="service_slug" name="service_slug" {{ old('service_slug') }} required>
+                            <input type="text" class="form-control" id="service_slug" name="service_slug" required>
                         </div>
 
                         <div class="mb-3">
-                            <label for="parent_service" class="form-label">Parent Service Area</label>
+                            <label for="parent_service" class="form-label">Category</label>
                             <select class="form-select" id="parent_service" name="parent_service" required>
+                                <option value="">Select Category</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}">{{ $category->category_name }}</option>
                                 @endforeach
@@ -70,11 +81,11 @@
 
                         <div class="mb-3">
                             <label for="service_description" class="form-label">Description</label>
-                            <textarea class="form-control" id="service_description" name="service_description"></textarea>
+                            <textarea class="form-control" id="service_description" name="service_description" rows="3"></textarea>
                         </div>
 
                         <div class="mb-3">
-                            <label for="service_image" class="form-label">Image</label>
+                            <label for="service_image" class="form-label">Image (Optional)</label>
                             <input type="file" class="form-control" id="service_image" name="service_image">
                         </div>
 
@@ -90,64 +101,78 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="viewServicesModalLabel">Services Under service</h5>
+                    <h5 class="modal-title" id="viewServicesModalLabel">Sub-Services</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="services-list">
-                    <!-- Services will be dynamically loaded here -->
+                    <p>Loading...</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 @endsection
 
 @push('scripts')
 <script>
-    // Update modal with service data
-    var editserviceModal = document.getElementById('editserviceModal');
-    editserviceModal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget; // Button that triggered the modal
-        var serviceId = button.getAttribute('data-service-id');
-        var serviceName = button.getAttribute('data-service-name');
-        var serviceDescription = button.getAttribute('data-service-description');
-        var parentservice = button.getAttribute('data-parent-service');
-        var serviceImage = button.getAttribute('data-service-image');
+    // Populate Edit Modal
+    document.getElementById('editserviceModal').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const serviceId = button.getAttribute('data-service-id');
+        const serviceName = button.getAttribute('data-service-name');
+        const serviceSlug = button.getAttribute('data-service-slug');
+        const serviceDescription = button.getAttribute('data-service-description');
+        const categoryId = button.getAttribute('data-category-id');
 
-        var modal = editserviceModal.querySelector('form');
-        modal.action = '/cp/services/' + serviceId; // Update action URL
+        const form = this.querySelector('form');
+        form.action = "{{ route('admin.services.update', '') }}" + '/' + serviceId;
 
-        // Set the modal form fields
-        modal.querySelector('#service_name').value = serviceName;
-        modal.querySelector('#service_description').value = serviceDescription;
-        modal.querySelector('#parent_service').value = parentservice;
+        // Fill form fields
+        document.getElementById('service_name').value = serviceName || '';
+        document.getElementById('service_slug').value = serviceSlug || '';
+        document.getElementById('service_description').value = serviceDescription || '';
+        
+        const parentSelect = document.getElementById('parent_service');
+        parentSelect.value = categoryId || '';
+
+        // Ensure the correct option is selected (in case value doesn't auto-select)
+        Array.from(parentSelect.options).forEach(option => {
+            option.selected = option.value === categoryId;
+        });
     });
 
-    // Load services under a service
-    var viewServicesModal = document.getElementById('viewServicesModal');
-    viewServicesModal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget; // Button that triggered the modal
-        var serviceId = button.getAttribute('data-service-id');
+    // Load Sub-Services
+    document.getElementById('viewServicesModal').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const serviceId = button.getAttribute('data-service-id');
+        const servicesList = document.getElementById('services-list');
+        servicesList.innerHTML = '<p>Loading...</p>';
 
-        // Fetch services related to the service
-        fetch('/cp/services/' + serviceId + '/services')
+        fetch(`/cp/services/${serviceId}/services`)
             .then(response => response.json())
             .then(data => {
-                var servicesList = document.getElementById('services-list');
-                servicesList.innerHTML = '';
-
-                if (data.services && data.services.length) {
-                    data.services.forEach(function(service) {
-                        var serviceItem = document.createElement('p');
-                        serviceItem.textContent = service.service_name; // Update with your service fields
-                        servicesList.appendChild(serviceItem);
-                    });
+                if (data.services && data.services.length > 0) {
+                    servicesList.innerHTML = data.services.map(s => 
+                        `<p class="mb-1">${s.service_name || '[Unnamed]'}</p>`
+                    ).join('');
                 } else {
-                    servicesList.innerHTML = '<p>No services found for this service.</p>';
+                    servicesList.innerHTML = '<p class="text-muted">No sub-services found.</p>';
                 }
             })
-            .catch(error => console.error('Error fetching services:', error));
+            .catch(err => {
+                console.error('Failed to load services:', err);
+                servicesList.innerHTML = '<p class="text-danger">Error loading services.</p>';
+            });
+    });
+
+    // Optional: Auto-generate slug from name (UX enhancement)
+    document.getElementById('service_name')?.addEventListener('input', function() {
+        const slugField = document.getElementById('service_slug');
+        if (!slugField.dataset.locked) {
+            slugField.value = this.value
+                ? this.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+                : '';
+        }
     });
 </script>
 @endpush

@@ -8,14 +8,15 @@
 
     <div class="card">
         <div class="card-body table-responsive">
-            <div class="mb-3 d-flex">
+            <div class="mb-3 d-flex align-items-center">
                 <label class="me-2 fw-bold">Filter by User Type:</label>
                 <select id="userTypeFilter" class="form-select w-auto">
                     <option value="">All</option>
-                    <option value="customer">Customer</option>
-                    <option value="merchant">Merchant</option>
-                    <option value="artisan">Artisan</option>
-                    <option value="affiliate">Affiliate</option>
+                    @foreach(["artisan", "providers", "co-operate_accounts", "private_accounts", "affiliates", "suppliers", "department"] as $role)
+                        <option value="{{ $role }}" {{ request('user_type') == $role ? 'selected' : '' }}>
+                            {{ ucfirst(str_replace('_', ' ', $role)) }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
 
@@ -45,7 +46,7 @@ $(function () {
         ajax: {
             url: '{{ route("admin.payments.transactions.data") }}',
             data: function (d) {
-                d.user_type = $('#userTypeFilter').val(); // Pass filter to server
+                d.user_type = $('#userTypeFilter').val();
             }
         },
         columns: [
@@ -58,8 +59,7 @@ $(function () {
         ]
     });
 
-    // Reload table when filter changes
-    $('#userTypeFilter').change(function () {
+    $('#userTypeFilter').on('change', function () {
         table.ajax.reload();
     });
 });
