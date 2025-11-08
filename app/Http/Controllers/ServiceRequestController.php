@@ -828,21 +828,19 @@ class ServiceRequestController extends Controller
                         404
                     );
                 }
-                
-                $serviceRequest->approved_providers_id = $invited_artisan->service_provider_id;
-                $serviceRequest->approved_artisan_id   = $invited_artisan->artisan_id;
 
 
                 Log::alert("artisan and providers ID are providers: {$invited_artisan->service_provider_id} & artisan {$invited_artisan->artisan_id}");
 
                 // Update request status to "Payment Confirmed"
-                $serviceRequest->request_status = "Payment Confirmed";
+                // $serviceRequest->request_status = "Payment Confirmed";
 
                 $serviceRequest->total_cost = $amountDue;
                 // $customer->notify(new PaymentStatusUpdated('Payment Confirmed', $negotiation));
 
                 // update the approved service provider and artisan
-                $serviceRequest->approved_providers_id = $invited_artisan->provider_id;
+                
+                $serviceRequest->approved_providers_id = $invited_artisan->service_provider_id;
                 $serviceRequest->approved_artisan_id   = $invited_artisan->artisan_id;
 
                 if (! $serviceRequest->save()) {
