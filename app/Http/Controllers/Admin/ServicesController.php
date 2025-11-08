@@ -110,5 +110,17 @@ class ServicesController extends Controller
         }
     }
 
-    // Keep show/edit/destroy if used elsewhere, or remove if modals handle everything
+    public function destroy(Request $request, $id)
+    {
+        try {
+            $service = Service::findOrfail($id);
+            if($service->delete()){
+                return back()->with('success', 'Service deleted successfully.');
+            }
+
+            return back()->with('error', 'Unable to delete service');
+        } catch (\Exception $e) {
+            return back()->with('error', 'An error occurred while deleting the service.');
+        }
+    }
 }

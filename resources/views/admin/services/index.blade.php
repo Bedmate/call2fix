@@ -8,10 +8,10 @@
             {{-- Search Bar --}}
             <form method="GET" class="mt-2">
                 <div class="input-group" style="max-width: 400px;">
-                    <input type="text" 
-                           name="search" 
-                           class="form-control" 
-                           placeholder="Search by name or slug..." 
+                    <input type="text"
+                           name="search"
+                           class="form-control"
+                           placeholder="Search by name or slug..."
                            value="{{ request('search') }}">
                     <button class="btn btn-outline-secondary" type="submit">Search</button>
                     @if(request('search'))
@@ -43,8 +43,8 @@
                 <td>{{ $service->service_slug }}</td>
                 <td>{{ $service->category?->category_name }}</td>
                 <td>
-                    <button type="button" class="btn btn-primary btn-sm" 
-                        data-bs-toggle="modal" 
+                    <button type="button" class="btn btn-primary btn-sm"
+                        data-bs-toggle="modal"
                         data-bs-target="#editServiceModal"
                         data-service-id="{{ $service->id }}"
                         data-service-name="{{ $service->service_name }}"
@@ -53,12 +53,12 @@
                         Edit
                     </button>
 
-                    <button type="button" class="btn btn-info btn-sm" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#viewServicesModal" 
-                        data-service-id="{{ $service->id }}">
-                        View Sub-Services
-                    </button>
+                    <form action="{{ route('admin.services.destroy', $service->id) }}" method="post">
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-info btn-sm">
+                            Delete Service
+                        </button>
+                    </form>
                 </td>
             </tr>
             @empty
@@ -185,7 +185,7 @@ bindSlug('[name="service_name"]', '[name="service_slug"]');
 document.getElementById('createServiceForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    
+
     try {
         const res = await fetch("{{ route('admin.services.store') }}", {
             method: 'POST',
@@ -193,7 +193,7 @@ document.getElementById('createServiceForm').addEventListener('submit', async (e
             headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
         });
         const data = await res.json();
-        
+
         if (data.success) {
             location.reload(); // or update table via JS
         } else {
@@ -212,7 +212,7 @@ document.getElementById('editServiceModal').addEventListener('show.bs.modal', (e
     document.querySelector('#editServiceForm [name="service_name"]').value = btn.dataset.serviceName;
     document.querySelector('#editServiceForm [name="service_slug"]').value = btn.dataset.serviceSlug;
     document.querySelector('#editServiceForm [name="parent_service"]').value = btn.dataset.categoryId;
-    
+
     // Update form action
     document.getElementById('editServiceForm').action = `/cp/services/${id}`;
 });
@@ -222,18 +222,18 @@ document.getElementById('editServiceForm').addEventListener('submit', async (e) 
     e.preventDefault();
     const id = document.getElementById('edit_service_id').value;
     const formData = new FormData(e.target);
-    
+
     try {
         const res = await fetch(`/cp/services/${id}`, {
             method: 'POST',
             body: formData,
-            headers: { 
+            headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'X-HTTP-Method-Override': 'PUT'
             }
         });
         const data = await res.json();
-        
+
         if (data.success) {
             location.reload();
         } else {
@@ -249,11 +249,11 @@ document.getElementById('viewServicesModal').addEventListener('show.bs.modal', a
     const id = e.relatedTarget.dataset.serviceId;
     const list = document.getElementById('services-list');
     list.innerHTML = '<p>Loading...</p>';
-    
+
     try {
         const res = await fetch(`/cp/services/${id}/services`);
         const data = await res.json();
-        list.innerHTML = data.services?.length 
+        list.innerHTML = data.services?.length
             ? data.services.map(s => `<p>${s.service_name}</p>`).join('')
             : '<p class="text-muted">No sub-services</p>';
     } catch {
