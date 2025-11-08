@@ -818,7 +818,7 @@ class ServiceRequestController extends Controller
                 $invited_artisan = $serviceRequest->invited_artisan
                     ->firstWhere('service_provider_id', $negotiation->provider_id);
 
-                Log::info('Invited artisan details are: ', ['invited_artisan' => invited_artisan]);
+                Log::info('Invited artisan details are: ', ['invited_artisan' => $invited_artisan]);
 
                 if (! $invited_artisan) {
                     DB::rollBack();
