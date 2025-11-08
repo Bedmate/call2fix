@@ -829,7 +829,6 @@ class ServiceRequestController extends Controller
                     );
                 }
 
-
                 Log::alert("artisan and providers ID are providers: {$invited_artisan->service_provider_id} & artisan {$invited_artisan->artisan_id}");
 
                 // Update request status to "Payment Confirmed"
@@ -839,7 +838,7 @@ class ServiceRequestController extends Controller
                 // $customer->notify(new PaymentStatusUpdated('Payment Confirmed', $negotiation));
 
                 // update the approved service provider and artisan
-                
+
                 $serviceRequest->approved_providers_id = $invited_artisan->service_provider_id;
                 $serviceRequest->approved_artisan_id   = $invited_artisan->artisan_id;
 
@@ -962,97 +961,120 @@ class ServiceRequestController extends Controller
 
     public function makePayment(Request $request, $requestId, $walletType = 'ngn')
     {
+        DB::beginTransaction();
+
         try {
-            // retrieved the service request firstly
             $request->validate([
-                "artisan_id" => "required",
+                'artisan_id' => 'required|exists:artisans,artisan_id',
             ]);
 
-            $serviceRequest    = ServiceRequestModel::whereId($requestId)->first();
-            $service_requester = $serviceRequest->user;
-            if (! $serviceRequest) {
-                return get_error_response("Service request not found", ["error" => "Service request not found"], 404);
+            $serviceRequest = ServiceRequestModel::with('user')->findOrFail($requestId);
+
+            // Prevent duplicate payment
+            if ($serviceRequest->request_status === 'Payment Confirmed') {
+                return get_error_response('Service request already paid for', ['error' => 'Payment already confirmed'], 400);
             }
 
-            // check if the service request is already paid for
-            if ($serviceRequest->request_status == "Payment Confirmed") {
-                return get_error_response("Service request already paid for", ["error" => "Service request already paid for"], 400);
+            $totalCost = $serviceRequest->total_cost;
+
+            if (! is_numeric($totalCost) || $totalCost <= 0) {
+                return get_error_response('Invalid total cost for service request', ['error' => 'Invalid amount'], 422);
             }
 
-            // get the total_cost and get the customer defaults wallets and debit the customer
-            $total_cost = $serviceRequest->total_cost;
-
-            // get object of the customer that placed the order
-            $customer = $serviceRequest->user;
-            $wallet   = $customer->getWallet($walletType);
-
-            // get the customer's wallet
-            if (auth()->user()->parent_account_id != null && auth()->user()->sub_account_type == 'normal') {
-                $parentUser = User::findOrFail(auth()->user()->parent_account_id);
-                $wallet     = $parentUser->getWallet($walletType);
-                Log::info("Wallet balance: ", ['wallet' => $wallet]);
+            // Determine wallet owner: sub-account uses parent's wallet
+            $payer = auth()->user();
+            if ($payer->parent_account_id && $payer->sub_account_type === 'normal') {
+                $payer = User::findOrFail($payer->parent_account_id);
             }
 
-            $transaction[] = $wallet->withdrawal($total_cost * 100, ['description' => "Service request payment - {$serviceRequest->id}", "narration" => $request->narration ?? null]);
-            $artisan       = Artisans::where('artisan_id', $request->artisan_id)->first();
-            if ($transaction && $wallet) {
-                $serviceRequest->update([
-                    "total_cost"            => $total_cost,
-                    "approved_artisan_id"   => $request->artisan_id,
-                    'approved_providers_id' => $artisan->service_provider_id,
-                    "request_status"        => "Payment Confirmed",
-                ]);
+            $wallet = $payer->getWallet($walletType);
 
-                $pro = $serviceRequest->approved_providers_id;
-                if (empty($pro)) {
-                    // check if artisan is set
-                    if ($artisan) {
-                        $serviceRequest->update([
-                            'approved_providers_id' => $artisan->service_provider_id,
-                        ]);
-                        $pro = $artisan->service_provider_id;
-                    }
-                }
-                $pro      = $serviceRequest->approved_providers_id;
-                $provider = User::find($pro);
-                if ($provider) {
-                    $provider->notify(new CustomNotification("Payment confirmed", "Payment confirmed."));
-                }
-                $artisanBio = User::find($serviceRequest->approved_artisan_id);
-                if ($artisanBio) {
-                    $artisanMessage = "Hi {$artisan->last_name}, \n\nA new service request has just been assigned to you. Please review the details in your Call2Fix app and take prompt action to confirm availability and begin preparations.\n\nYour reliability and professionalism help ensure customer satisfaction.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
-
-                    $artisanBio->notify(new CustomNotification("A New Task Has Been Assigned to You", $artisanMessage));
-                    $artisanBio->notify(new CustomNotification("Payment confirmed", "Payment has been confirmed for service request ID: {$serviceRequest->id}"));
-                }
-
-                $serviceName   = $service_request->problem_title ?? '[Service Name]';
-                $providerName  = "{$provider->first_name} {$provider->last_name}" ?? '[Service Provider\'s Name]';
-                $amountPaid    = number_format($total_cost, 2) ?? '[Amount]';
-                $paymentDate   = now() ?? '[Date]';
-                $paymentMethod = "Wallet Balance" ?? '[Payment Method]';
-
-                $message =
-                    "Thank you for your payment! We have successfully received your payment for the service request.\n\n" .
-                    "Payment Details:\n" .
-                    "\t• Service Requested: {$serviceName}\n" .
-                    "\t• Provider Name: {$providerName}\n" .
-                    "\t• Amount Paid: {$amountPaid}\n" .
-                    "\t• Payment Date: {$paymentDate}\n" .
-                    "\t• Payment Method: {$paymentMethod}\n\n" .
-                    "The service provider will now proceed with the next steps. You can track the progress of your service request through the app.";
-
-                $service_requester->notify(new CustomNotification("Payment Confirmation for Your Service Request", $message));
-
-                // return success data with the transaction and service request data
-                return get_success_response([
-                    'transaction'     => $transaction,
-                    'service_request' => $serviceRequest,
-                ], 'Payment successful');
+            if (! $wallet) {
+                return get_error_response("Wallet not found for type: {$walletType}", ['error' => 'Wallet unavailable'], 404);
             }
+
+            if ($wallet->balance < $totalCost * 100) {
+                return get_error_response('Insufficient wallet balance', ['error' => 'Low balance'], 402);
+            }
+
+            // Perform withdrawal
+            $transaction = $wallet->withdraw(
+                $totalCost * 100,
+                [
+                    'description' => "Service request payment - {$serviceRequest->id}",
+                    'narration' => $request->narration ?? 'Service payment',
+                ]
+            );
+
+            // Fetch artisan and validate
+            $artisan = Artisans::where('artisan_id', $request->artisan_id)->first();
+            if (! $artisan) {
+                DB::rollBack();
+                return get_error_response('Artisan not found', ['error' => 'Invalid artisan ID'], 404);
+            }
+
+            // Update service request
+            $serviceRequest->update([
+                'total_cost'            => $totalCost,
+                'approved_artisan_id'   => $request->artisan_id,
+                'approved_providers_id' => $artisan->service_provider_id,
+                'request_status'        => 'Payment Confirmed',
+            ]);
+
+            // Notify provider
+            $provider = User::find($artisan->service_provider_id);
+            if ($provider) {
+                $provider->notify(new CustomNotification(
+                    'Payment confirmed',
+                    'Payment has been confirmed for your service request.'
+                ));
+            }
+
+            // Notify artisan (if different from provider or also a user)
+            $artisanUser = User::find($request->artisan_id);
+            if ($artisanUser) {
+                $artisanMessage = "Hi {$artisan->last_name}, \n\nA new service request has just been assigned to you. Please review the details in your Call2Fix app and take prompt action to confirm availability and begin preparations.\n\nYour reliability and professionalism help ensure customer satisfaction.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+
+                $artisanUser->notify(new CustomNotification('A New Task Has Been Assigned to You', $artisanMessage));
+                $artisanUser->notify(new CustomNotification('Payment confirmed', "Payment has been confirmed for service request ID: {$serviceRequest->id}"));
+            }
+
+            // Notify customer
+            $customer      = $serviceRequest->user;
+            $serviceName   = $serviceRequest->problem_title ?? '[Service Name]';
+            $providerName  = $provider ? "{$provider->first_name} {$provider->last_name}" : '[Provider Name]';
+            $amountPaid    = number_format($totalCost, 2);
+            $paymentDate   = now()->format('Y-m-d H:i:s');
+            $paymentMethod = 'Wallet Balance';
+
+            $customerMessage =
+                "Thank you for your payment! We have successfully received your payment for the service request.\n\n" .
+                "Payment Details:\n" .
+                "\t• Service Requested: {$serviceName}\n" .
+                "\t• Provider Name: {$providerName}\n" .
+                "\t• Amount Paid: ₦{$amountPaid}\n" .
+                "\t• Payment Date: {$paymentDate}\n" .
+                "\t• Payment Method: {$paymentMethod}\n\n" .
+                "The service provider will now proceed with the next steps. You can track the progress of your service request through the app.";
+
+            $customer->notify(new CustomNotification('Payment Confirmation for Your Service Request', $customerMessage));
+
+            DB::commit();
+
+            return get_success_response([
+                'transaction'     => $transaction,
+                'service_request' => $serviceRequest,
+            ], 'Payment successful');
+
         } catch (\Throwable $th) {
-            Log::debug("Transaction failed_1: ", ['error' => $th->getMessage()]);
-            return get_error_response($th->getMessage(), ['error' => $th->getMessage()]);
+            DB::rollBack();
+            Log::error("Payment failed: " . $th->getMessage(), [
+                'request_id' => $requestId,
+                'artisan_id' => $request->artisan_id ?? null,
+                'trace'      => $th->getTraceAsString(),
+            ]);
+
+            return get_error_response('Payment processing failed', ['error' => $th->getMessage()], 500);
         }
     }
 
