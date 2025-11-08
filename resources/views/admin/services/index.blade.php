@@ -53,10 +53,12 @@
                         Edit
                     </button>
 
-                    <form action="{{ route('admin.services.destroy', $service->id) }}" method="post">
+                    <form action="{{ route('admin.services.destroy', $service->id) }}" method="POST" style="display:inline;">
+                        @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-info btn-sm">
-                            Delete Service
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('Are you sure you want to delete this service?')">
+                            Delete
                         </button>
                     </form>
                 </td>
