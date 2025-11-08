@@ -26,7 +26,7 @@ class UsersController extends Controller
 {
     public function index()
     {
-        $users = User::with('roles')->whereNull('parent_account_id') //->get();
+        $users = User::with('roles') //->whereNull('parent_account_id') //->get();
             ->when(request('roles'), function ($query) {
                 $query->whereHas('roles', function ($q) {
                     $q->whereIn('name', is_array(request('roles')) ? request('roles') : [request('roles')]);

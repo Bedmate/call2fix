@@ -29,9 +29,9 @@ class ServicesController extends Controller
 
     public function create(Request $request)
     {
-        if (!$request->user()->can('create services')) {
-            return back()->with('error', 'Unauthorized action.');
-        }
+        // if (!$request->user()->can('create services')) {
+        //     return back()->with('error', 'Unauthorized action.');
+        // }
 
         try {
             $categories = Category::all();
@@ -43,9 +43,9 @@ class ServicesController extends Controller
 
     public function store(Request $request)
     {
-        if (!$request->user()->can('create services')) {
-            return back()->with('error', 'Unauthorized action.');
-        }
+        // if (!$request->user()->can('create services')) {
+        //     return back()->with('error', 'Unauthorized action.');
+        // }
 
         try {
             $validatedData = $request->validate([
@@ -66,9 +66,9 @@ class ServicesController extends Controller
 
     public function show(Request $request, Service $service)
     {
-        if (!$request->user()->can('view services')) {
-            return back()->with('error', 'Unauthorized action.');
-        }
+        // if (!$request->user()->can('view services')) {
+        //     return back()->with('error', 'Unauthorized action.');
+        // }
 
         try {
             return back()->with('success', $service->load('category'));
@@ -79,9 +79,9 @@ class ServicesController extends Controller
 
     public function edit(Request $request, Service $service)
     {
-        if (!$request->user()->can('edit services')) {
-            return back()->with('error', 'Unauthorized action.');
-        }
+        // if (!$request->user()->can('edit services')) {
+        //     return back()->with('error', 'Unauthorized action.');
+        // }
 
         try {
             $categories = Category::all();
@@ -93,9 +93,9 @@ class ServicesController extends Controller
 
     public function update(Request $request, Service $service)
     {
-        if (!$request->user()->can('edit services')) {
-            return back()->with('error', 'Unauthorized action.');
-        }
+        // if (!$request->user()->can('edit services')) {
+        //     return back()->with('error', 'Unauthorized action.');
+        // }
 
         try {
             $validatedData = $request->validate([
@@ -116,9 +116,9 @@ class ServicesController extends Controller
 
     public function destroy(Request $request, Service $service)
     {
-        if (!$request->user()->can('delete services')) {
-            return back()->with('error', 'Unauthorized action.');
-        }
+        // if (!$request->user()->can('delete services')) {
+        //     return back()->with('error', 'Unauthorized action.');
+        // }
 
         try {
             $service->delete();
