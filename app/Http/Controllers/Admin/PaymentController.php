@@ -31,7 +31,7 @@ class PaymentController extends Controller
     public function retention()
     {
         if (request()->ajax()) {
-            $apportionments = PaymentApportionment::with('serviceRequest');
+            $apportionments = PaymentApportionment::latest()->with('serviceRequest');
 
             // dd($apportionments->get());
 
