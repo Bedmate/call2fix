@@ -31,8 +31,7 @@ class PaymentController extends Controller
     public function retention()
     {
         if (request()->ajax()) {
-            $apportionments = PaymentApportionment::where('created_at', '<', Carbon::now()->subDays(30))
-                ->with('serviceRequest');
+            $apportionments = PaymentApportionment::with('serviceRequest');
 
             // dd($apportionments->get());
 
