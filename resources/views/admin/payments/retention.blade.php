@@ -87,9 +87,9 @@ $(function () {
                 // Populate Service Request details
                 let sr = res.service_request || {};
                 $('#serviceRequestDetails').html(`
-                    <li class="list-group-item"><strong>Title:</strong> ${sr.title ?? 'N/A'}</li>
-                    <li class="list-group-item"><strong>Description:</strong> ${sr.description ?? 'N/A'}</li>
-                    <li class="list-group-item"><strong>Status:</strong> ${sr.status ?? 'N/A'}</li>
+                    <li class="list-group-item"><strong>Title:</strong> ${sr.problem_title ?? 'N/A'}</li>
+                    <li class="list-group-item"><strong>Description:</strong> ${sr.problem_description ?? 'N/A'}</li>
+                    <li class="list-group-item"><strong>Status:</strong> ${sr.request_status ?? 'N/A'}</li>
                     <li class="list-group-item"><strong>Created At:</strong> ${sr.created_at ?? 'N/A'}</li>
                 `);
 

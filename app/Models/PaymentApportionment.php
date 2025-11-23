@@ -20,6 +20,6 @@ class PaymentApportionment extends Model
 
     public function serviceRequest()
     {
-        return $this->belongsTo(ServiceRequestModel::class, 'service_request_id', 'id');
+        return $this->belongsTo(ServiceRequestModel::class, 'id', 'service_request_id');
     }
 }
