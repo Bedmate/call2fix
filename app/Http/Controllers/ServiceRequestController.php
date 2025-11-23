@@ -708,8 +708,8 @@ class ServiceRequestController extends Controller
                 'price'               => number_format($request->price, 4, '.', ''),
                 'status'              => 'pending',
                 'percentage_decrease' => $percentageDecrease,
-                'new_item_total'      => $newItemTotal,
-                'new_workmanship'     => $newWorkmanship,
+                'new_item_total'      => round($newItemTotal, 2),
+                'new_workmanship'     => round($newWorkmanship, 2),
             ]);
 
             // Update service request total
