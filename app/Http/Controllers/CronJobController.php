@@ -20,7 +20,7 @@ class CronJobController extends Controller
         try {
             $requests = ServiceRequestModel::where('is_retention_paid', false)
                 ->whereHas('aportionment', function ($query) {
-                    $query->where('created_at', '<', Carbon::now()->subDays(30));
+                    $query->where('created_at', '<', Carbon::now()->subDays(3));
                 })
                 ->with('aportionment')->limit(50)->get();
 

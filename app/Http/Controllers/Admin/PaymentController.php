@@ -41,7 +41,7 @@ class PaymentController extends Controller
                 ->addColumn('call2fix_earnings', fn($row) => number_format($row->call2fix_earnings, 2)) // fixed
                 ->addColumn('warranty_retention', fn($row) => number_format($row->warranty_retention, 2)) // fixed
                 ->addColumn('created_at', fn($row) => $row->created_at->format('Y-m-d H:i'))
-                ->addColumn('release_date', fn($row) => $row->created_at->addDays(30)->format('Y-m-d H:i'))
+                ->addColumn('release_date', fn($row) => $row->created_at->addDays(3)->format('Y-m-d H:i'))
                 ->make(true);
         }
         return view('admin.payments.retention');

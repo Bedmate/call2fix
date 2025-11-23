@@ -654,68 +654,159 @@ class ServiceRequestController extends Controller
         try {
             $validate = Validator::make($request->all(), [
                 'price' => 'required|numeric|min:0',
+                'percentage_decrease' => 'nullable|numeric|min:0|max:100', // optional but safe
             ]);
 
             if ($validate->fails()) {
                 return get_error_response("Validation failed", $validate->errors(), 422);
             }
 
-            $quote = DB::table('submitted_quotes')->where(['request_id' => $requestId, 'id' => $quoteId])->first();
+            $quote = DB::table('submitted_quotes')
+                ->where('request_id', $requestId)
+                ->where('id', $quoteId)
+                ->first();
+
             if (! $quote) {
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
-            Log::info("Quote retrieved");
 
-            $neg = Negotiation::where('request_id', $requestId)->where('status', "accepted")->first();
-            if ($neg) {
-                return get_error_response("Qoute already accepted", ['error' => "Qoute already accepted"], 400);
+            // Prevent negotiation if already accepted
+            $existingAcceptedNegotiation = Negotiation::where('request_id', $requestId)
+                ->where('status', 'accepted')
+                ->exists();
+
+            if ($existingAcceptedNegotiation) {
+                return get_error_response("Quote already accepted", ['error' => "Quote already accepted"], 400);
             }
-            Log::info("neg retrieved");
 
-            // $quoteTotal = (float) collect($quote->items)->sum(function ($item) {
-            //     return (float) $item['itemTotalPrice'];
-            // });
+            // Parse items
+            $items = json_decode($quote->items, true) ?: [];
+            $originalItemsTotal = collect($items)->sum(fn($item) => (float) ($item['itemTotalPrice'] ?? 0));
+            $originalWorkmanship = (float) $quote->workmanship;
 
-            $items      = json_decode($quote->items, true);
-            $quoteTotal = collect($items)->sum(fn($item) => (float) $item['itemTotalPrice']);
+            // Get percentage decrease (default to 0 if not provided)
+            $percentageDecrease = (float) ($request->input('percentage_decrease') ?? 0);
 
-            Log::info("Quote total");
+            // Clamp percentage between 0 and 100
+            $percentageDecrease = max(0, min(100, $percentageDecrease));
+
+            // Helper: reduce amount by X%
+            $reduceByPercentage = function ($amount, $percent) {
+                $reduced = $amount * (1 - ($percent / 100));
+                return max(0, $reduced); // Never go below zero
+            };
+
+            // Calculate new totals
+            $newItemTotal = $reduceByPercentage($originalItemsTotal, $percentageDecrease);
+            $newWorkmanship = $reduceByPercentage($originalWorkmanship, $percentageDecrease);
+
+            // Create negotiation record
             $negotiation = Negotiation::create([
                 'submitted_quote_id'  => $quoteId,
                 'request_id'          => $requestId,
                 'provider_id'         => $quote->provider_id,
                 'price'               => number_format($request->price, 4, '.', ''),
                 'status'              => 'pending',
-                'percentage_decrease' => $request->percentage_decrease ?? 0,
-                'new_item_total'      => $this->removePercentage($quoteTotal, $request->percentage_decrease) ?? $quoteTotal,
-                'new_workmanship'     => $this->removePercentage($quote->workmanship, $request->percentage_decrease) ?? $quote->workmanship,
+                'percentage_decrease' => $percentageDecrease,
+                'new_item_total'      => $newItemTotal,
+                'new_workmanship'     => $newWorkmanship,
             ]);
 
+            // Update service request total
             $serviceRequest = ServiceRequest::whereId($requestId)->first();
-
-            Log::info("service request retrieved");
-            $serviceRequest->update([
-                "total_cost"      => $request->price,
-                "formatted_price" => number_format($request->price, 4, '.', ''),
-            ]);
-
             if ($serviceRequest) {
-                $user     = User::whereId($serviceRequest->user_id)->first();
-                $provider = User::whereId($quote->provider_id)->first();
+                $serviceRequest->update([
+                    "total_cost"      => $request->price,
+                    "formatted_price" => number_format($request->price, 4, '.', ''),
+                ]);
+
+                // Notify provider
+                $provider = User::find($quote->provider_id);
                 if ($provider) {
-                    $provider->notify(new CustomNotification("Quote Negotiated by customer", "Quote Negotiated by customer."));
-                    // $user->notify(new ServiceRequestNegotiated($serviceRequest));
+                    $provider->notify(new CustomNotification(
+                        "Quote Negotiated by customer",
+                        "Quote Negotiated by customer."
+                    ));
                 }
             }
-            Log::info("Final log");
 
             return get_success_response($negotiation, "Price negotiation submitted successfully");
         } catch (\Throwable $th) {
-            Log::info("Error on Negotiation: ", ['error' => $th->getMessage(), 'trace' => $th->getTrace()]);
+            Log::info("Error on Negotiation: ", [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString()
+            ]);
             return get_error_response($th->getMessage(), ["error" => $th->getMessage()]);
         }
     }
+    // public function negotiateQuote(Request $request, $requestId, $quoteId)
+    // {
+    //     try {
+    //         $validate = Validator::make($request->all(), [
+    //             'price' => 'required|numeric|min:0',
+    //         ]);
 
+    //         if ($validate->fails()) {
+    //             return get_error_response("Validation failed", $validate->errors(), 422);
+    //         }
+
+    //         $quote = DB::table('submitted_quotes')->where(['request_id' => $requestId, 'id' => $quoteId])->first();
+    //         if (! $quote) {
+    //             return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
+    //         }
+    //         Log::info("Quote retrieved");
+
+    //         $neg = Negotiation::where('request_id', $requestId)->where('status', "accepted")->first();
+    //         if ($neg) {
+    //             return get_error_response("Qoute already accepted", ['error' => "Qoute already accepted"], 400);
+    //         }
+    //         Log::info("neg retrieved");
+
+    //         // $quoteTotal = (float) collect($quote->items)->sum(function ($item) {
+    //         //     return (float) $item['itemTotalPrice'];
+    //         // });
+
+    //         $items      = json_decode($quote->items, true);
+    //         $quoteTotal = collect($items)->sum(fn($item) => (float) $item['itemTotalPrice']);
+
+    //         Log::info("Quote total");
+    //         $negotiation = Negotiation::create([
+    //             'submitted_quote_id'  => $quoteId,
+    //             'request_id'          => $requestId,
+    //             'provider_id'         => $quote->provider_id,
+    //             'price'               => number_format($request->price, 4, '.', ''),
+    //             'status'              => 'pending',
+    //             'percentage_decrease' => $request->percentage_decrease ?? 0,
+    //             'new_item_total'      => $this->removePercentage($quoteTotal, $request->percentage_decrease) ?? $quoteTotal,
+    //             'new_workmanship'     => $this->removePercentage($quote->workmanship, $request->percentage_decrease) ?? $quote->workmanship,
+    //         ]);
+
+    //         $serviceRequest = ServiceRequest::whereId($requestId)->first();
+
+    //         Log::info("service request retrieved");
+    //         $serviceRequest->update([
+    //             "total_cost"      => $request->price,
+    //             "formatted_price" => number_format($request->price, 4, '.', ''),
+    //         ]);
+
+    //         if ($serviceRequest) {
+    //             $user     = User::whereId($serviceRequest->user_id)->first();
+    //             $provider = User::whereId($quote->provider_id)->first();
+    //             if ($provider) {
+    //                 $provider->notify(new CustomNotification("Quote Negotiated by customer", "Quote Negotiated by customer."));
+    //                 // $user->notify(new ServiceRequestNegotiated($serviceRequest));
+    //             }
+    //         }
+    //         Log::info("Final log");
+
+    //         return get_success_response($negotiation, "Price negotiation submitted successfully");
+    //     } catch (\Throwable $th) {
+    //         Log::info("Error on Negotiation: ", ['error' => $th->getMessage(), 'trace' => $th->getTrace()]);
+    //         return get_error_response($th->getMessage(), ["error" => $th->getMessage()]);
+    //     }
+    // }
+
+    
     public function getNegotiation($requestId)
     {
         try {
