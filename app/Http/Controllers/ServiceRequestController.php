@@ -806,7 +806,7 @@ class ServiceRequestController extends Controller
     //     }
     // }
 
-    
+
     public function getNegotiation($requestId)
     {
         try {
@@ -1176,97 +1176,114 @@ class ServiceRequestController extends Controller
 
     private function aportionment($requestId)
     {
-        $neg = Negotiation::where('request_id', $requestId)->where("status", "accepted")->first();
-        if (! $neg) {
-            return ['error' => 'Negotiation not found or  not yet accepted.'];
+        $neg = Negotiation::where('request_id', $requestId)
+            ->where("status", "accepted")
+            ->first();
+
+        if (!$neg) {
+            return ['error' => 'Negotiation not found or not yet accepted.'];
         }
 
-        $submittedQuote = SubmittedQuotes::where('request_id', $requestId)->whereId($neg->submitted_quote_id)->first();
-        if (! $submittedQuote) {
+        $submittedQuote = SubmittedQuotes::where('request_id', $requestId)
+            ->where('id', $neg->submitted_quote_id)
+            ->first();
+
+        if (!$submittedQuote) {
             return ['error' => 'Quote not found'];
         }
 
-        $serviceRequest = ServiceRequestModel::whereId($requestId)->first();
-        if (! $serviceRequest) {
+        $serviceRequest = ServiceRequestModel::find($requestId);
+        if (!$serviceRequest) {
             return ['error' => "Service request not found"];
         }
 
+        // Approve provider
         if (isset($submittedQuote->provider_id) || isset($neg->provider_id)) {
             $serviceRequest->approved_providers_id = $submittedQuote->provider_id ?? $neg->provider_id;
             $serviceRequest->save();
         }
 
-        // Calculate total quote (items_total + workmanship)
-        $itemsTotal  = $neg->new_item_total;
-        $workmanship = $neg->new_workmanship;
-        $quoteTotal  = $itemsTotal + $workmanship;
+        // 🔒 CRITICAL FIX: Validate and sanitize totals
+        $itemsTotal = (float) $neg->new_item_total;
+        $workmanship = (float) $neg->new_workmanship;
 
-        // Calculate fees and retention
-        $call2FixFee       = $quoteTotal * 0.10; // 10% of total quote
-        $warrantyRetention = $quoteTotal * 0.10; // 10% of total quote
+        // If either is negative, reconstruct from original quote + percentage
+        if ($itemsTotal < 0 || $workmanship < 0) {
+            Log::warning("Negative values detected in negotiation. Reconstructing from original quote.", [
+                'neg_id' => $neg->id,
+                'new_item_total' => $neg->new_item_total,
+                'new_workmanship' => $neg->new_workmanship
+            ]);
 
-        // Distributable amount (after deducting call2FixFee and warrantyRetention)
+            // Parse original items
+            $items = json_decode($submittedQuote->items, true) ?: [];
+            $originalItemsTotal = collect($items)->sum(fn($item) => (float) ($item['itemTotalPrice'] ?? 0));
+            $originalWorkmanship = (float) $submittedQuote->workmanship;
+
+            $percentage = max(0, min(100, (float) ($neg->percentage_decrease ?? 0)));
+            $factor = 1 - ($percentage / 100);
+
+            $itemsTotal = max(0, $originalItemsTotal * $factor);
+            $workmanship = max(0, $originalWorkmanship * $factor);
+        }
+
+        $quoteTotal = $itemsTotal + $workmanship;
+
+        // Ensure quoteTotal is not negative
+        if ($quoteTotal <= 0) {
+            Log::error("Invalid quote total after reconstruction", compact('itemsTotal', 'workmanship', 'quoteTotal'));
+            return ['error' => 'Invalid negotiated total (zero or negative).'];
+        }
+
+        // Proceed with safe values
+        $call2FixFee = $quoteTotal * 0.10;
+        $warrantyRetention = $quoteTotal * 0.10;
         $distributable = $quoteTotal - ($call2FixFee + $warrantyRetention);
 
-        // Retrieve Artisan and Payment Logic
+        $artisanShare = 0;
         $artisan = Artisans::where('artisan_id', $submittedQuote->approved_artisan_id ?? $serviceRequest->approved_artisan_id)->first();
 
-        $artisanShare = 0;
         if ($artisan) {
-            $serviceRequest->update([
-                'approved_providers_id' => $artisan->service_provider_id,
-            ]);
-            $paymentMethod = $artisan->payment_plan; // "fixed" or "percentage"
-            $paymentValue  = (float) $artisan->payment_amount;
+            $serviceRequest->update(['approved_providers_id' => $artisan->service_provider_id]);
 
-            // Artisan's share is calculated only from workmanship
+            $paymentMethod = $artisan->payment_plan;
+            $paymentValue = (float) $artisan->payment_amount;
+
             if ($paymentMethod === 'fixed') {
-                $artisanShare = min($paymentValue, $workmanship); // Ensure it doesn't exceed workmanship
+                $artisanShare = min($paymentValue, $workmanship);
             } elseif ($paymentMethod === 'percentage') {
-                $artisanShare = min($workmanship * ($paymentValue), $workmanship); // Ensure it doesn't exceed workmanship
+                // Assume paymentValue is a fraction (e.g., 0.7 for 70%), not percent (70)
+                // If stored as percent (e.g., 70), divide by 100
+                $share = $workmanship * ($paymentValue > 1 ? $paymentValue / 100 : $paymentValue);
+                $artisanShare = min($share, $workmanship);
             }
 
-            // If artisan's share exceeds workmanship, set artisanShare to 0
-            if ($artisanShare > $workmanship) {
-                $artisanShare = 0;
-            }
-
-            Log::debug("Artisan payment details: ", ['artisan' => $artisan]);
+            $artisanShare = max(0, $artisanShare); // never negative
         }
 
-        // Provider's share is items_total + (distributable - artisanShare)
         $providerShare = $itemsTotal + ($distributable - $artisanShare);
-
-        // Ensure providerShare doesn't go negative
         if ($providerShare < 0) {
-            $providerShare = 0;
-            $artisanShare  = $distributable;
+            $artisanShare = min($artisanShare, $distributable);
+            $providerShare = $itemsTotal + ($distributable - $artisanShare);
         }
 
-        // Final Distribution
-        $spent          = floatval($call2FixFee + $warrantyRetention + $artisanShare);
-        $balance        = $quoteTotal - $spent;
+        $spent = $call2FixFee + $warrantyRetention + $artisanShare;
+        $balance = $quoteTotal - $spent;
+
         $apportionments = [
             'subtotal'                  => $quoteTotal,
-            'service_provider_earnings' => $balance,
-            'call2fix_management_fee'   => $submittedQuote->administrative_fee,
+            'service_provider_earnings' => max(0, $balance),
+            'call2fix_management_fee'   => (float) ($submittedQuote->administrative_fee ?? 0),
             'call2fix_earnings'         => $call2FixFee,
             'warranty_retention'        => $warrantyRetention,
             'artisan_earnings'          => $artisanShare,
             'spent'                     => $spent,
-            'balance'                   => $balance,
+            'balance'                   => max(0, $balance),
         ];
-
-        // Ensure the sum of provider and artisan earnings equals the quoteTotal
-        // if (($apportionments['service_provider_earnings'] + $apportionments['artisan_earnings']) != $quoteTotal) {
-        //     // Adjust if there's a discrepancy (e.g., due to rounding)
-        //     $apportionments['service_provider_earnings'] = $quoteTotal - $apportionments['artisan_earnings'];
-        // }
 
         Log::debug("Apportionment Result: ", ['apportionments' => $apportionments]);
         return $apportionments;
     }
-
     private function removePercentage($amount, $percentage)
     {
         $deduction = ($percentage) * $amount;
