@@ -8,7 +8,7 @@ use App\Models\Property;
 use App\Models\ServiceRequest;
 use App\Models\SubmittedQuotes;
 use App\Models\User;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Modules\Artisan\Models\ArtisanQuotes;
 use Validator;
@@ -155,7 +155,7 @@ class EnhancedServiceProviderController extends Controller
     public function getProviders($propertyId)
     {
         $property = Property::findOrFail($propertyId);
-        $radiusLimitMeters = $this->radiusLimitKm * 1000;
+        $radiusLimitMeters = $this->radiusLimitKm;
 
         $providers = User::role(Controller::SERVICE_PROVIDERS)
             ->select(DB::raw('*, ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) as distance'))
@@ -175,7 +175,7 @@ class EnhancedServiceProviderController extends Controller
     public function getFeaturedProvider($propertyId)
     {
         $property = Property::findOrFail($propertyId);
-        $radiusLimitMeters = $this->radiusLimitKm * 1000;
+        $radiusLimitMeters = $this->radiusLimitKm;
 
         $featuredProvider = User::role(Controller::SERVICE_PROVIDERS)
             ->select(DB::raw('*, ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) as distance'))

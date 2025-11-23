@@ -113,7 +113,7 @@ class OrderController extends Controller
             $orderData["total_price"] = round($totalPrice, 2);
 
             // Withdraw from wallet
-            if (! $wallet->withdrawal(round($orderData["total_price"] * 100, 2), ["description" => "Order placed", "Order placement"])) {
+            if (! $wallet->withdrawal(round($orderData["total_price"] , 2), ["description" => "Order placed", "Order placement"])) {
                 return ['error' => 'Insufficient Balance'];
             }
 
@@ -278,7 +278,7 @@ class OrderController extends Controller
                     return get_error_response("User wallet not found", ["error" => "User wallet not found"], 404);
                 }
 
-                if (! $wallet->deposit($order->total_price * 100, ["description" => "Order refund for ORDER ID: {$order->id}", "Order placement refunded"])) {
+                if (! $wallet->deposit($order->total_price , ["description" => "Order refund for ORDER ID: {$order->id}", "Order placement refunded"])) {
                     return ['error' => 'Insufficient balance'];
                 }
 
@@ -381,7 +381,7 @@ class OrderController extends Controller
         if (! $wallet) {
             return get_error_response("Seller wallet not found", ["error" => "Seller wallet not found"], 404);
         }
-        if (! $wallet->deposit($supplierPrice * 100, ["description" => "Order payment for ORDER ID: {$order->id}", "Order payment"])) {
+        if (! $wallet->deposit($supplierPrice , ["description" => "Order payment for ORDER ID: {$order->id}", "Order payment"])) {
             Log::info(['error' => "Unable to pay seller for ORDER ID: {$order->id}"]);
         }
 

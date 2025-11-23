@@ -30,7 +30,7 @@ class CronJobController extends Controller
                     $wallet = $provider->getWallet('ngn');
                     if ($wallet) {
                         $wallet->deposit(
-                            $request->aportionment->warranty_retention * 100,
+                            $request->aportionment->warranty_retention ,
                             [
                                 "description" => "Service request payment - {$requests->id}",
                                 "narration"   => $request->narration ?? null,

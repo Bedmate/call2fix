@@ -224,7 +224,7 @@ class AuthController extends Controller
 
                 if ($wallet) {
                     $wallet->deposit(
-                        get_settings_value('referal_commission', 0) * 100,
+                        get_settings_value('referal_commission', 0) ,
                         ['description' => 'Referral Bonus']
                     );
 
@@ -246,7 +246,7 @@ class AuthController extends Controller
 
                 if ($user_wallet) {
                     $user_wallet->deposit(
-                        1000 * 100,
+                        1000 ,
                         ['description' => 'Welcome Bonus']
                     );
                 } else {
@@ -309,7 +309,7 @@ class AuthController extends Controller
 
             return get_error_response('Invalid credentials', ['message' => 'Invalid credentials']);
         } catch (\Exception $e) {
-            \Log::info('An error occurred during authentication', ['error' => $e->getMessage()]);
+            Log::info('An error occurred during authentication', ['error' => $e->getMessage()]);
             return get_error_response('An error occurred during authentication', ['error' => $e->getMessage()]);
         }
     }
@@ -511,7 +511,7 @@ class AuthController extends Controller
 
                     if ($user_wallet) {
                         $user_wallet->deposit(
-                            1000 * 100,
+                            1000 ,
                             ['description' => 'Welcome Bonus']
                         );
                     } else {

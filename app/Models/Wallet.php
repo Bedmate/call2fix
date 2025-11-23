@@ -67,7 +67,7 @@ class Wallet extends BaseModel
     public function deposit($amount, $meta = [], $description = '', $decimalPlaces = 2)
     {
         $balanceBefore = $this->balance;
-        $this->balance += $amount * 100;
+        $this->balance += $amount ;
         $save = $this->save();
 
         // Log the deposit transaction
@@ -79,9 +79,9 @@ class Wallet extends BaseModel
     // Withdraw from the wallet
     public function withdraw($amount, $meta = [], $description = '', $decimalPlaces = 2)
     {
-        if (self::balance() >= $amount * 100) {
+        if (self::balance() >= $amount ) {
             $balanceBefore = $this->balance;
-            $this->balance -= $amount * 100;
+            $this->balance -= $amount ;
             $save = $this->save();
 
             // Log the withdrawal transaction

@@ -1,16 +1,18 @@
 <?php
+
 namespace Modules\ServiceProvider\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\ArtisanCanSubmitQuote;
 use App\Models\Artisans;
+use App\Models\Category;
 use App\Models\Property;
 use App\Models\ServiceRequest;
 use App\Models\SubmittedQuotes;
 use App\Models\User;
 use App\Notifications\CustomNotification;
 use App\Notifications\NewArtisanAddedNotification;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -149,7 +151,6 @@ class ServiceProviderController extends Controller
 
             DB::rollBack(); // Roll back if the new artisan could not be created
             return get_error_response("Unable to complete request", ["error" => "Unable to complete request, please contact support if error persists"], 400);
-
         } catch (\Throwable $th) {
             DB::rollBack(); // Roll back on any exception
             return get_error_response($th->getMessage(), ['error' => $th->getMessage()]);
@@ -221,7 +222,6 @@ class ServiceProviderController extends Controller
 
             DB::rollBack(); // Roll back if the new artisan could not be created
             return get_error_response("Unable to complete request", ["error" => "Unable to complete request, please contact support if error persists"], 400);
-
         } catch (\Throwable $th) {
             DB::rollBack(); // Roll back on any exception
             return get_error_response($th->getMessage(), ['error' => $th->getMessage()]);
@@ -380,7 +380,6 @@ class ServiceProviderController extends Controller
                 $customer->notify(new CustomNotification("Quote submitted by provider", $message));
             }
             return get_success_response($createQuote, "Quote submitted successfully");
-
         } catch (\Throwable $th) {
             return get_error_response($th->getMessage(), [], 500);
         }
@@ -413,7 +412,7 @@ class ServiceProviderController extends Controller
 
             // Get the radius limit in kilometers from settings and convert to meters
             $radiusLimitKm     = get_settings_value('max_provider_radius');
-            $radiusLimitMeters = $radiusLimitKm * 1000; // Convert km to meters
+            $radiusLimitMeters = $radiusLimitKm; // Convert km to meters
 
             // Get service providers within the radius limit
             $providers = User::role(Controller::SERVICE_PROVIDERS)->select(DB::raw('*, ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) as distance'))
@@ -440,8 +439,8 @@ class ServiceProviderController extends Controller
             // Get the authenticated user
             $user = auth()->user();
 
-                                                              // Get the radius limit in kilometers from settings and convert to meters
-            $radiusLimitMeters = $this->radiusLimitKm * 1000; // Convert km to meters
+            // Get the radius limit in kilometers from settings and convert to meters
+            $radiusLimitMeters = $this->radiusLimitKm; // Convert km to meters
 
             // Get the closest featured service provider within the radius limit
             $featuredProvider = User::role(Controller::SERVICE_PROVIDERS)->removeRoleselect(DB::raw('*, ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) as distance'))
@@ -595,7 +594,6 @@ class ServiceProviderController extends Controller
             ]);
 
             return get_success_response($artisan, "Artisan invited successfully");
-
         } catch (\Throwable $th) {
             Log::error("💥 Exception in addArtisanToRequest", [
                 'message' => $th->getMessage(),

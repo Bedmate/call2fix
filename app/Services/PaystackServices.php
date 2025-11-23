@@ -90,7 +90,7 @@ class PaystackServices
 
     public function initiatePayment($amount)
     {
-        $amount = $amount * 100; // Convert to kobo
+        $amount = $amount ; // Convert to kobo
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->paystackSecretKey,
@@ -264,7 +264,7 @@ class PaystackServices
             $txn->transaction_type = 'credit';
             $txn->transaction_slug = 'paystack_charge';
             $txn->transaction_status = 'successful';
-            $txn->transaction_amount = $data['amount'] / 100; // Convert from kobo to naira
+            $txn->transaction_amount = $data['amount'] ; // Convert from kobo to naira
 
             if (!$txn->save()) {
                 Log::error("Unable to add Deposit transaction record for WalletID: $wallet1->id");
@@ -276,7 +276,7 @@ class PaystackServices
             $txn->transaction_type = 'credit';
             $txn->transaction_slug = 'topup_bonus';
             $txn->transaction_status = 'successful';
-            $txn->transaction_amount = $data['amount'] / 100; // Convert from kobo to naira
+            $txn->transaction_amount = $data['amount'] ; // Convert from kobo to naira
 
             if (!$txn->save()) {
                 Log::error("Unable to add Deposit transaction record for WalletID: $wallet2->id (Bonus wallet)");
@@ -305,7 +305,7 @@ class PaystackServices
                 'transaction_type' => 'credit',
                 'transaction_slug' => 'paystack_charge',
                 'transaction_status' => 'successful',
-                'transaction_amount' => $data['amount'] / 100, // Convert from kobo to naira
+                'transaction_amount' => $data['amount'] , // Convert from kobo to naira
             ]);
             $user->deposit($data['amount'], $data['currency'], $user->current_role, ['source' => 'Card payment via Paystack'], 'Card payment via Paystack');
             $user->deposit(0.05, 'bonus', $user->current_role, ['source' => 'Bonus for wallet topup'], 'Bonus for wallet topup');

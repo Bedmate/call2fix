@@ -78,7 +78,7 @@ class PaymentController extends Controller
                     return ucwords(str_replace("_", " ", $row->_account_type));
                 })
                 ->addColumn('amount', function ($row) {
-                    return number_format($row->amount / 100, 2);
+                    return number_format($row->amount , 2);
                 })
                 ->addColumn('date', function ($row) {
                     return $row->created_at->format('Y-m-d H:i');

@@ -91,7 +91,7 @@ class WalletController extends Controller
     {
         $user   = $request->user();
         $wallet = $user->getWallet($walletType);
-        $amount = $request->amount * 100;
+        $amount = $request->amount ;
 
         try {
             $transaction = credit_user($user->id, $amount);
@@ -118,7 +118,7 @@ class WalletController extends Controller
             $bank_id        = $request->bank_id;
             $amount         = $request->amount;
             $withdrawal_fee = get_settings_value('withdrawal_fee', 0);
-            $finalAmountDue = ($amount + $withdrawal_fee) * 100; // Convert to cents
+            $finalAmountDue = ($amount + $withdrawal_fee) ; // Convert to cents
 
             $account = BankAccounts::where([
                 'id'      => $bank_id,
@@ -151,12 +151,12 @@ class WalletController extends Controller
                 ]);
 
                 // **Step 2: Deduct the Amount & Fee Separately**
-                $withdrawalTransaction = $wallet->withdraw($amount * 100, [
+                $withdrawalTransaction = $wallet->withdraw($amount , [
                     'description' => "Withdrawal to bank - {$bank_id}",
                     'narration'   => $request->narration ?? 'Personal Use',
                 ]);
 
-                $feeTransaction = $wallet->withdraw($withdrawal_fee * 100, [
+                $feeTransaction = $wallet->withdraw($withdrawal_fee , [
                     'description' => "Withdrawal Fee",
                     'narration'   => "Fee for bank transfer",
                 ]);
@@ -164,7 +164,7 @@ class WalletController extends Controller
                 // **Step 3: Call Paystack API**
                 $paystack     = new PaystackServices();
                 $payoutObject = [
-                    'amount'    => $amount * 100, // In cents
+                    'amount'    => $amount , // In cents
                     'recipient' => $account->account_reference,
                     'narration' => $request->narration ?? 'Call2Fix Payout',
                     'reference' => $transactionReference,
@@ -260,7 +260,7 @@ class WalletController extends Controller
             if (! $user) {
                 return get_error_response("User not found.", ['user_id' => $request->user_id]);
             }
-            $amount       = $request->amount * 100;
+            $amount       = $request->amount ;
             $toWalletType = "ngn"; //"Department ID: {$request->user_id}";
         }
 
@@ -477,7 +477,7 @@ class WalletController extends Controller
 
         $fields = [
             'email'        => auth()->user()->email,
-            'amount'       => $amount * 100,
+            'amount'       => $amount ,
             'currency'     => $user_country,
             'callback_url' => route('paystack.callback'),
             'metadata'     => [
@@ -592,7 +592,7 @@ class WalletController extends Controller
 
             // Calculate percentage difference safely
             $percentage_difference = $sum_total_payout_previous_month > 0
-            ? (($sum_total_payout_current_month - $sum_total_payout_previous_month) / $sum_total_payout_previous_month) * 100
+            ? (($sum_total_payout_current_month - $sum_total_payout_previous_month) / $sum_total_payout_previous_month) 
             : ($sum_total_payout_current_month > 0 ? 100 : 0);
 
             // Build response

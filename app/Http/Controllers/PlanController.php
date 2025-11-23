@@ -53,7 +53,7 @@ class PlanController extends Controller
             // charge the customer
             $wallet = $user->getWallet('ngn');
 
-            if (!$wallet->withdraw($plan->price * 100)) {
+            if (!$wallet->withdraw($plan->price )) {
                 return get_error_response('Insufficient wallet balance', ['error' => 'Insufficient wallet balance'], 402);
             }
 
@@ -92,7 +92,7 @@ class PlanController extends Controller
             // charge the customer
             $wallet = $user->getWallet('ngn');
             
-            if (!$wallet->withdraw($plan->amount * 100)) {
+            if (!$wallet->withdraw($plan->amount )) {
                 return get_error_response('Insufficient wallet balance', ['error' => 'Insufficient wallet balance'], 402);
             }
 

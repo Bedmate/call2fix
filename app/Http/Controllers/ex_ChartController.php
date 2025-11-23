@@ -211,7 +211,7 @@ class ex_ChartController extends Controller
     
         // Calculate the percentage of completed requests
         $percentageCompleted = $totalServiceRequests > 0 
-            ? ($completedServiceRequests / $totalServiceRequests) * 100 
+            ? ($completedServiceRequests / $totalServiceRequests)  
             : 0;
             
         $artisans = Artisans::where('service_provider_id', auth()->id())->latest()->count();

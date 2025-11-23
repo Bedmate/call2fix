@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\ArtisanCanSubmitQuote;
@@ -93,7 +94,7 @@ class ServiceRequestController extends Controller
 
         if (! RateLimiter::tooManyAttempts($key, $maxAttempts)) {
 
-                                                        // Record the attempt
+            // Record the attempt
             RateLimiter::hit($key, $decayMinutes * 60); // Convert minutes to seconds
 
             $validate = Validator::make($request->all(), [
@@ -133,7 +134,7 @@ class ServiceRequestController extends Controller
             } else {
                 $propertyId        = $request->property_id;
                 $property          = Property::findOrFail($propertyId);
-                $radiusLimitMeters = $this->radiusLimitKm * 1000;
+                $radiusLimitMeters = $this->radiusLimitKm;
 
                 $latitude  = $property->porperty_latitude;
                 $longitude = $property->porperty_longitude;
@@ -219,7 +220,7 @@ class ServiceRequestController extends Controller
                 $wallet1 = $user->getWallet($currency ?? 'ngn');
 
                 $assesmentFee     = get_settings_value('assessment_fee', 500);
-                $isPaySuccessfull = $wallet1->withdrawal($assesmentFee * 100, [
+                $isPaySuccessfull = $wallet1->withdrawal($assesmentFee, [
                     "description" => "Assessment fee for Service request order.",
                 ]);
 
@@ -394,7 +395,7 @@ class ServiceRequestController extends Controller
             }
 
             $providerDeposit = $provider->getWallet('ngn')->deposit(
-                $apportionment['service_provider_earnings'] * 100,
+                $apportionment['service_provider_earnings'],
                 ["description" => "Payment for: " . $serviceRequest->problem_title]
             );
 
@@ -417,7 +418,7 @@ class ServiceRequestController extends Controller
                 }
 
                 $artisanDeposit = $artisan->getWallet('ngn')->deposit(
-                    $apportionment['artisan_earnings'] * 100,
+                    $apportionment['artisan_earnings'],
                     ["description" => "Payment for: " . $serviceRequest->problem_title]
                 );
 
@@ -545,13 +546,13 @@ class ServiceRequestController extends Controller
                         // $updatedTerms        = $this->updatedTerms ?? '[Details of Updated Terms]';
 
                         $message =
-                        "Your negotiation for the quote provided by {$providerName} has been accepted. The updated terms have been confirmed, and the service will proceed as agreed.\n\n" .
-                        "Request Details:\n" .
-                        "\t• Service Requested: {$serviceName}\n" .
-                        "\t• Provider Name: {$providerName}\n" .
-                        "\t• Accepted Quote Amount: {$acceptedQuoteAmount}\n" .
-                        // "\t• Updated Terms: {$updatedTerms}\n\n" .
-                        "To proceed, please make the payment for the accepted quote amount. Once the payment is made, the service provider will contact you to finalize the arrangements. You can view the details and track the progress of your request on the app.";
+                            "Your negotiation for the quote provided by {$providerName} has been accepted. The updated terms have been confirmed, and the service will proceed as agreed.\n\n" .
+                            "Request Details:\n" .
+                            "\t• Service Requested: {$serviceName}\n" .
+                            "\t• Provider Name: {$providerName}\n" .
+                            "\t• Accepted Quote Amount: {$acceptedQuoteAmount}\n" .
+                            // "\t• Updated Terms: {$updatedTerms}\n\n" .
+                            "To proceed, please make the payment for the accepted quote amount. Once the payment is made, the service provider will contact you to finalize the arrangements. You can view the details and track the progress of your request on the app.";
 
                         $service_requester->notify(new CustomNotification("Quote Negotiation Accepted", $message));
 
@@ -937,7 +938,7 @@ class ServiceRequestController extends Controller
     private function getEnumValues($table, $column)
     {
         $query  = "SHOW COLUMNS FROM `$table` WHERE Field = ?";
-        $result = \DB::select($query, [$column]);
+        $result = DB::select($query, [$column]);
 
         // Check if the result is empty
         if (empty($result)) {
@@ -993,13 +994,18 @@ class ServiceRequestController extends Controller
                 return get_error_response("Wallet not found for type: {$walletType}", ['error' => 'Wallet unavailable'], 404);
             }
 
-            if ($wallet->balance < $totalCost * 100) {
-                return get_error_response('Insufficient wallet balance', ['error' => 'Low balance'], 402);
+            if ($wallet->balance < $totalCost) {
+                Log::info("my payment details", [
+                    'wallet_balance' => $wallet->balance,
+                    'total_cost'     => $totalCost,
+                    'service_request_id' => $serviceRequest->id,
+                ]);
+                return get_error_response('Insufficient wallet balance', ['error' => 'Low balance', 'total_cost' => $totalCost, 'balance' => $wallet->balance], 402);
             }
 
             // Perform withdrawal
             $transaction = $wallet->withdraw(
-                $totalCost * 100,
+                $totalCost,
                 [
                     'description' => "Service request payment - {$serviceRequest->id}",
                     'narration' => $request->narration ?? 'Service payment',
@@ -1065,7 +1071,6 @@ class ServiceRequestController extends Controller
                 'transaction'     => $transaction,
                 'service_request' => $serviceRequest,
             ], 'Payment successful');
-
         } catch (\Throwable $th) {
             DB::rollBack();
             Log::error("Payment failed: " . $th->getMessage(), [
@@ -1105,7 +1110,7 @@ class ServiceRequestController extends Controller
         $workmanship = $neg->new_workmanship;
         $quoteTotal  = $itemsTotal + $workmanship;
 
-                                                 // Calculate fees and retention
+        // Calculate fees and retention
         $call2FixFee       = $quoteTotal * 0.10; // 10% of total quote
         $warrantyRetention = $quoteTotal * 0.10; // 10% of total quote
 
@@ -1127,7 +1132,7 @@ class ServiceRequestController extends Controller
             if ($paymentMethod === 'fixed') {
                 $artisanShare = min($paymentValue, $workmanship); // Ensure it doesn't exceed workmanship
             } elseif ($paymentMethod === 'percentage') {
-                $artisanShare = min($workmanship * ($paymentValue / 100), $workmanship); // Ensure it doesn't exceed workmanship
+                $artisanShare = min($workmanship * ($paymentValue), $workmanship); // Ensure it doesn't exceed workmanship
             }
 
             // If artisan's share exceeds workmanship, set artisanShare to 0
@@ -1173,7 +1178,7 @@ class ServiceRequestController extends Controller
 
     private function removePercentage($amount, $percentage)
     {
-        $deduction = ($percentage / 100) * $amount;
+        $deduction = ($percentage) * $amount;
         return $amount - $deduction;
     }
 }

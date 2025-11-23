@@ -29,7 +29,7 @@ class WalletController extends Controller
         // find user wallet where _account_type
         $wallet = Wallet::where(['user_id' => $request->user_id, 'role' => $request->_account_type])->first();
         if($wallet) {
-            $wallet->deposit($amount * 100, [
+            $wallet->deposit($amount , [
                 "description" => $request->naration,
                 "funded_by" => auth('admin')->user(),
                 "is_admin" => true,
@@ -60,7 +60,7 @@ class WalletController extends Controller
         // find user wallet where _account_type
         $wallet = Wallet::where(['user_id' => $request->user_id, 'role' => $request->_account_type])->first();
         if($wallet) {
-            $wallet->withdrawal($amount * 100, [
+            $wallet->withdrawal($amount , [
                 "description" => $request->naration,
                 "funded_by" => auth('admin')->user(),
                 "is_admin" => true,
@@ -100,7 +100,7 @@ class WalletController extends Controller
 
         try {
             if ($request->transaction_type === 'credit') {
-                $wallet->deposit($request->amount * 100, [
+                $wallet->deposit($request->amount , [
                     "description" => $request->naration,
                     "funded_by" => auth('admin')->user(),
                     "is_admin" => true,
@@ -108,7 +108,7 @@ class WalletController extends Controller
                 ]);
                 return back()->with('success', 'Wallet credited successfully.');
             } elseif ($request->transaction_type === 'debit') {
-                $wallet->withdraw($request->amount * 100, [
+                $wallet->withdraw($request->amount , [
                     "description" => $request->naration,
                     "funded_by" => auth('admin')->user(),
                     "is_admin" => true,

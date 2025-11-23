@@ -129,7 +129,7 @@ class SuppliersController extends Controller
                     // refund the buyer.
                     $buyer  = User::find($order->user_id);
                     $wallet = $buyer->getWallet("ngn");
-                    $wallet->deposit(floor($order->total_price * 100), ["description" => "Order refund", "Order placement refund"]);
+                    $wallet->deposit(floor($order->total_price ), ["description" => "Order refund", "Order placement refund"]);
                     $buyer->notify(new CustomNotification('Order rejected by Supplier', 'Order rejected by Supplier'));
                     return get_success_response($order, "Order status updated successfully", 200);
                 }

@@ -364,7 +364,7 @@ class ChartController extends Controller
             ->count();
 
         $percentageCompleted = $totalServiceRequests > 0
-            ? ($completedServiceRequests / $totalServiceRequests) * 100
+            ? ($completedServiceRequests / $totalServiceRequests) 
             : 0;
 
         $totalArtisans = Artisans::where('service_provider_id', auth()->id())
