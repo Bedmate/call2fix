@@ -8,13 +8,21 @@
         <div class="col-md-8 offset-md-2">
             <div class="card shadow-lg">
                 <div class="card-header bg-primary text-white text-center">
-                    <h3 class="mb-0">{{ $property->property_name }}</h3>
+                    <h3 class="mb-0">{{ ucfirst($property->property_name) }}</h3>
                     <small>{{ $property->property_type }}</small>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
                         <h5 class="text-muted">Address</h5>
                         <p>{{ $property->property_address }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h5 class="text-muted">Property Longitude</h5>
+                        <p>{{ $property->porperty_longitude }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h5 class="text-muted">Property Latitude</h5>
+                        <p>{{ $property->porperty_latitude }}</p>
                     </div>
 
                     <div class="mb-3">

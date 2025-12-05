@@ -82,8 +82,9 @@ class PropertyController extends Controller
         }
     }
 
-    public function show(Property $property)
+    public function show($propertyId)
     {
+        $property = Property::whereId($propertyId)->with('user')->first();
         return view('admin.properties.show', compact('property'));
     }
 
