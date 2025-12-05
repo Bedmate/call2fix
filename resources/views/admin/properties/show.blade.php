@@ -46,22 +46,52 @@
 <script src="//unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var map = L.map('map').setView([
-            parseFloat("{{ $property->property_latitude }}"), 
-            parseFloat("{{ $property->property_longitude }}")
-        ], 15);
+    document.addEventListener("DOMContentLoaded", function() {
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+        var lat = parseFloat("{{ $property->property_latitude }}");
+        var lng = parseFloat("{{ $property->property_longitude }}");
+        console.log([lat, lng])
 
-        L.marker([
-            parseFloat("{{ $property->property_latitude }}"), 
-            parseFloat("{{ $property->property_longitude }}")
-        ]).addTo(map)
-        .bindPopup('<b>{{ $property->property_name }}</b><br>{{ $property->property_address }}')
-        .openPopup();
+        if (!lat || !lng) {
+            console.error("Invalid coordinates");
+            return;
+        }
+
+        var map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                sources: {
+                    osm: {
+                        type: 'raster',
+                        tiles: [
+                            'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                        ],
+                        tileSize: 256,
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }
+                },
+                layers: [{
+                    id: 'osm-layer',
+                    type: 'raster',
+                    source: 'osm'
+                }]
+            },
+            center: [lng, lat],
+            zoom: 15
+        });
+
+        // marker
+        new maplibregl.Marker()
+            .setLngLat([lng, lat])
+            .setPopup(
+                new maplibregl.Popup().setHTML(
+                    `<b>{{ $property->property_name }}</b><br>{{ $property->property_address }}`
+                )
+            )
+            .addTo(map);
     });
 </script>
 @endpush
