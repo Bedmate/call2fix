@@ -25,31 +25,33 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Towoju5\Wallet\Models\Wallet;
 
-class ServiceRequestController extends Controller
+class OldServiceRequestController extends Controller
 {
     protected $radiusLimitKm;
-
     public function __construct()
     {
-        if (!Schema::hasColumn('negotiations', 'percentage_decrease')) {
+        if (! Schema::hasColumn('negotiations', 'percentage_decrease')) {
             Schema::table('negotiations', function (Blueprint $table) {
                 $table->string('percentage_decrease')->nullable();
                 $table->string('new_item_total')->nullable();
                 $table->string('new_workmanship')->nullable();
             });
         }
-        if (!Schema::hasColumn('service_requests', 'bidding_start_date')) {
+
+        if (! Schema::hasColumn('service_requests', 'bidding_start_date')) {
             Schema::table('service_requests', function (Blueprint $table) {
                 $table->date('bidding_start_date')->nullable();
                 $table->date('bidding_end_date')->nullable();
             });
         }
+
         if (Schema::hasColumn('service_requests', 'bidding_start_time')) {
             Schema::table('service_requests', function (Blueprint $table) {
                 $table->string('bidding_start_time')->nullable()->change();
                 $table->string('bidding_end_time')->nullable()->change();
             });
         }
+
         $this->radiusLimitKm = get_settings_value('max_provider_radius') ?? 30;
     }
 
@@ -70,6 +72,7 @@ class ServiceRequestController extends Controller
                 })
                 ->orderBy('updated_at', 'desc')
                 ->get();
+
             return get_success_response($serviceRequests);
         } catch (\Throwable $th) {
             logger()->error('Service Requests Error', ['error' => $th]);
@@ -79,40 +82,39 @@ class ServiceRequestController extends Controller
 
     public function serviceProviderRequest()
     {
-        $serviceRequests = ServiceRequestModel::with('reworkMessages', 'service_provider', 'invited_artisan')
-            ->whereJsonContains('featured_providers_id', [auth()->id()])
-            ->latest()
-            ->get();
+        $serviceRequests = ServiceRequestModel::with('reworkMessages', 'service_provider', 'invited_artisan')->whereJsonContains('featured_providers_id', [auth()->id()])->latest()->get();
         return get_success_response($serviceRequests);
     }
 
     public function store(Request $request)
     {
-        $key = 'rate_limit_' . ($request->user()?->id ?: $request->ip());
-        $maxAttempts = 1;
-        $decayMinutes = 1;
+        $key          = 'rate_limit_' . ($request->user()?->id ?: $request->ip()); // Unique key per user or IP
+        $maxAttempts  = 1;                                                         // Limit: 1 requests
+        $decayMinutes = 1;                                                         // Time frame: 1 minute
 
-        if (!RateLimiter::tooManyAttempts($key, $maxAttempts)) {
-            RateLimiter::hit($key, $decayMinutes * 60);
+        if (! RateLimiter::tooManyAttempts($key, $maxAttempts)) {
+
+            // Record the attempt
+            RateLimiter::hit($key, $decayMinutes * 60); // Convert minutes to seconds
 
             $validate = Validator::make($request->all(), [
-                'property_id' => 'required|exists:properties,id',
-                'service_category_id' => 'nullable|exists:categories,id',
-                'service_id' => 'nullable|exists:services,id',
-                'problem_title' => 'required|string|max:255',
-                'problem_description' => 'required|string',
-                'inspection_time' => 'required',
-                'inspection_date' => 'required|date',
-                'problem_images' => 'nullable|array|max:5',
+                'property_id'            => 'required|exists:properties,id',
+                'service_category_id'    => 'nullable|exists:categories,id',
+                'service_id'             => 'nullable|exists:services,id',
+                'problem_title'          => 'required|string|max:255',
+                'problem_description'    => 'required|string',
+                'inspection_time'        => 'required',
+                'inspection_date'        => 'required|date',
+                'problem_images'         => 'nullable|array|max:5',
                 'use_featured_providers' => 'boolean',
-                'featured_providers_id' => 'nullable|array',
-                'department_id' => 'nullable|exists:departments,id',
-                "alternative_date" => "sometimes",
-                "alternative_time" => "sometimes",
-                "bidding_start_date" => "sometimes",
-                "bidding_end_date" => "sometimes",
-                "bidding_start_time" => "sometimes",
-                "bidding_end_time" => "sometimes",
+                'featured_providers_id'  => 'nullable|array',
+                'department_id'          => 'nullable|exists:departments,id',
+                "alternative_date"       => "sometimes",
+                "alternative_time"       => "sometimes",
+                "bidding_start_date"     => "sometimes",
+                "bidding_end_date"       => "sometimes",
+                "bidding_start_time"     => "sometimes",
+                "bidding_end_time"       => "sometimes",
             ]);
 
             Log::debug("Incoming request payload is: ", ['payload' => $request->all()]);
@@ -121,22 +123,44 @@ class ServiceRequestController extends Controller
                 return get_error_response("Validation Error", $validate->errors()->toArray());
             }
 
-            $validatedData = $validate->validated();
-            $validatedData['user_id'] = auth()->id();
+            $validatedData                   = $validate->validated();
+            $validatedData['user_id']        = auth()->id();
             $validatedData['request_status'] = "Pending";
             $validatedData['problem_images'] = $request->problem_images;
-            $alphameadAccount = get_settings_value('alphamaed_service_account_id', 'a599fd50-15b4-4db5-a839-9e722aea226d');
+            $alphameadAccount                = get_settings_value('alphamaed_service_account_id', 'a599fd50-15b4-4db5-a839-9e722aea226d');
 
             if ($request->use_featured_providers) {
                 $validatedData['featured_providers_id'] = $request->featured_providers_id;
             } else {
-                $propertyId = $request->property_id;
-                $property = Property::findOrFail($propertyId);
+                $propertyId        = $request->property_id;
+                $property          = Property::findOrFail($propertyId);
                 $radiusLimitMeters = $this->radiusLimitKm;
-                $latitude = $property->porperty_latitude;
+
+                $latitude  = $property->porperty_latitude;
                 $longitude = $property->porperty_longitude;
 
+                // Get nearby providers
+                // $providers = BusinessOfficeAddress::query()
+                //     ->select(
+                //         'user_id',
+                //         DB::raw("
+                //             ST_Distance_Sphere(
+                //                 point(longitude, latitude),
+                //                 point(?, ?)
+                //             ) as distance
+                //         ")
+                //     )
+                //     ->setBindings([$longitude, $latitude])
+                //     ->having('distance', '<=', $radiusLimitMeters)
+                //     ->orderBy('distance')
+                //     ->groupBy('user_id')
+                //     ->where('user_id', '!=', auth()->id())
+                //     ->take(5)
+                //     ->pluck('user_id')
+                //     ->toArray(); // Convert collection to array
+
                 $selectedCategoryId = $request->service_category_id;
+
                 $providers = BusinessOfficeAddress::query()
                     ->select(
                         'business_office_addresses.user_id',
@@ -153,18 +177,14 @@ class ServiceRequestController extends Controller
                     ->having('distance', '<=', $radiusLimitMeters)
                     ->orderBy('distance')
                     ->groupBy('business_office_addresses.user_id')
-                    ->addBinding([$longitude, $latitude], 'select')
+                    ->addBinding([$longitude, $latitude], 'select') // Only add bindings for ST_Distance_Sphere
                     ->take(5)
                     ->pluck('business_office_addresses.user_id')
                     ->toArray();
 
-                Log::debug("Selected providers and locations are: ", [
-                    "providers" => $providers,
-                    "latitude" => $latitude,
-                    "longitude" => $longitude,
-                    "property" => $property
-                ]);
+                Log::debug("Selected providers and locations are: ", ["providers" => $providers, "latitude" => $latitude, "longitude" => $longitude, "property" => $property]);
 
+                // Ensure only provider users
                 $distinctProviders = User::whereIn('id', $providers)
                     ->whereHas('roles', function ($query) {
                         $query->where('name', 'providers');
@@ -172,7 +192,8 @@ class ServiceRequestController extends Controller
                     ->pluck('id')
                     ->toArray();
 
-                if (!in_array($alphameadAccount, $distinctProviders)) {
+                // Ensure Alphamead is always included and unique
+                if (! in_array($alphameadAccount, $distinctProviders)) {
                     $distinctProviders[] = $alphameadAccount;
                 }
 
@@ -186,34 +207,45 @@ class ServiceRequestController extends Controller
             DB::beginTransaction();
             try {
                 $serviceRequest = ServiceRequest::create($validatedData);
+
+                // charge user for assessment fees
                 $user = auth()->user();
+
+                // Validate default currency and role
                 $currency = get_default_currency($user->id);
-                $role = $user->current_role;
+                $role     = $user->current_role;
+
+                // Locate wallet
+                $wallet  = Wallet::where(['user_id' => $user->id, 'currency' => $currency, 'role' => $role])->first();
                 $wallet1 = $user->getWallet($currency ?? 'ngn');
-                $assesmentFee = get_settings_value('assessment_fee', 500);
+
+                $assesmentFee     = get_settings_value('assessment_fee', 500);
                 $isPaySuccessfull = $wallet1->withdrawal($assesmentFee, [
                     "description" => "Assessment fee for Service request order.",
                 ]);
 
                 if ($isPaySuccessfull) {
                     $serviceRequest->update([
-                        "request_status" => "Pending",
+                        "request_status"     => "Pending",
                         "assesment_fee_paid" => true,
                     ]);
                 }
 
+                // Get the list of artisans to notify
                 $artisans = User::whereIn('id', $serviceRequest->featured_providers_id)
                     ->whereHas('roles', function ($query) {
                         $query->where('name', 'providers');
                     })
                     ->get();
 
+                // Notify each artisan
                 foreach ($artisans as $artisan) {
                     $artisan->notify(new NewRequestNotification($serviceRequest));
                 }
 
+                // notify service providers
                 $user->notify(new ServiceRequestSuccessful($serviceRequest, $distinctProviders, $property));
-
+                // Commit transaction if everything is successful
                 DB::commit();
                 return get_success_response($serviceRequest, "Request created successfully", 201);
             } catch (\Exception $e) {
@@ -229,11 +261,9 @@ class ServiceRequestController extends Controller
     public function show($serviceRequest)
     {
         try {
-            $serviceRequest = ServiceRequestModel::with('reworkMessages', 'submittedQuotes', 'service_provider', 'invited_artisan')
-                ->whereId($serviceRequest)
-                ->first();
+            $serviceRequest = ServiceRequestModel::with('reworkMessages', 'submittedQuotes', 'service_provider', 'invited_artisan')->whereId($serviceRequest)->first();
 
-            if (!empty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
+            if (! empty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -250,18 +280,18 @@ class ServiceRequestController extends Controller
     public function update(Request $request, ServiceRequestModel $serviceRequest)
     {
         $validatedData = $request->validate([
-            'property_id' => 'sometimes|exists:properties,id',
-            'service_category_id' => 'nullable|exists:categories,id',
-            'service_id' => 'nullable|exists:services,id',
-            'problem_title' => 'sometimes|string|max:255',
-            'problem_description' => 'sometimes|string',
-            'inspection_time' => 'sometimes|date_format:H:i',
-            'inspection_date' => 'sometimes|date',
-            'problem_images' => 'sometimes|array',
+            'property_id'            => 'sometimes|exists:properties,id',
+            'service_category_id'    => 'nullable|exists:categories,id',
+            'service_id'             => 'nullable|exists:services,id',
+            'problem_title'          => 'sometimes|string|max:255',
+            'problem_description'    => 'sometimes|string',
+            'inspection_time'        => 'sometimes|date_format:H:i',
+            'inspection_date'        => 'sometimes|date',
+            'problem_images'         => 'sometimes|array',
             'use_featured_providers' => 'sometimes|boolean',
-            'featured_providers_id' => 'nullable|array',
-            "alternative_date" => "sometimes",
-            "alternative_time" => "sometimes",
+            'featured_providers_id'  => 'nullable|array',
+            "alternative_date"       => "sometimes",
+            "alternative_time"       => "sometimes",
         ]);
 
         if (isset($validatedData['problem_images'])) {
@@ -290,20 +320,24 @@ class ServiceRequestController extends Controller
     public function getFeaturedProviders($serviceRequest)
     {
         $serviceRequest = ServiceRequestModel::find($serviceRequest);
-        if (!$serviceRequest) {
+
+        if (! $serviceRequest) {
             return get_error_response("Service Request Not Found", ["error" => "Service Request Not Found"], 404);
         }
 
         $featuredProviderIds = $serviceRequest->featured_providers_id;
+
         if (empty($featuredProviderIds)) {
             return get_success_response([], "No featured providers for this Service Request");
         }
 
         try {
             $featuredProviders = User::whereIn('id', $featuredProviderIds)->get();
+
             if ($featuredProviders->isEmpty()) {
                 return get_success_response([], "No active featured providers found for this Service Request");
             }
+
             return get_success_response($featuredProviders, "Service Request Featured Providers fetched successfully");
         } catch (\Exception $e) {
             return get_error_response("An error occurred while fetching featured providers", [], 500);
@@ -313,20 +347,27 @@ class ServiceRequestController extends Controller
     public function updateStatus(Request $request, $requestId)
     {
         try {
-            $authId = auth()->id();
+            $authId         = auth()->id();
             $serviceRequest = ServiceRequestModel::find($requestId);
-            if (!$serviceRequest) {
+
+            if (! $serviceRequest) {
                 return get_error_response("Service request not found", ["error" => "Service request not found"]);
             }
 
             $finalStatus = $request->status;
+
+            // if(strtolower($serviceRequest->request_status) === 'closed') {
+            //     return get_error_response("Service request is already completed", ['error' => "Service request is already completed"]);
+            // }
 
             if ($finalStatus !== 'Closed') {
                 $serviceRequest->update(['request_status' => $finalStatus]);
                 return get_success_response($serviceRequest, "Service Request status updated successfully");
             }
 
+            // Begin full transaction for status = Closed
             DB::beginTransaction();
+
             $serviceRequest->update(['request_status' => $finalStatus]);
 
             $apportionment = $this->aportionment($requestId);
@@ -337,17 +378,18 @@ class ServiceRequestController extends Controller
             PaymentApportionment::updateOrCreate([
                 'service_request_id' => $serviceRequest->id,
             ], [
-                'subtotal' => $apportionment['subtotal'],
+                'subtotal'                  => $apportionment['subtotal'],
                 'service_provider_earnings' => $apportionment['service_provider_earnings'],
-                'call2fix_management_fee' => $apportionment['call2fix_management_fee'],
-                'call2fix_earnings' => $apportionment['call2fix_earnings'],
-                'warranty_retention' => $apportionment['warranty_retention'],
-                'artisan_earnings' => $apportionment['artisan_earnings'],
+                'call2fix_management_fee'   => $apportionment['call2fix_management_fee'],
+                'call2fix_earnings'         => $apportionment['call2fix_earnings'],
+                'warranty_retention'        => $apportionment['warranty_retention'],
+                'artisan_earnings'          => $apportionment['artisan_earnings'],
             ]);
 
-            $neg = Negotiation::where('request_id', $requestId)->where('status', "accepted")->first();
+            // Credit Provider
+            $neg      = Negotiation::where('request_id', $requestId)->where('status', "accepted")->first();
             $provider = User::find($serviceRequest->approved_providers_id ?? $neg->provider_id);
-            if (!$provider) {
+            if (! $provider) {
                 DB::rollBack();
                 return get_error_response('Provider not found');
             }
@@ -357,7 +399,7 @@ class ServiceRequestController extends Controller
                 ["description" => "Payment for: " . $serviceRequest->problem_title]
             );
 
-            if (!$providerDeposit) {
+            if (! $providerDeposit) {
                 DB::rollBack();
                 return get_error_response('Failed to deposit into provider wallet');
             }
@@ -367,9 +409,10 @@ class ServiceRequestController extends Controller
                 "Your wallet has been credited with ₦" . number_format($apportionment['service_provider_earnings'], 2)
             ));
 
+            // Credit Artisan (optional)
             if ($serviceRequest->approved_artisan_id) {
                 $artisan = User::find($serviceRequest->approved_artisan_id);
-                if (!$artisan) {
+                if (! $artisan) {
                     DB::rollBack();
                     return get_error_response('Artisan not found');
                 }
@@ -379,22 +422,18 @@ class ServiceRequestController extends Controller
                     ["description" => "Payment for: " . $serviceRequest->problem_title]
                 );
 
-                if (!$artisanDeposit) {
+                if (! $artisanDeposit) {
                     DB::rollBack();
                     return get_error_response('Failed to deposit into artisan wallet');
                 }
 
-                $artisanMessage = "Hi {$artisan->last_name},\n
-                        Congratulations! You've just earned a payout from a completed task. The amount will be reflected in your wallet shortly.\n
-                        Your hard work is paying off. Keep delivering excellent service.\n
-                        If you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
-                $artisan->notify(new CustomNotification("You've Earned From a Completed Task", $artisanMessage));
+                if ($artisan) {
+                    $artisanMessage = "Hi {$artisan->last_name},\n\nCongratulations! You’ve just earned a payout from a completed task. The amount will be reflected in your wallet shortly.\nYour hard work is paying off. Keep delivering excellent service.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                    $artisan->notify(new CustomNotification("You've Earned From a Completed Task", $artisanMessage));
 
-                $artisan_message = "Hi {$artisan->last_name},\n
-                        The customer has reviewed your work and marked the task as completed and satisfactory. Well done!\n
-                        You're one step closer to receiving your payment and boosting your profile.\n
-                        If you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
-                $artisan->notify(new CustomNotification('Customer Has Approved the Task as Completed', $artisan_message));
+                    $artisan_message = "Hi {$artisan->last_name},\n\nThe customer has reviewed your work and marked the task as completed and satisfactory. Well done!\nYou’re one step closer to receiving your payment and boosting your profile.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                    $artisan->notify(new CustomNotification('Customer Has Approved the Task as Completed', $artisan_message));
+                }
 
                 $artisan->notify(new CustomNotification(
                     'Wallet Credited',
@@ -402,13 +441,16 @@ class ServiceRequestController extends Controller
                 ));
             }
 
+            // Optionally Credit Call2Fix (commented out intentionally)
+
             DB::commit();
             return get_success_response($serviceRequest, "Service Request closed successfully");
         } catch (\Illuminate\Validation\ValidationException $e) {
             return get_error_response("Invalid status provided", $e->errors(), 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Status update failed", ['error' => $e->getMessage()]);
+            Log::error("Status update failed", [
+                'error' => $e->getMessage()]);
             return get_error_response("An error occurred while updating the status: " . $e->getMessage(), ['error' => $e->getMessage()], 500);
         }
     }
@@ -416,8 +458,9 @@ class ServiceRequestController extends Controller
     public function inspectionRequest(Request $request, $requestId)
     {
         $validate = Validator::make($request->all(), []);
+
         $request = ServiceRequest::whereId($requestId)->first();
-        if (!$request) {
+        if (! $request) {
             return get_error_response("Service Request not found");
         }
     }
@@ -426,14 +469,15 @@ class ServiceRequestController extends Controller
     {
         try {
             $requests = SubmittedQuotes::whereRequestId($requestId)->get();
-            if (!$requests or $requests->isEmpty()) {
+
+            if (! $requests or $requests->isEmpty()) {
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
-            $service_request = ServiceRequestModel::whereId($requestId)->with('user')->first();
+            $service_request   = ServiceRequestModel::whereId($requestId)->with('user')->first();
             $service_requester = $service_request->user;
 
-            if (!empty($serviceRequest->bidding_end_date) && now()->lte($service_request->bidding_end_date)) {
+            if (! empty($serviceRequest->bidding_end_date) && now()->lte($service_request->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -441,7 +485,8 @@ class ServiceRequestController extends Controller
                 );
             }
 
-            if (!Schema::hasColumn('submitted_quotes', 'status')) {
+            // Check if 'read_by' column exists, if not, add it (This should be done in a migration)
+            if (! Schema::hasColumn('submitted_quotes', 'status')) {
                 Schema::table('submitted_quotes', function (Blueprint $table) {
                     $table->string('status')->nullable();
                 });
@@ -451,11 +496,10 @@ class ServiceRequestController extends Controller
                 $request->status = ($request->id == $quoteId) ? "accepted" : "rejected";
                 $request->save();
             });
-
-            $quote = SubmittedQuotes::whereId($quoteId)->where('request_id', $requestId)->first();
+            $quote     = SubmittedQuotes::whereId($quoteId)->where('request_id', $requestId)->first();
             $amountDue = $quote->total_charges;
 
-            if (!empty($quote->negotiations)) {
+            if (! empty($quote->negotiations)) {
                 $negotiations = $quote->negotiations;
                 foreach ($negotiations as $negotiation) {
                     if (strtolower($negotiation->status) == "accepted") {
@@ -467,19 +511,20 @@ class ServiceRequestController extends Controller
             $acceptedRequest = $requests->firstWhere('id', $quoteId);
             if ($acceptedRequest) {
                 $service_request = ServiceRequest::whereId($requestId)->first();
+                // retrieve the assigned artisan and add to the service request
                 $artisan = ArtisanCanSubmitQuote::where([
-                    "request_id" => $requestId,
+                    "request_id"          => $requestId,
                     "service_provider_id" => $quote->provider_id,
                 ])->latest()->first();
 
                 if ($service_request) {
                     $old_featured_providers_id = $service_request->featured_providers_id;
                     $service_request->update([
-                        "total_cost" => $amountDue,
-                        "request_status" => "Quote Accepted",
-                        "approved_providers_id" => $quote->provider_id,
-                        "approved_artisan_id" => $artisan->artisan_id ?? null,
-                        "featured_providers_id" => (array) $quote->provider_id,
+                        "total_cost"                => $amountDue,
+                        "request_status"            => "Quote Accepted",
+                        "approved_providers_id"     => $quote->provider_id,
+                        "approved_artisan_id"       => $artisan->artisan_id ?? null,
+                        "featured_providers_id"     => (array) $quote->provider_id,
                         "old_featured_providers_id" => $old_featured_providers_id,
                     ]);
 
@@ -488,36 +533,31 @@ class ServiceRequestController extends Controller
                     ]);
 
                     $service_provider = User::whereId($quote->provider_id)->first();
-                    $artisanBio = Artisans::where('artisan_id', $artisan->artisan_id)->first();
 
+                    $artisanBio = Artisans::where('artisan_id', $artisan->artisan_id)->first();
                     if ($artisanBio) {
-                        $artisanMessage = "Hi {$artisan->last_name},
-Good news! The customer has approved your quote. You are now expected to proceed to site and begin the job as outlined. Please make sure you arrive on time and deliver quality service.
-Let us know if you experience any challenges along the way.
-If you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                        $artisanMessage = "Hi {$artisan->last_name},\n\nGood news! The customer has approved your quote. You are now expected to proceed to site and begin the job as outlined. Please make sure you arrive on time and deliver quality service.\n\nLet us know if you experience any challenges along the way.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
                         $artisanBio->notify(new CustomNotification('Your Quote Has Been Approved - Get Ready to Work', $artisanMessage));
                     }
-
                     if ($service_request->save()) {
-                        $serviceName = $service_request->problem_title ?? '[Service Name]';
-                        $providerName = "{$service_provider->first_name} {$service_provider->last_name}" ?? '[Service Provider\'s Name]';
+                        // notify the service requester
+                        $serviceName         = $service_request->problem_title ?? '[Service Name]';
+                        $providerName        = "{$service_provider->first_name} {$service_provider->last_name}" ?? '[Service Provider\'s Name]';
                         $acceptedQuoteAmount = $amountDue ?? '[Amount]';
+                        // $updatedTerms        = $this->updatedTerms ?? '[Details of Updated Terms]';
 
                         $message =
-                            "Your negotiation for the quote provided by {$providerName} has been accepted. The updated terms have been confirmed, and the service will proceed as agreed.
-" .
-                            "Request Details:
-" .
-                            "\t• Service Requested: {$serviceName}
-" .
-                            "\t• Provider Name: {$providerName}
-" .
-                            "\t• Accepted Quote Amount: {$acceptedQuoteAmount}
-" .
+                            "Your negotiation for the quote provided by {$providerName} has been accepted. The updated terms have been confirmed, and the service will proceed as agreed.\n\n" .
+                            "Request Details:\n" .
+                            "\t• Service Requested: {$serviceName}\n" .
+                            "\t• Provider Name: {$providerName}\n" .
+                            "\t• Accepted Quote Amount: {$acceptedQuoteAmount}\n" .
+                            // "\t• Updated Terms: {$updatedTerms}\n\n" .
                             "To proceed, please make the payment for the accepted quote amount. Once the payment is made, the service provider will contact you to finalize the arrangements. You can view the details and track the progress of your request on the app.";
 
                         $service_requester->notify(new CustomNotification("Quote Negotiation Accepted", $message));
 
+                        // $service_request->save();
                         return get_success_response($acceptedRequest, "Request approved successfully");
                     }
                 }
@@ -533,11 +573,11 @@ If you have any questions or need assistance, our support team is here to help. 
     {
         try {
             $request = SubmittedQuotes::whereRequestId($requestId)->whereId($quoteId)->first();
-            if (!$request) {
+            if (! $request) {
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
-            if (!empty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
+            if (! empty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -547,30 +587,26 @@ If you have any questions or need assistance, our support team is here to help. 
 
             $request->status = "rejected";
             if ($request->save()) {
-                $service_request = ServiceRequestModel::whereId($requestId)->with('user')->first();
+                $service_request   = ServiceRequestModel::whereId($requestId)->with('user')->first();
                 $service_requester = $service_request->user;
-                $service_provider = User::find(auth()->id());
-                $serviceName = $service_request->problem_title ?? '[Service Name]';
-                $providerName = "{$service_provider->first_name} {$service_provider->last_name}" ?? '[Service Provider\'s Name]';
+
+                $service_provider    = User::find(auth()->id());
+                $serviceName         = $service_request->problem_title ?? '[Service Name]';
+                $providerName        = "{$service_provider->first_name} {$service_provider->last_name}" ?? '[Service Provider\'s Name]';
                 $rejectedQuoteAmount = $amountDue ?? '[Amount]';
-                $rejectionReason = $rejectionReason ?? "N/A";
+                $rejectionReason     = $rejectionReason ?? "N/A";
 
                 $message =
-                    "Unfortunately, your negotiation for the quote provided by {$providerName} has been rejected. The service provider is unable to accept the proposed changes.
-" .
-                    "Request Details:
-" .
-                    "\t• Service Requested: {$serviceName}
-" .
-                    "\t• Provider Name: {$providerName}
-" .
-                    "\t• Rejected Quote Amount: {$rejectedQuoteAmount}
-" .
-                    "\t• Reason for Rejection: {$rejectionReason}
-" .
+                    "Unfortunately, your negotiation for the quote provided by {$providerName} has been rejected. The service provider is unable to accept the proposed changes.\n\n" .
+                    "Request Details:\n" .
+                    "\t• Service Requested: {$serviceName}\n" .
+                    "\t• Provider Name: {$providerName}\n" .
+                    "\t• Rejected Quote Amount: {$rejectedQuoteAmount}\n" .
+                    "\t• Reason for Rejection: {$rejectionReason}\n\n" .
                     "You may choose to either accept the original quote or negotiate further. Please review the quote details and take action through the app.";
 
                 $service_requester->notify(new CustomNotification("Quote Negotiation Rejected", $message));
+
                 return get_success_response($request, "Request rejected successfully");
             }
         } catch (\Throwable $th) {
@@ -582,9 +618,10 @@ If you have any questions or need assistance, our support team is here to help. 
     {
         try {
             $requests = SubmittedQuotes::whereRequestId($requestId)->get();
-            if (!$requests) {
+            if (! $requests) {
                 return get_error_response("No Quotes found for request", ["error" => "No Quotes found for request!"], 404);
             }
+
             return get_success_response($requests, "Quotes fetched successfully");
         } catch (\Throwable $th) {
             return get_error_response($th->getMessage(), ["error" => $th->getMessage()]);
@@ -595,11 +632,11 @@ If you have any questions or need assistance, our support team is here to help. 
     {
         try {
             $request = SubmittedQuotes::whereRequestId($requestId)->whereProviderId($providerId)->first();
-            if (!$request) {
+            if (! $request) {
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
-            if (!empty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
+            if (! empty($serviceRequest->bidding_end_date) && now()->lte($request->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -618,7 +655,7 @@ If you have any questions or need assistance, our support team is here to help. 
         try {
             $validate = Validator::make($request->all(), [
                 'price' => 'required|numeric|min:0',
-                'percentage_decrease' => 'nullable|numeric|min:0|max:100',
+                'percentage_decrease' => 'nullable|numeric|min:0|max:100', // optional but safe
             ]);
 
             if ($validate->fails()) {
@@ -630,10 +667,11 @@ If you have any questions or need assistance, our support team is here to help. 
                 ->where('id', $quoteId)
                 ->first();
 
-            if (!$quote) {
+            if (! $quote) {
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
+            // Prevent negotiation if already accepted
             $existingAcceptedNegotiation = Negotiation::where('request_id', $requestId)
                 ->where('status', 'accepted')
                 ->exists();
@@ -642,38 +680,48 @@ If you have any questions or need assistance, our support team is here to help. 
                 return get_error_response("Quote already accepted", ['error' => "Quote already accepted"], 400);
             }
 
+            // Parse items
             $items = json_decode($quote->items, true) ?: [];
             $originalItemsTotal = collect($items)->sum(fn($item) => (float) ($item['itemTotalPrice'] ?? 0));
             $originalWorkmanship = (float) $quote->workmanship;
 
+            // Get percentage decrease (default to 0 if not provided)
             $percentageDecrease = (float) ($request->input('percentage_decrease') ?? 0);
+
+            // Clamp percentage between 0 and 100
             $percentageDecrease = max(0, min(100, $percentageDecrease));
 
+            // Helper: reduce amount by X%
             $reduceByPercentage = function ($amount, $percent) {
-                return max(0, $amount * (1 - ($percent / 100)));
+                $reduced = $amount * (1 - ($percent / 100));
+                return max(0, $reduced); // Never go below zero
             };
 
+            // Calculate new totals
             $newItemTotal = $reduceByPercentage($originalItemsTotal, $percentageDecrease);
             $newWorkmanship = $reduceByPercentage($originalWorkmanship, $percentageDecrease);
 
+            // Create negotiation record
             $negotiation = Negotiation::create([
-                'submitted_quote_id' => $quoteId,
-                'request_id' => $requestId,
-                'provider_id' => $quote->provider_id,
-                'price' => number_format($request->price, 4, '.', ''),
-                'status' => 'pending',
+                'submitted_quote_id'  => $quoteId,
+                'request_id'          => $requestId,
+                'provider_id'         => $quote->provider_id,
+                'price'               => number_format($request->price, 4, '.', ''),
+                'status'              => 'pending',
                 'percentage_decrease' => $percentageDecrease,
-                'new_item_total' => round($newItemTotal, 2),
-                'new_workmanship' => round($newWorkmanship, 2),
+                'new_item_total'      => round($newItemTotal, 2),
+                'new_workmanship'     => round($newWorkmanship, 2),
             ]);
 
+            // Update service request total
             $serviceRequest = ServiceRequest::whereId($requestId)->first();
             if ($serviceRequest) {
                 $serviceRequest->update([
-                    "total_cost" => $request->price,
+                    "total_cost"      => $request->price,
                     "formatted_price" => number_format($request->price, 4, '.', ''),
                 ]);
 
+                // Notify provider
                 $provider = User::find($quote->provider_id);
                 if ($provider) {
                     $provider->notify(new CustomNotification(
@@ -692,14 +740,82 @@ If you have any questions or need assistance, our support team is here to help. 
             return get_error_response($th->getMessage(), ["error" => $th->getMessage()]);
         }
     }
+    // public function negotiateQuote(Request $request, $requestId, $quoteId)
+    // {
+    //     try {
+    //         $validate = Validator::make($request->all(), [
+    //             'price' => 'required|numeric|min:0',
+    //         ]);
+
+    //         if ($validate->fails()) {
+    //             return get_error_response("Validation failed", $validate->errors(), 422);
+    //         }
+
+    //         $quote = DB::table('submitted_quotes')->where(['request_id' => $requestId, 'id' => $quoteId])->first();
+    //         if (! $quote) {
+    //             return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
+    //         }
+    //         Log::info("Quote retrieved");
+
+    //         $neg = Negotiation::where('request_id', $requestId)->where('status', "accepted")->first();
+    //         if ($neg) {
+    //             return get_error_response("Qoute already accepted", ['error' => "Qoute already accepted"], 400);
+    //         }
+    //         Log::info("neg retrieved");
+
+    //         // $quoteTotal = (float) collect($quote->items)->sum(function ($item) {
+    //         //     return (float) $item['itemTotalPrice'];
+    //         // });
+
+    //         $items      = json_decode($quote->items, true);
+    //         $quoteTotal = collect($items)->sum(fn($item) => (float) $item['itemTotalPrice']);
+
+    //         Log::info("Quote total");
+    //         $negotiation = Negotiation::create([
+    //             'submitted_quote_id'  => $quoteId,
+    //             'request_id'          => $requestId,
+    //             'provider_id'         => $quote->provider_id,
+    //             'price'               => number_format($request->price, 4, '.', ''),
+    //             'status'              => 'pending',
+    //             'percentage_decrease' => $request->percentage_decrease ?? 0,
+    //             'new_item_total'      => $this->removePercentage($quoteTotal, $request->percentage_decrease) ?? $quoteTotal,
+    //             'new_workmanship'     => $this->removePercentage($quote->workmanship, $request->percentage_decrease) ?? $quote->workmanship,
+    //         ]);
+
+    //         $serviceRequest = ServiceRequest::whereId($requestId)->first();
+
+    //         Log::info("service request retrieved");
+    //         $serviceRequest->update([
+    //             "total_cost"      => $request->price,
+    //             "formatted_price" => number_format($request->price, 4, '.', ''),
+    //         ]);
+
+    //         if ($serviceRequest) {
+    //             $user     = User::whereId($serviceRequest->user_id)->first();
+    //             $provider = User::whereId($quote->provider_id)->first();
+    //             if ($provider) {
+    //                 $provider->notify(new CustomNotification("Quote Negotiated by customer", "Quote Negotiated by customer."));
+    //                 // $user->notify(new ServiceRequestNegotiated($serviceRequest));
+    //             }
+    //         }
+    //         Log::info("Final log");
+
+    //         return get_success_response($negotiation, "Price negotiation submitted successfully");
+    //     } catch (\Throwable $th) {
+    //         Log::info("Error on Negotiation: ", ['error' => $th->getMessage(), 'trace' => $th->getTrace()]);
+    //         return get_error_response($th->getMessage(), ["error" => $th->getMessage()]);
+    //     }
+    // }
+
 
     public function getNegotiation($requestId)
     {
         try {
             $negotiation = Negotiation::where(['request_id' => $requestId])->get();
-            if (!$negotiation) {
+            if (! $negotiation) {
                 return get_error_response("Negotiation not found", ["error" => "Negotiation not found!"], 404);
             }
+
             return get_success_response($negotiation, "Price negotiation retrieved successfully");
         } catch (\Throwable $th) {
             Log::info("Error on Negotiation: ", ['error' => $th->getMessage()]);
@@ -710,7 +826,9 @@ If you have any questions or need assistance, our support team is here to help. 
     public function acceptNegotiatedPrice(Request $request, $negotiationId)
     {
         DB::beginTransaction();
+
         try {
+            // Validate the status field
             $validator = Validator::make($request->all(), [
                 'status' => 'required|in:accepted,rejected',
             ]);
@@ -719,27 +837,32 @@ If you have any questions or need assistance, our support team is here to help. 
                 return get_error_response("Validation failed", $validator->errors()->toArray(), 422);
             }
 
+            // Fetch the negotiation by ID
             $negotiation = Negotiation::find($negotiationId);
-            if (!$negotiation) {
+
+            if (! $negotiation) {
                 return get_error_response("Negotiation not found", ["error" => "Negotiation not found"], 404);
             }
 
             $neg = Negotiation::where('request_id', $negotiation->request_id)->where('status', "accepted")->first();
             if ($neg) {
-                return get_error_response("Quote already accepted", ['error' => "Quote already accepted"], 400);
+                return get_error_response("Qoute already accepted", ['error' => "Qoute already accepted"], 400);
             }
 
+            // Update the negotiation status
             $negotiation->status = $request->status;
             $negotiation->save();
 
+            // Retrieve the corresponding quote
             $quote = SubmittedQuotes::where([
-                'request_id' => $negotiation->request_id,
+                'request_id'  => $negotiation->request_id,
                 'provider_id' => $negotiation->provider_id,
-                'id' => $negotiation->submitted_quote_id,
+                'id'          => $negotiation->submitted_quote_id,
             ])->first();
 
             $amountDue = $quote->total_charges;
-            if (!empty($quote->negotiations)) {
+
+            if (! empty($quote->negotiations)) {
                 $negotiations = $quote->negotiations;
                 foreach ($negotiations as $negotiation) {
                     if (strtolower($negotiation->status) == "accepted") {
@@ -749,27 +872,29 @@ If you have any questions or need assistance, our support team is here to help. 
             }
 
             if ($quote) {
+                // Update quote price
                 DB::table('submitted_quotes')->where('id', $quote->id)
                     ->update([
-                        'old_price' => $quote->total_charges,
+                        'old_price'     => $quote->total_charges,
                         'total_charges' => number_format($negotiation->price, 4, '.', ''),
                     ]);
 
-                $users = User::whereIn('id', [$negotiation->provider_id, $quote->serviceRequest->user->id])->get()->keyBy('id');
+                // Retrieve both provider and customer in one query
+                $users    = User::whereIn('id', [$negotiation->provider_id, $quote->serviceRequest->user->id])->get()->keyBy('id');
                 $provider = $users->get($negotiation->provider_id);
                 $customer = $users->get($quote->serviceRequest->user->id);
 
-                if (!$provider || !$customer) {
+                if (! $provider || ! $customer) {
                     DB::rollBack();
                     return get_error_response("Provider or Customer not found", ["error" => "User not found"], 404);
                 }
-
                 $finalStatus = ucfirst($request->status);
                 $customer->notify(new CustomNotification("Negotiation {$finalStatus} by Provider", "Negotiation {$finalStatus} by Provider."));
 
+                // Retrieve the service request
                 $serviceRequest = ServiceRequestModel::whereId($negotiation->request_id)->with('invited_artisan')->first();
 
-                if (!empty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
+                if (! empty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
                     return get_error_response(
                         "Request bidding process must end to perform this action.",
                         ["error" => "Request bidding process must end to perform this action!"],
@@ -782,10 +907,13 @@ If you have any questions or need assistance, our support team is here to help. 
                     return get_error_response("Payment already processed", ["error" => "Payment already processed"], 409);
                 }
 
+                // since 'invited_artisan' is a HasMany relationship
                 $invited_artisan = $serviceRequest->invited_artisan
                     ->firstWhere('service_provider_id', $negotiation->provider_id);
 
-                if (!$invited_artisan) {
+                Log::info('Invited artisan details are: ', ['invited_artisan' => $invited_artisan]);
+
+                if (! $invited_artisan) {
                     DB::rollBack();
                     return get_error_response(
                         "Invited artisan not found for this provider",
@@ -794,17 +922,27 @@ If you have any questions or need assistance, our support team is here to help. 
                     );
                 }
 
-                $serviceRequest->total_cost = $amountDue;
-                $serviceRequest->approved_providers_id = $invited_artisan->service_provider_id;
-                $serviceRequest->approved_artisan_id = $invited_artisan->artisan_id;
+                Log::alert("artisan and providers ID are providers: {$invited_artisan->service_provider_id} & artisan {$invited_artisan->artisan_id}");
 
-                if (!$serviceRequest->save()) {
+                // Update request status to "Payment Confirmed"
+                // $serviceRequest->request_status = "Payment Confirmed";
+
+                $serviceRequest->total_cost = $amountDue;
+                // $customer->notify(new PaymentStatusUpdated('Payment Confirmed', $negotiation));
+
+                // update the approved service provider and artisan
+
+                $serviceRequest->approved_providers_id = $invited_artisan->service_provider_id;
+                $serviceRequest->approved_artisan_id   = $invited_artisan->artisan_id;
+
+                if (! $serviceRequest->save()) {
                     DB::rollBack();
                     return get_error_response("Unable to complete request, please contact support", ["error" => "Unable to complete request"], 400);
                 }
             }
 
             DB::commit();
+
             return get_success_response($negotiation, "Negotiated price accepted successfully");
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -812,13 +950,20 @@ If you have any questions or need assistance, our support team is here to help. 
         }
     }
 
+    /**
+     * Issue a rework for a service request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $requestId
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function issueRework(Request $request, $requestId)
     {
         try {
             $validate = Validator::make($request->all(), [
-                "media_files" => "required|array",
+                "media_files"   => "required|array",
                 "media_files.*" => "url",
-                "message" => "required|string",
+                "message"       => "required|string",
             ]);
 
             if ($validate->fails()) {
@@ -827,7 +972,7 @@ If you have any questions or need assistance, our support team is here to help. 
 
             $serviceRequest = ServiceRequest::findOrFail($requestId);
 
-            if (!empty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
+            if (! empty($serviceRequest->bidding_end_date) && now()->lte($serviceRequest->bidding_end_date)) {
                 return get_error_response(
                     "Request bidding process must end to perform this action.",
                     ["error" => "Request bidding process must end to perform this action!"],
@@ -836,24 +981,22 @@ If you have any questions or need assistance, our support team is here to help. 
             }
 
             $serviceRequest->request_status = "Rework issued";
+
             if ($serviceRequest->save()) {
+                // get service provider and notify him
                 $provider = User::find($serviceRequest->approved_providers_id);
                 if ($provider) {
                     $provider->notify(new ReworkIssuedNotification($serviceRequest));
                 }
-
                 $artisan = User::find($serviceRequest->approved_artisan_id);
                 if ($artisan) {
-                    $artisanMessage = "Hi {$artisan->last_name},
-The customer has reopened the request and asked for a rework due to dissatisfaction. Please check the updated request details in your app and take necessary action as soon as possible.
-We count on you to address this promptly and professionally.
-If you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                    $artisanMessage = "Hi {$artisan->last_name},\n\nThe customer has reopened the request and asked for a rework due to dissatisfaction. Please check the updated request details in your app and take necessary action as soon as possible.\n\nWe count on you to address this promptly and professionally.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
                     $artisan->notify(new CustomNotification("Task Reopened - Customer Requests a Rework", $artisanMessage));
                 }
 
                 $serviceRequest->reworkMessages()->create([
                     'message' => $request->message,
-                    'images' => $request->media_files,
+                    'images'  => $request->media_files,
                     'user_id' => auth()->id(),
                 ]);
 
@@ -881,19 +1024,24 @@ If you have any questions or need assistance, our support team is here to help. 
         //
     }
 
+    /**
+     * Retrieve ENUM values for a column from the database schema.
+     */
     private function getEnumValues($table, $column)
     {
-        $query = "SHOW COLUMNS FROM `$table` WHERE Field = ?";
+        $query  = "SHOW COLUMNS FROM `$table` WHERE Field = ?";
         $result = DB::select($query, [$column]);
 
+        // Check if the result is empty
         if (empty($result)) {
             return get_error_response("Column '$column' does not exist in table '$table' or is not an ENUM type.");
         }
 
-        $type = $result[0]->Type;
+        $type = $result[0]->Type; // Safely access the first result
+
         preg_match('/enum\((.*)\)/', $type, $matches);
 
-        if (!isset($matches[1])) {
+        if (! isset($matches[1])) {
             return get_error_response("The column '$column' is not of ENUM type.");
         }
 
@@ -907,6 +1055,7 @@ If you have any questions or need assistance, our support team is here to help. 
     public function makePayment(Request $request, $requestId, $walletType = 'ngn')
     {
         DB::beginTransaction();
+
         try {
             $request->validate([
                 'artisan_id' => 'required|exists:artisans,artisan_id',
@@ -914,34 +1063,39 @@ If you have any questions or need assistance, our support team is here to help. 
 
             $serviceRequest = ServiceRequestModel::with('user')->findOrFail($requestId);
 
+            // Prevent duplicate payment
             if ($serviceRequest->request_status === 'Payment Confirmed') {
                 return get_error_response('Service request already paid for', ['error' => 'Payment already confirmed'], 400);
             }
 
             $totalCost = $serviceRequest->total_cost;
-            if (!is_numeric($totalCost) || $totalCost <= 0) {
+
+            if (! is_numeric($totalCost) || $totalCost <= 0) {
                 return get_error_response('Invalid total cost for service request', ['error' => 'Invalid amount'], 422);
             }
 
+            // Determine wallet owner: sub-a ccount uses parent's wallet
             $payer = auth()->user();
             if ($payer->parent_account_id && $payer->sub_account_type === 'normal') {
                 $payer = User::findOrFail($payer->parent_account_id);
             }
 
             $wallet = $payer->getWallet($walletType);
-            if (!$wallet) {
+
+            if (! $wallet) {
                 return get_error_response("Wallet not found for type: {$walletType}", ['error' => 'Wallet unavailable'], 404);
             }
 
             if ($wallet->balance < $totalCost) {
                 Log::info("my payment details", [
                     'wallet_balance' => $wallet->balance,
-                    'total_cost' => $totalCost,
+                    'total_cost'     => $totalCost,
                     'service_request_id' => $serviceRequest->id,
                 ]);
                 return get_error_response('Insufficient wallet balance', ['error' => 'Low balance', 'total_cost' => $totalCost, 'balance' => $wallet->balance], 402);
             }
 
+            // Perform withdrawal
             $transaction = $wallet->withdraw(
                 $totalCost,
                 [
@@ -950,19 +1104,22 @@ If you have any questions or need assistance, our support team is here to help. 
                 ]
             );
 
+            // Fetch artisan and validate
             $artisan = Artisans::where('artisan_id', $request->artisan_id)->first();
-            if (!$artisan) {
+            if (! $artisan) {
                 DB::rollBack();
                 return get_error_response('Artisan not found', ['error' => 'Invalid artisan ID'], 404);
             }
 
+            // Update service request
             $serviceRequest->update([
-                'total_cost' => $totalCost,
-                'approved_artisan_id' => $request->artisan_id,
+                'total_cost'            => $totalCost,
+                'approved_artisan_id'   => $request->artisan_id,
                 'approved_providers_id' => $artisan->service_provider_id,
-                'request_status' => 'Payment Confirmed',
+                'request_status'        => 'Payment Confirmed',
             ]);
 
+            // Notify provider
             $provider = User::find($artisan->service_provider_id);
             if ($provider) {
                 $provider->notify(new CustomNotification(
@@ -971,45 +1128,39 @@ If you have any questions or need assistance, our support team is here to help. 
                 ));
             }
 
+            // Notify artisan (if different from provider or also a user)
             $artisanUser = User::find($request->artisan_id);
             if ($artisanUser) {
-                $artisanMessage = "Hi {$artisan->last_name}, 
-A new service request has just been assigned to you. Please review the details in your Call2Fix app and take prompt action to confirm availability and begin preparations.
-Your reliability and professionalism help ensure customer satisfaction.
-If you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+                $artisanMessage = "Hi {$artisan->last_name}, \n\nA new service request has just been assigned to you. Please review the details in your Call2Fix app and take prompt action to confirm availability and begin preparations.\n\nYour reliability and professionalism help ensure customer satisfaction.\n\nIf you have any questions or need assistance, our support team is here to help. Simply reply to this email or call us at 0701-530-0138.";
+
                 $artisanUser->notify(new CustomNotification('A New Task Has Been Assigned to You', $artisanMessage));
                 $artisanUser->notify(new CustomNotification('Payment confirmed', "Payment has been confirmed for service request ID: {$serviceRequest->id}"));
             }
 
-            $customer = $serviceRequest->user;
-            $serviceName = $serviceRequest->problem_title ?? '[Service Name]';
-            $providerName = $provider ? "{$provider->first_name} {$provider->last_name}" : '[Provider Name]';
-            $amountPaid = number_format($totalCost, 2);
-            $paymentDate = now()->format('Y-m-d H:i:s');
+            // Notify customer
+            $customer      = $serviceRequest->user;
+            $serviceName   = $serviceRequest->problem_title ?? '[Service Name]';
+            $providerName  = $provider ? "{$provider->first_name} {$provider->last_name}" : '[Provider Name]';
+            $amountPaid    = number_format($totalCost, 2);
+            $paymentDate   = now()->format('Y-m-d H:i:s');
             $paymentMethod = 'Wallet Balance';
 
             $customerMessage =
-                "Thank you for your payment! We have successfully received your payment for the service request.
-" .
-                "Payment Details:
-" .
-                "\t• Service Requested: {$serviceName}
-" .
-                "\t• Provider Name: {$providerName}
-" .
-                "\t• Amount Paid: ₦{$amountPaid}
-" .
-                "\t• Payment Date: {$paymentDate}
-" .
-                "\t• Payment Method: {$paymentMethod}
-" .
+                "Thank you for your payment! We have successfully received your payment for the service request.\n\n" .
+                "Payment Details:\n" .
+                "\t• Service Requested: {$serviceName}\n" .
+                "\t• Provider Name: {$providerName}\n" .
+                "\t• Amount Paid: ₦{$amountPaid}\n" .
+                "\t• Payment Date: {$paymentDate}\n" .
+                "\t• Payment Method: {$paymentMethod}\n\n" .
                 "The service provider will now proceed with the next steps. You can track the progress of your service request through the app.";
 
             $customer->notify(new CustomNotification('Payment Confirmation for Your Service Request', $customerMessage));
 
             DB::commit();
+
             return get_success_response([
-                'transaction' => $transaction,
+                'transaction'     => $transaction,
                 'service_request' => $serviceRequest,
             ], 'Payment successful');
         } catch (\Throwable $th) {
@@ -1017,14 +1168,16 @@ If you have any questions or need assistance, our support team is here to help. 
             Log::error("Payment failed: " . $th->getMessage(), [
                 'request_id' => $requestId,
                 'artisan_id' => $request->artisan_id ?? null,
-                'trace' => $th->getTraceAsString(),
+                'trace'      => $th->getTraceAsString(),
             ]);
+
             return get_error_response('Payment processing failed', ['error' => $th->getMessage()], 500);
         }
     }
 
     private function aportionment($requestId)
     {
+        // Fetch accepted negotiation
         $neg = Negotiation::where('request_id', $requestId)
             ->where('status', 'accepted')
             ->first();
@@ -1033,6 +1186,7 @@ If you have any questions or need assistance, our support team is here to help. 
             return ['error' => 'Negotiation not found or not yet accepted.'];
         }
 
+        // Fetch related quote
         $submittedQuote = SubmittedQuotes::where('request_id', $requestId)
             ->where('id', $neg->submitted_quote_id)
             ->first();
@@ -1041,93 +1195,142 @@ If you have any questions or need assistance, our support team is here to help. 
             return ['error' => 'Quote not found'];
         }
 
+        // Fetch service request
         $serviceRequest = ServiceRequestModel::find($requestId);
         if (!$serviceRequest) {
             return ['error' => 'Service request not found'];
         }
 
+        // Approve provider
         $providerId = $submittedQuote->provider_id ?? $neg->provider_id;
         if ($providerId) {
             $serviceRequest->approved_providers_id = $providerId;
             $serviceRequest->save();
         }
 
-        // Securely compute base totals
-        $itemsTotal = max(0, (float) ($neg->new_item_total ?? 0));
-        $workmanship = max(0, (float) ($neg->new_workmanship ?? 0));
+        // === STEP 1: Securely compute base totals (workmanship + items) ===
+        $itemsTotal = max(0, (float) $neg->new_item_total);
+        $workmanship = max(0, (float) $neg->new_workmanship);
         $baseTotal = $itemsTotal + $workmanship;
 
-        // Reconstruct if invalid
-        if ($baseTotal <= 0.01) {
+        // Reconstruct from original quote if values are invalid
+        if ($baseTotal <= 0.01) { // allow tiny floating tolerance
             Log::warning("Invalid base total. Reconstructing from original quote.", [
                 'request_id' => $requestId,
                 'neg_id' => $neg->id,
+                'provided_item_total' => $neg->new_item_total,
+                'provided_workmanship' => $neg->new_workmanship
             ]);
 
-            $items = json_decode($submittedQuote->items, true) ?: [];
+            $items = $submittedQuote->items ?: [];
             $originalItemsTotal = collect($items)->sum(fn($item) => (float) ($item['itemTotalPrice'] ?? 0));
             $originalWorkmanship = (float) $submittedQuote->workmanship;
-            $percentage = max(0, min(100, (float) ($neg->percentage_decrease ?? 0)));
 
-            $itemsTotal = max(0, $originalItemsTotal * (1 - ($percentage / 100)));
-            $workmanship = max(0, $originalWorkmanship * (1 - ($percentage / 100)));
+            $percentage = max(0, min(100, (float) ($neg->percentage_decrease ?? 0)));
+            $factor = 1 - ($percentage / 100);
+
+            $itemsTotal = max(0, $originalItemsTotal * $factor);
+            $workmanship = max(0, $originalWorkmanship * $factor);
             $baseTotal = $itemsTotal + $workmanship;
 
             if ($baseTotal <= 0.01) {
-                return ['error' => 'Unable to determine valid service base amount after negotiation.'];
+                return ['error' => 'Unable to determine valid service base amount.'];
             }
         }
 
-        $baseTotal = max(0.01, $baseTotal);
+        // === STEP 2: Deduct platform fees FROM base total only ===
+        $call2FixFee = $baseTotal * 0.10;         // 10% platform commission
+        $warrantyRetention = $baseTotal * 0.10;   // 10% retention
+        $distributable = $baseTotal - $call2FixFee - $warrantyRetention; // 80% of base
 
-        // Platform fees (10% each)
-        $call2FixFee = $baseTotal * 0.10;
-        $warrantyRetention = $baseTotal * 0.10;
-        $distributable = max(0, $baseTotal - $call2FixFee - $warrantyRetention);
+        // Ensure no negative distributable
+        if ($distributable < 0) {
+            $distributable = 0;
+            $call2FixFee = $baseTotal * 0.5;
+            $warrantyRetention = $baseTotal * 0.5;
+        }
 
-        // Artisan earnings
+        // === STEP 3: Compute artisan share (capped by distributable) ===
         $artisanShare = 0;
-        $artisanId = $submittedQuote->artisan_id ?? $serviceRequest->approved_artisan_id;
-        if ($artisanId) {
-            $artisan = Artisans::where('artisan_id', $artisanId)->first();
-            if ($artisan) {
-                $serviceRequest->update(['approved_providers_id' => $artisan->service_provider_id]);
-                $paymentMethod = $artisan->payment_plan;
-                $paymentValue = (float) $artisan->payment_amount;
+        $artisan = Artisans::where('artisan_id', $submittedQuote->approved_artisan_id ?? $serviceRequest->approved_artisan_id)
+            ->first();
 
-                if ($paymentMethod === 'fixed') {
-                    $artisanShare = min($paymentValue, $workmanship);
-                } elseif ($paymentMethod === 'percentage') {
-                    $rate = $paymentValue > 1 ? $paymentValue / 100 : $paymentValue;
-                    $artisanShare = $workmanship * $rate;
-                }
+        if ($artisan) {
+            $serviceRequest->update(['approved_providers_id' => $artisan->service_provider_id]);
 
-                $artisanShare = max(0, min($artisanShare, $distributable));
+            $paymentMethod = $artisan->payment_plan;
+            $paymentValue = (float) $artisan->payment_amount;
+
+            if ($paymentMethod === 'fixed') {
+                $artisanShare = min($paymentValue, $workmanship);
+            } elseif ($paymentMethod === 'percentage') {
+                $rate = $paymentValue > 1 ? $paymentValue / 100 : $paymentValue;
+                $artisanShare = $workmanship * $rate;
             }
+
+            // 🔑 CRITICAL: Never exceed distributable pool
+            $artisanShare = max(0, min($artisanShare, $distributable));
         }
 
+        // === STEP 4: Provider gets item costs + leftover from distributable ===
         $remainingInPool = max(0, $distributable - $artisanShare);
         $providerEarnings = $itemsTotal + $remainingInPool;
 
-        // Additional fees
-        $adminFee = max(0, (float) ($submittedQuote->administrative_fee ?? 0));
-        $vat = max(0, (float) ($submittedQuote->service_vat ?? 0));
+        // === STEP 5: Handle additional customer charges (not from base) ===
+        $adminFee = (float) ($submittedQuote->administrative_fee ?? 0);
+        $vat = (float) ($submittedQuote->service_vat ?? 0);
         $customerTotalPaid = $baseTotal + $adminFee + $vat;
 
-        return [
-            'base_total' => $baseTotal,
-            'items_total' => $itemsTotal,
-            'workmanship_total' => $workmanship,
-            'call2fix_earnings' => $call2FixFee,
-            'warranty_retention' => $warrantyRetention,
-            'distributable_pool' => $distributable,
-            'artisan_earnings' => $artisanShare,
+        // === STEP 6: Build final apportionment ===
+        $apportionments = [
+            // Core base
+            'base_total'                => $baseTotal,
+            'items_total'               => $itemsTotal,
+            'workmanship_total'         => $workmanship,
+
+            // Platform cuts (from base)
+            'call2fix_earnings'         => $call2FixFee,
+            'warranty_retention'        => $warrantyRetention,
+            'distributable_pool'        => $distributable,
+
+            // Labor split
+            'artisan_earnings'          => $artisanShare,
             'service_provider_earnings' => $providerEarnings,
-            'admin_fee' => $adminFee,
-            'vat' => $vat,
-            'customer_total_paid' => $customerTotalPaid,
-            'subtotal' => $baseTotal,
-            'call2fix_management_fee' => $adminFee,
+
+            // Additional fees (paid by customer, not from base)
+            'call2fix_management_fee'   => $adminFee, // for backward compatibility
+            'admin_fee'                 => $adminFee,
+            'vat'                       => $vat,
+            'customer_total_paid'       => $customerTotalPaid,
+
+            // Summary fields (for legacy/frontend)
+            'subtotal'                  => $baseTotal,
+            'spent'                     => $call2FixFee + $warrantyRetention + $artisanShare,
+            'balance'                   => $providerEarnings,
         ];
+
+        // === VALIDATION: Ensure internal consistency ===
+        $totalFromBase = $call2FixFee + $warrantyRetention + $artisanShare + $providerEarnings;
+        if (abs($totalFromBase - $baseTotal) > 0.01) {
+            Log::error("Apportionment imbalance detected!", [
+                'request_id' => $requestId,
+                'base_total' => $baseTotal,
+                'computed_total' => $totalFromBase,
+                'difference' => $totalFromBase - $baseTotal,
+                'apportionment' => $apportionments
+            ]);
+            // Optionally: force balance
+            // $apportionments['service_provider_earnings'] += ($baseTotal - $totalFromBase);
+        }
+
+        Log::debug("Apportionment finalized", ['apportionments' => $apportionments]);
+        return $apportionments;
+    }
+
+
+    private function removePercentage($amount, $percentage)
+    {
+        $deduction = ($percentage) * $amount;
+        return $amount - $deduction;
     }
 }
