@@ -1,7 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -31,32 +34,50 @@ class ServiceRequestController extends Controller
 
     public function create()
     {
-        return view('admin.service-requests.create');
+        $users = User::role(["co-operate_accounts", "private_accounts"])
+            ->with('properties')
+            ->get();
+
+        $categories = Category::all();
+        $services   = Service::all();
+
+        return view('admin.service-requests.create', compact('users', 'categories', 'services'));
     }
+
 
     public function store(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'property_id'            => 'required|exists:properties,id',
-            'service_category_id'    => 'nullable|exists:categories,id',
-            'service_id'             => 'nullable|exists:services,id',
-            'problem_title'          => 'required|string|max:255',
-            'problem_description'    => 'required|string',
-            'inspection_time'        => 'required|date_format:H:i',
-            'inspection_date'        => 'required|date',
-            'problem_images'         => 'nullable|array',
+            'user_id'               => 'required|exists:users,id',
+            'property_id'           => 'required|exists:properties,id',
+            'service_category_id'   => 'nullable|exists:categories,id',
+            'service_id'            => 'nullable|exists:services,id',
+            'problem_title'         => 'required|string|max:255',
+            'problem_description'   => 'required|string',
+            'inspection_time'       => 'required|date_format:H:i',
+            'inspection_date'       => 'required|date',
+            'problem_images'        => 'nullable|array|max:5',
             'use_featured_providers' => 'boolean',
-            'featured_providers_id'  => 'nullable|array',
+            'featured_providers_id' => 'nullable|array',
+            'bidding_start_date'    => 'nullable|date',
+            'bidding_end_date'      => 'nullable|date',
+            'bidding_start_time'    => 'nullable',
+            'bidding_end_time'      => 'nullable'
         ]);
 
         if ($validate->fails()) {
             return back()->withErrors($validate->errors())->withInput();
         }
 
-        $serviceRequest = ServiceRequest::create($validate->validated());
+        $data = $validate->validated();
+        $data['request_status'] = "Pending";
 
-        return redirect()->route('admin.service-requests.index')->with('success', 'Service request created successfully.');
+        $serviceRequest = ServiceRequest::create($data);
+
+        return redirect()->route('admin.service-requests.index')
+            ->with('success', 'Service request created successfully.');
     }
+
 
     public function show(ServiceRequest $serviceRequest)
     {

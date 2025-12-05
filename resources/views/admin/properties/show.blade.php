@@ -53,53 +53,63 @@
 <!-- Leaflet.js JS -->
 <script src="//unpkg.com/leaflet/dist/leaflet.js"></script>
 
+@push('scripts')
+<script src="https://unpkg.com/maplibre-gl@3.3.0/dist/maplibre-gl.js"></script>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function() {
 
-        var lat = parseFloat("{{ $property->porperty_latitude }}");
-        var lng = parseFloat("{{ $property->porperty_longitude }}");
-        console.log([lat, lng])
+    // raw debug
+    console.log("raw lat:", "{{ $property->porperty_latitude }}");
+    console.log("raw lng:", "{{ $property->porperty_longitude }}");
 
-        if (!lat || !lng) {
-            console.error("Invalid coordinates");
-            return;
-        }
+    var lat = parseFloat("{{ $property->porperty_latitude }}");
+    var lng = parseFloat("{{ $property->porperty_longitude }}");
 
-        var map = new maplibregl.Map({
-            container: 'map',
-            style: {
-                version: 8,
-                sources: {
-                    osm: {
-                        type: 'raster',
-                        tiles: [
-                            'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                        ],
-                        tileSize: 256,
-                        attribution: '&copy; OpenStreetMap contributors'
-                    }
-                },
-                layers: [{
-                    id: 'osm-layer',
+    console.log("parsed:", lat, lng);
+
+    if (isNaN(lat) || isNaN(lng)) {
+        console.error("Invalid coordinates — value is NaN");
+        return;
+    }
+
+    var map = new maplibregl.Map({
+        container: 'map',
+        style: {
+            version: 8,
+            sources: {
+                osm: {
                     type: 'raster',
-                    source: 'osm'
-                }]
+                    tiles: [
+                        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    ],
+                    tileSize: 256,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }
             },
-            center: [lng, lat],
-            zoom: 15
-        });
-
-        // marker
-        new maplibregl.Marker()
-            .setLngLat([lng, lat])
-            .setPopup(
-                new maplibregl.Popup().setHTML(
-                    `<b>{{ $property->property_name }}</b><br>{{ $property->property_address }}`
-                )
-            )
-            .addTo(map);
+            layers: [{
+                id: 'osm-layer',
+                type: 'raster',
+                source: 'osm'
+            }]
+        },
+        center: [lng, lat],
+        zoom: 15
     });
+
+    new maplibregl.Marker()
+        .setLngLat([lng, lat])
+        .setPopup(
+            new maplibregl.Popup().setHTML(`
+                <b>{{ $property->property_name }}</b><br>
+                {{ $property->property_address }}
+            `)
+        )
+        .addTo(map);
+});
 </script>
+@endpush
+
 @endpush
