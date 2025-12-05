@@ -616,11 +616,10 @@ If you have any questions or need assistance, our support team is here to help. 
     public function negotiateQuote(Request $request, $requestId, $quoteId)
     {
         try {
+            // Remove 'price' from validation — we compute it
             $validate = Validator::make($request->all(), [
-                'price' => 'required|numeric|min:0',
                 'percentage_decrease' => 'nullable|numeric|min:0|max:100',
             ]);
-
             if ($validate->fails()) {
                 return get_error_response("Validation failed", $validate->errors(), 422);
             }
@@ -630,14 +629,13 @@ If you have any questions or need assistance, our support team is here to help. 
                 ->where('id', $quoteId)
                 ->first();
 
-            if (!$quote) {
+            if (! $quote) {
                 return get_error_response("Quote not found", ["error" => "Quote not found!"], 404);
             }
 
             $existingAcceptedNegotiation = Negotiation::where('request_id', $requestId)
                 ->where('status', 'accepted')
                 ->exists();
-
             if ($existingAcceptedNegotiation) {
                 return get_error_response("Quote already accepted", ['error' => "Quote already accepted"], 400);
             }
@@ -656,22 +654,32 @@ If you have any questions or need assistance, our support team is here to help. 
             $newItemTotal = $reduceByPercentage($originalItemsTotal, $percentageDecrease);
             $newWorkmanship = $reduceByPercentage($originalWorkmanship, $percentageDecrease);
 
+            // ✅ Compute total price from negotiated parts + fees
+            $adminFee = (float) ($quote->administrative_fee ?? 0);
+            $vat = (float) ($quote->service_vat ?? 0);
+            $computedPrice = $newItemTotal + $newWorkmanship + $adminFee + $vat;
+
+            // Prevent zero base
+            if (($newItemTotal + $newWorkmanship) <= 0.01) {
+                return get_error_response("Negotiated service amount cannot be zero.", ['error' => 'Invalid negotiation'], 422);
+            }
+
             $negotiation = Negotiation::create([
-                'submitted_quote_id' => $quoteId,
-                'request_id' => $requestId,
-                'provider_id' => $quote->provider_id,
-                'price' => number_format($request->price, 4, '.', ''),
-                'status' => 'pending',
+                'submitted_quote_id'  => $quoteId,
+                'request_id'          => $requestId,
+                'provider_id'         => $quote->provider_id,
+                'price'               => number_format($computedPrice, 4, '.', ''),
+                'status'              => 'pending',
                 'percentage_decrease' => $percentageDecrease,
-                'new_item_total' => round($newItemTotal, 2),
-                'new_workmanship' => round($newWorkmanship, 2),
+                'new_item_total'      => round($newItemTotal, 2),
+                'new_workmanship'     => round($newWorkmanship, 2),
             ]);
 
             $serviceRequest = ServiceRequest::whereId($requestId)->first();
             if ($serviceRequest) {
                 $serviceRequest->update([
-                    "total_cost" => $request->price,
-                    "formatted_price" => number_format($request->price, 4, '.', ''),
+                    "total_cost"      => $computedPrice,
+                    "formatted_price" => number_format($computedPrice, 4, '.', ''),
                 ]);
 
                 $provider = User::find($quote->provider_id);
@@ -1028,7 +1036,6 @@ If you have any questions or need assistance, our support team is here to help. 
         $neg = Negotiation::where('request_id', $requestId)
             ->where('status', 'accepted')
             ->first();
-
         if (!$neg) {
             return ['error' => 'Negotiation not found or not yet accepted.'];
         }
@@ -1036,7 +1043,6 @@ If you have any questions or need assistance, our support team is here to help. 
         $submittedQuote = SubmittedQuotes::where('request_id', $requestId)
             ->where('id', $neg->submitted_quote_id)
             ->first();
-
         if (!$submittedQuote) {
             return ['error' => 'Quote not found'];
         }
@@ -1052,12 +1058,11 @@ If you have any questions or need assistance, our support team is here to help. 
             $serviceRequest->save();
         }
 
-        // Securely compute base totals
-        $itemsTotal = max(0, (float) ($neg->new_item_total ?? 0));
-        $workmanship = max(0, (float) ($neg->new_workmanship ?? 0));
+        // === Secure base total ===
+        $itemsTotal = max(0, (float) $neg->new_item_total);
+        $workmanship = max(0, (float) $neg->new_workmanship);
         $baseTotal = $itemsTotal + $workmanship;
 
-        // Reconstruct if invalid
         if ($baseTotal <= 0.01) {
             Log::warning("Invalid base total. Reconstructing from original quote.", [
                 'request_id' => $requestId,
@@ -1069,8 +1074,9 @@ If you have any questions or need assistance, our support team is here to help. 
             $originalWorkmanship = (float) $submittedQuote->workmanship;
             $percentage = max(0, min(100, (float) ($neg->percentage_decrease ?? 0)));
 
-            $itemsTotal = max(0, $originalItemsTotal * (1 - ($percentage / 100)));
-            $workmanship = max(0, $originalWorkmanship * (1 - ($percentage / 100)));
+            $factor = 1 - ($percentage / 100);
+            $itemsTotal = max(0, $originalItemsTotal * $factor);
+            $workmanship = max(0, $originalWorkmanship * $factor);
             $baseTotal = $itemsTotal + $workmanship;
 
             if ($baseTotal <= 0.01) {
@@ -1080,12 +1086,12 @@ If you have any questions or need assistance, our support team is here to help. 
 
         $baseTotal = max(0.01, $baseTotal);
 
-        // Platform fees (10% each)
+        // === Platform fees (20% total) ===
         $call2FixFee = $baseTotal * 0.10;
         $warrantyRetention = $baseTotal * 0.10;
         $distributable = max(0, $baseTotal - $call2FixFee - $warrantyRetention);
 
-        // Artisan earnings
+        // === Artisan share ===
         $artisanShare = 0;
         $artisanId = $submittedQuote->artisan_id ?? $serviceRequest->approved_artisan_id;
         if ($artisanId) {
@@ -1109,25 +1115,35 @@ If you have any questions or need assistance, our support team is here to help. 
         $remainingInPool = max(0, $distributable - $artisanShare);
         $providerEarnings = $itemsTotal + $remainingInPool;
 
+        // Final safety: provider must earn > 0 if items exist
+        if ($itemsTotal > 0 && $providerEarnings <= 0) {
+            Log::error("Provider earnings non-positive despite item costs", [
+                'request_id' => $requestId,
+                'items_total' => $itemsTotal,
+                'provider_earnings' => $providerEarnings,
+            ]);
+            return ['error' => 'Provider earnings cannot be zero when supplying items.'];
+        }
+
         // Additional fees
         $adminFee = max(0, (float) ($submittedQuote->administrative_fee ?? 0));
         $vat = max(0, (float) ($submittedQuote->service_vat ?? 0));
         $customerTotalPaid = $baseTotal + $adminFee + $vat;
 
         return [
-            'base_total' => $baseTotal,
-            'items_total' => $itemsTotal,
-            'workmanship_total' => $workmanship,
-            'call2fix_earnings' => $call2FixFee,
-            'warranty_retention' => $warrantyRetention,
-            'distributable_pool' => $distributable,
-            'artisan_earnings' => $artisanShare,
+            'base_total'                => $baseTotal,
+            'items_total'               => $itemsTotal,
+            'workmanship_total'         => $workmanship,
+            'call2fix_earnings'         => $call2FixFee,
+            'warranty_retention'        => $warrantyRetention,
+            'distributable_pool'        => $distributable,
+            'artisan_earnings'          => $artisanShare,
             'service_provider_earnings' => $providerEarnings,
-            'admin_fee' => $adminFee,
-            'vat' => $vat,
-            'customer_total_paid' => $customerTotalPaid,
-            'subtotal' => $baseTotal,
-            'call2fix_management_fee' => $adminFee,
+            'admin_fee'                 => $adminFee,
+            'vat'                       => $vat,
+            'customer_total_paid'       => $customerTotalPaid,
+            'subtotal'                  => $baseTotal,
+            'call2fix_management_fee'   => $adminFee,
         ];
     }
 }
