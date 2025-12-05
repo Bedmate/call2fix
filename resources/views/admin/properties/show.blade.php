@@ -56,8 +56,8 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
 
-        var lat = parseFloat("{{ $property->property_latitude }}");
-        var lng = parseFloat("{{ $property->property_longitude }}");
+        var lat = parseFloat("{{ $property->porperty_latitude }}");
+        var lng = parseFloat("{{ $property->porperty_longitude }}");
         console.log([lat, lng])
 
         if (!lat || !lng) {
