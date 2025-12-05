@@ -36,12 +36,12 @@
 </div>
 @endsection
 
-@section('styles')
+@push('styles')
 <!-- Leaflet.js CSS -->
 <link rel="stylesheet" href="//unpkg.com/leaflet/dist/leaflet.css" />
-@endsection
+@endpush
 
-@section('scripts')
+@push('scripts')
 <!-- Leaflet.js JS -->
 <script src="//unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -64,4 +64,4 @@
         .openPopup();
     });
 </script>
-@endsection
+@endpush
