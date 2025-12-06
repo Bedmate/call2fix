@@ -1,8 +1,10 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Property;
+use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -88,12 +90,26 @@ class PropertyController extends Controller
         return view('admin.properties.show', compact('property'));
     }
 
-    public function userProperties($userId)
+    public function getUserProperties($userId)
     {
-        $property = Property::whereUserId($userId)->with('user')->get();
-        return response()->json($property);
-        // return view('admin.properties.show', compact('property'));
+        $properties = Property::where('user_id', $userId)
+            ->select('id', 'property_name', 'property_address')
+            ->get();
+
+        return response()->json([
+            'properties' => $properties
+        ]);
     }
+
+    public function getServicesByCategory($categoryId)
+    {
+        $services = Service::where('service_category_id', $categoryId)
+            ->select('id', 'service_name')
+            ->get();
+
+        return response()->json(['services' => $services]);
+    }
+
 
     public function edit(Property $property)
     {

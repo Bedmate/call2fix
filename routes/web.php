@@ -57,15 +57,15 @@ Route::get('paystack/processing', [WebhookLogController::class, 'callback'])->na
 
 Route::any('dojah/webhook/verification', [VerificationWebhookController::class, 'handleWebhook'])->withoutMiddleware(VerifyCsrfToken::class);
 
-        Route::prefix('payments')->controller(PaymentController::class)->group(function () {
-            Route::get('revenue', 'revenue')->name('payments.revenue');
-            Route::get('retention', 'retention')->name('payments.retention');
-            Route::get('transactions', 'transactions')->name('payments.transactions');
-            Route::get('wallet-deposits', 'wallet_deposits')->name('payments.wallet_deposits');
-            Route::get('merchant-withdrawals', 'merchant_withdrawals')->name('payments.merchant_withdrawals');
-            Route::get('artisan-withdrawals', 'artisan_withdrawals')->name('payments.artisan_withdrawals');
-            Route::get('affiliate-withdrawals', 'affiliate_withdrawals')->name('payments.affiliate_withdrawals');
-        });
+Route::prefix('payments')->controller(PaymentController::class)->group(function () {
+	Route::get('revenue', 'revenue')->name('payments.revenue');
+	Route::get('retention', 'retention')->name('payments.retention');
+	Route::get('transactions', 'transactions')->name('payments.transactions');
+	Route::get('wallet-deposits', 'wallet_deposits')->name('payments.wallet_deposits');
+	Route::get('merchant-withdrawals', 'merchant_withdrawals')->name('payments.merchant_withdrawals');
+	Route::get('artisan-withdrawals', 'artisan_withdrawals')->name('payments.artisan_withdrawals');
+	Route::get('affiliate-withdrawals', 'affiliate_withdrawals')->name('payments.affiliate_withdrawals');
+});
 
 
 Route::put('api/v1/update-device-token', [FcmController::class, 'updateDeviceToken'])->withoutMiddleware(VerifyCsrfToken::class);
@@ -90,14 +90,14 @@ Route::post('api/v1/send-fcm-notification', [FcmController::class, 'sendFcmNotif
 
 
 Route::middleware('auth:admin')->prefix('api/admin/payments')->name('admin.payments.')->group(function () {
-    Route::get('/revenue/data', [PaymentDataController::class, 'revenueData'])->name('revenue.data');
-    Route::get('/retention/data', [PaymentDataController::class, 'retentionData'])->name('retention.data');
-    Route::get('/transactions/data', [PaymentDataController::class, 'transactionsData'])->name('transactions.data');
-    Route::get('/wallet-deposits/data', [PaymentDataController::class, 'walletDepositsData'])->name('wallet_deposits.data');
-    Route::get('/merchant-withdrawals/data', [PaymentDataController::class, 'merchantWithdrawalsData'])->name('merchant.data');
-    Route::get('/artisan-withdrawals/data', [PaymentDataController::class, 'artisanWithdrawalsData'])->name('artisan.data');
-    Route::get('/affiliate-withdrawals/data', [PaymentDataController::class, 'affiliateWithdrawalsData'])->name('affiliate.data');
-    Route::get('/wallet-transactions/data', [PaymentDataController::class, 'walletTransactionsData'])->name('wallet_transactions.data');
+	Route::get('/revenue/data', [PaymentDataController::class, 'revenueData'])->name('revenue.data');
+	Route::get('/retention/data', [PaymentDataController::class, 'retentionData'])->name('retention.data');
+	Route::get('/transactions/data', [PaymentDataController::class, 'transactionsData'])->name('transactions.data');
+	Route::get('/wallet-deposits/data', [PaymentDataController::class, 'walletDepositsData'])->name('wallet_deposits.data');
+	Route::get('/merchant-withdrawals/data', [PaymentDataController::class, 'merchantWithdrawalsData'])->name('merchant.data');
+	Route::get('/artisan-withdrawals/data', [PaymentDataController::class, 'artisanWithdrawalsData'])->name('artisan.data');
+	Route::get('/affiliate-withdrawals/data', [PaymentDataController::class, 'affiliateWithdrawalsData'])->name('affiliate.data');
+	Route::get('/wallet-transactions/data', [PaymentDataController::class, 'walletTransactionsData'])->name('wallet_transactions.data');
 });
 
 
@@ -158,4 +158,5 @@ Route::withoutMiddleware(VerifyCsrfToken::class)->group(function () {
 });
 
 
-Route::get('admin/get-user-properties/{userId}', [PropertyController::class, 'userProperties']);
+Route::get('admin/get-user-properties/{userId}', [PropertyController::class, 'getUserProperties']);
+Route::get('/admin/get-services/{category}', [PropertyController::class, 'getServicesByCategory']);

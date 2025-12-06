@@ -33,7 +33,7 @@
                 {{-- CATEGORY --}}
                 <div class="mb-3">
                     <label class="form-label">Service Category</label>
-                    <select name="service_category_id" class="form-select">
+                    <select name="service_category_id" id="service_category_id" class="form-select">
                         <option value="">-- Optional --</option>
                         @foreach($categories as $cat)
                             <option value="{{ $cat->id }}">{{ $cat->category_name }}</option>
@@ -44,11 +44,8 @@
                 {{-- SERVICE --}}
                 <div class="mb-3">
                     <label class="form-label">Service</label>
-                    <select name="service_id" class="form-select">
+                    <select name="service_id" id="service_id" class="form-select">
                         <option value="">-- Optional --</option>
-                        @foreach($services as $srv)
-                            <option value="{{ $srv->id }}">{{ $srv->service_name }}</option>
-                        @endforeach
                     </select>
                 </div>
 
@@ -102,7 +99,6 @@
                     </div>
                 </div>
 
-                {{-- SUBMIT --}}
                 <div class="d-grid mt-4">
                     <button type="submit" class="btn btn-primary">Create Service Request</button>
                 </div>
@@ -112,21 +108,43 @@
     </div>
 </div>
 
-
-{{-- AJAX SCRIPT --}}
+{{-- AJAX --}}
 <script>
 document.getElementById('user_id').addEventListener('change', function () {
     const userId = this.value;
 
+    if (!userId) return;
+
     fetch(`/admin/get-user-properties/${userId}`)
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
             let options = `<option value="">-- Select Property --</option>`;
-            data.properties.forEach(function (p) {
-                options += `<option value="${p.id}">${p.property_name}</option>`;
+            data.properties.forEach(p => {
+                options += `<option value="${p.id}">
+                    ${p.property_name} — ${p.property_address}
+                </option>`;
             });
-
             document.getElementById('property_id').innerHTML = options;
+        });
+});
+
+// Load services dynamically by category
+document.getElementById('service_category_id').addEventListener('change', function () {
+    const categoryId = this.value;
+
+    if (!categoryId) {
+        document.getElementById('service_id').innerHTML = '<option value="">-- Optional --</option>';
+        return;
+    }
+
+    fetch(`/admin/get-services/${categoryId}`)
+        .then(res => res.json())
+        .then(data => {
+            let options = `<option value="">-- Select Service --</option>`;
+            data.services.forEach(s => {
+                options += `<option value="${s.id}">${s.service_name}</option>`;
+            });
+            document.getElementById('service_id').innerHTML = options;
         });
 });
 </script>
