@@ -91,7 +91,8 @@ class PropertyController extends Controller
     public function userProperties($userId)
     {
         $property = Property::whereUserId($userId)->with('user')->get();
-        return view('admin.properties.show', compact('property'));
+        return response()->json($property);
+        // return view('admin.properties.show', compact('property'));
     }
 
     public function edit(Property $property)
