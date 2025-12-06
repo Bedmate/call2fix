@@ -103,7 +103,7 @@ class PropertyController extends Controller
 
     public function getServicesByCategory($categoryId)
     {
-        $services = Service::where('service_category_id', $categoryId)
+        $services = Service::where('category_id', $categoryId)
             ->select('id', 'service_name')
             ->get();
 
