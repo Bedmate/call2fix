@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessOfficeAddress;
 use App\Models\Category;
+use App\Models\Property;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ServiceRequestController extends Controller
@@ -54,7 +57,7 @@ class ServiceRequestController extends Controller
             'service_id'            => 'nullable|exists:services,id',
             'problem_title'         => 'required|string|max:255',
             'problem_description'   => 'required|string',
-            'inspection_time'       => 'required|date_format:H:i',
+            'inspection_time'       => 'required',
             'inspection_date'       => 'required|date',
             'problem_images'        => 'nullable|array|max:5',
             'use_featured_providers' => 'boolean',
@@ -72,11 +75,77 @@ class ServiceRequestController extends Controller
         $data = $validate->validated();
         $data['request_status'] = "Pending";
 
+        /** ---------------------------------------------------------
+         *  FIND NEAREST PROVIDERS (same as customer flow)
+         *  ---------------------------------------------------------
+         */
+        $alphameadAccount = get_settings_value(
+            'alphamaed_service_account_id',
+            'a599fd50-15b4-4db5-a839-9e722aea226d'
+        );
+
+        // If admin manually selects featured providers, skip auto-fetch
+        if (empty($request->featured_providers_id)) {
+
+            $property = Property::findOrFail($request->property_id);
+            $radiusLimitMeters = 20000; // 20KM radius or use $this->radiusLimitKm if applicable
+
+            $latitude = $property->porperty_latitude;
+            $longitude = $property->porperty_longitude;
+
+            $selectedCategoryId = $request->service_category_id;
+
+            $providers = BusinessOfficeAddress::query()
+                ->select(
+                    'business_office_addresses.user_id',
+                    DB::raw("
+                    ST_Distance_Sphere(
+                        point(business_office_addresses.longitude, business_office_addresses.latitude),
+                        point(?, ?)
+                    ) as distance
+                ")
+                )
+                ->join('business_infos', 'business_infos.user_id', '=', 'business_office_addresses.user_id')
+                ->whereRaw("JSON_CONTAINS(business_infos.businessCategory, ?)", [json_encode($selectedCategoryId)])
+                ->orderBy('distance')
+                ->groupBy('business_office_addresses.user_id')
+                ->addBinding([$longitude, $latitude], 'select')
+                ->get()
+                ->pluck('user_id')
+                ->toArray();
+
+            // Filter only users with 'providers' role
+            $distinctProviders = User::whereIn('id', $providers)
+                ->whereHas('roles', fn($q) => $q->where('name', 'providers'))
+                ->pluck('id')
+                ->toArray();
+
+            // Randomly pick the FIRST 5 providers
+            $distinctProviders = collect($distinctProviders)->shuffle()->take(5)->toArray();
+
+            // Ensure Alphamead is added
+            if (!in_array($alphameadAccount, $distinctProviders)) {
+                $distinctProviders[] = $alphameadAccount;
+            }
+
+            // If still empty, abort with error
+            if (empty($distinctProviders)) {
+                return back()->with('error', 'No service provider found nearby.')->withInput();
+            }
+
+            $data['featured_providers_id'] = $distinctProviders;
+        }
+
+        /** ---------------------------------------------------------
+         *  SAVE REQUEST 
+         *  ---------------------------------------------------------
+         */
         $serviceRequest = ServiceRequest::create($data);
 
         return redirect()->route('admin.service-requests.index')
             ->with('success', 'Service request created successfully.');
     }
+
 
 
     public function show(ServiceRequest $serviceRequest)
