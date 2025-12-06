@@ -4,6 +4,7 @@ use App\Events\MessageSent;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentDataController;
 use App\Http\Controllers\Admin\ServiceAreaController;
+use App\Http\Controllers\Admin\ServiceRequestController as AdminServiceRequestController;
 use App\Http\Controllers\DojaWebhookController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\ServiceRequestController;
@@ -156,4 +157,4 @@ Route::withoutMiddleware(VerifyCsrfToken::class)->group(function () {
 });
 
 
-Route::get('admin/get-user-propertie/{userId}', [ServiceRequestController::class, 'userProperties']);
+Route::get('admin/get-user-properties/{userId}', [AdminServiceRequestController::class, 'userProperties']);
