@@ -36,7 +36,7 @@
                     <select name="service_category_id" class="form-select">
                         <option value="">-- Optional --</option>
                         @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                            <option value="{{ $cat->id }}">{{ $cat->category_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -47,7 +47,7 @@
                     <select name="service_id" class="form-select">
                         <option value="">-- Optional --</option>
                         @foreach($services as $srv)
-                            <option value="{{ $srv->id }}">{{ $srv->name }}</option>
+                            <option value="{{ $srv->id }}">{{ $srv->service_name }}</option>
                         @endforeach
                     </select>
                 </div>

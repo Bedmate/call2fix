@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\PaymentDataController;
 use App\Http\Controllers\Admin\ServiceAreaController;
 use App\Http\Controllers\DojaWebhookController;
 use App\Http\Controllers\FcmController;
+use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\WebhookLogController;
 use App\Http\Middleware\JsonRequestMiddleware;
 use App\Models\Category;
@@ -153,3 +154,6 @@ Route::get('/messages/{friend}', function (User $friend) {
 Route::withoutMiddleware(VerifyCsrfToken::class)->group(function () {
 	Route::any('webhook/callback/paystack', [WebhookLogController::class, 'handleWebhook']);
 });
+
+
+Route::get('admin/get-user-propertie/{userId}', [ServiceRequestController::class, 'userProperties']);

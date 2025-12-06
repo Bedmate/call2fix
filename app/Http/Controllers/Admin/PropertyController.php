@@ -88,6 +88,12 @@ class PropertyController extends Controller
         return view('admin.properties.show', compact('property'));
     }
 
+    public function userProperties($userId)
+    {
+        $property = Property::whereUserId($userId)->with('user')->get();
+        return view('admin.properties.show', compact('property'));
+    }
+
     public function edit(Property $property)
     {
         $users = User::all();
